@@ -38,22 +38,30 @@ async function findBestAnswer(topic: string, question: string): Promise<{ answer
       messages: [
         {
           role: "system",
-          content: `You are a knowledge base assistant. You ONLY answer using the curated content below. Each entry has a subtopic, keywords, key takeaway, and expert/source.
+          content: `You are a strict knowledge base assistant. You can ONLY answer using the curated entries below.
 
 INSTRUCTIONS:
-1. Read the user's question.
-2. Check if the question relates to any entry. Compare against the subtopic, keywords, AND key takeaway. If the user's question touches on the same general subject area as an entry, that counts as a match.
-3. If you find a match, respond with EXACTLY this format on the first line:
+1. Read the user's question carefully.
+2. For each entry, check if the user's question is specifically asking about the SAME specific subtopic described in that entry. The entry's subtopic, keywords, and key takeaway must directly answer what the user is asking.
+3. A match is ONLY valid if the entry's key takeaway actually answers the user's question. Sharing a word (like "AI") is NOT enough — the specific subject must match.
+4. If you find a genuine match, respond EXACTLY like this:
    MATCH:[index_number]
-   Then on subsequent lines, rephrase the key takeaway as a natural, helpful answer. Use ONLY information from the matched entry's key takeaway. Then add: "— [Expert/Source name]"
-4. If NO entry is related to the question at all (completely different subject), respond EXACTLY with: NOT_FOUND
+   [Rephrase the key takeaway as a natural answer. Use ONLY info from the entry. Then write: — [Expert/Source name]]
+5. If no entry genuinely answers the user's question, respond EXACTLY with: NOT_FOUND
+
+EXAMPLES OF WRONG MATCHES (do NOT do this):
+- User asks "How to use AI in the gym" → Entry about "How to start a prompt" → NOT a match (different subjects)
+- User asks "AI tools for cooking" → Entry about "prompt persona" → NOT a match
+- User asks about topic X → Entry mentions "AI" too → NOT a match unless the specific subject is the same
+
+EXAMPLES OF CORRECT MATCHES:
+- User asks "How should I write a prompt?" → Entry about "How to start a prompt" → MATCH (same specific subject)
+- User asks "What role should I give AI?" → Entry about "giving AI a persona/role" → MATCH (same specific subject)
 
 RULES:
-- NEVER invent answers or use your own knowledge.
+- NEVER invent answers. NEVER use your own knowledge.
+- When in doubt, respond NOT_FOUND. A human will review the question later.
 - The [index_number] must match the [N] prefix of the entry.
-- Always credit the expert/source.
-- A question about the same general topic as an entry IS a valid match. For example, a question about "prompts" matches an entry about "how to start a prompt".
-- Only say NOT_FOUND for questions about completely unrelated subjects not covered at all.
 
 Knowledge Base for topic "${topic}":
 ${contentContext}`
@@ -68,8 +76,11 @@ ${contentContext}`
 
     const aiAnswer = response.choices[0]?.message?.content?.trim() || "";
 
-    if (!aiAnswer || aiAnswer === "NOT_FOUND" || aiAnswer.includes("NOT_FOUND")) {
-      console.log("AI returned empty or NOT_FOUND, trying keyword fallback");
+    if (aiAnswer === "NOT_FOUND" || aiAnswer.includes("NOT_FOUND")) {
+      return { answer: "", found: false };
+    }
+
+    if (!aiAnswer) {
       return fallbackKeywordMatch(contentItems, question);
     }
 
@@ -111,34 +122,35 @@ ${contentContext}`
 }
 
 function fallbackKeywordMatch(contentItems: Content[], query: string): { answer: string; found: boolean; link?: string } {
-  const lowerQuery = query.toLowerCase().replace(/[?!.,]/g, '');
-  const queryWords = lowerQuery.split(/\s+/).filter(w => w.length > 2);
+  const lowerQuery = query.toLowerCase().replace(/[?!.,]/g, '').trim();
+  const stopWords = new Set(['how', 'to', 'the', 'a', 'an', 'is', 'in', 'of', 'for', 'and', 'or', 'what', 'can', 'do', 'i', 'my', 'use', 'using', 'with', 'about', 'should']);
+  const queryWords = lowerQuery.split(/\s+/).filter(w => w.length > 1 && !stopWords.has(w));
   let bestMatch: Content | undefined;
   let maxScore = 0;
 
   for (const item of contentItems) {
     let score = 0;
     const lowerQuestion = item.question.toLowerCase();
-    if (lowerQuestion.includes(lowerQuery) || lowerQuery.includes(lowerQuestion)) {
-      score += 10;
+    const questionWords = lowerQuestion.split(/\s+/).filter(w => w.length > 1 && !stopWords.has(w));
+
+    const significantMatches = queryWords.filter(qw =>
+      questionWords.some(qwItem => qw === qwItem || (qw.length > 4 && (qwItem.includes(qw) || qw.includes(qwItem))))
+    );
+
+    if (significantMatches.length >= 2 || (significantMatches.length === 1 && significantMatches[0].length > 5)) {
+      score += significantMatches.length * 5;
     }
-    const questionWords = lowerQuestion.split(/\s+/).filter(w => w.length > 2);
-    for (const qw of queryWords) {
-      if (questionWords.some(w => w.includes(qw) || qw.includes(w))) {
-        score += 3;
-      }
-    }
+
     if (item.keywords) {
+      let keywordHits = 0;
       for (const keyword of item.keywords) {
         const lowerKeyword = keyword.toLowerCase();
-        if (lowerQuery.includes(lowerKeyword)) {
-          score += 5;
+        if (lowerKeyword.length > 3 && lowerQuery.includes(lowerKeyword)) {
+          keywordHits++;
         }
-        for (const qw of queryWords) {
-          if (lowerKeyword.includes(qw) || qw.includes(lowerKeyword)) {
-            score += 2;
-          }
-        }
+      }
+      if (keywordHits >= 2) {
+        score += keywordHits * 5;
       }
     }
     if (score > maxScore) {
@@ -147,7 +159,7 @@ function fallbackKeywordMatch(contentItems: Content[], query: string): { answer:
     }
   }
 
-  if (bestMatch && maxScore > 0) {
+  if (bestMatch && maxScore >= 5) {
     const formattedAnswer = bestMatch.answer.replace(/\n\nSource:\s*/g, '\n— ').replace(/\nSource:\s*/g, '\n— ');
     return { answer: formattedAnswer, found: true, link: bestMatch.link || undefined };
   }
