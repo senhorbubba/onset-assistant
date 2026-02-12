@@ -11,6 +11,10 @@ A chatbot web application that answers user questions based on curated content f
 - OpenAI-powered intelligent answer matching (gpt-5-nano via Replit AI Integrations)
 - Database-backed content storage with link support
 - Sync button in admin panel to refresh content from Google Sheets
+- Multi-language support: English (en) and Brazilian Portuguese (pt-BR)
+- Auto-detects user region (browser locale) — defaults to Portuguese for pt* locales
+- Language choice persisted in localStorage across page navigation
+- Mobile-first responsive design
 
 ## Architecture
 - Frontend: React + Vite + Tailwind CSS + shadcn/ui
@@ -29,9 +33,11 @@ A chatbot web application that answers user questions based on curated content f
 - `client/src/components/chat-interface.tsx` - Chat widget
 - `client/src/hooks/use-content.ts` - Content and sync hooks
 - `client/src/hooks/use-chat.ts` - Chat mutation hook
+- `client/src/lib/i18n.ts` - Translations for en and pt-BR with language detection
+- `client/src/lib/language-context.tsx` - React context for language state and persistence
 
 ## API Endpoints
-- `POST /api/chat` - Ask a question (topic + question), returns AI-matched answer
+- `POST /api/chat` - Ask a question (topic + question + language?), returns AI-matched answer
 - `GET /api/content` - List all knowledge base content
 - `POST /api/content` - Add new content item
 - `GET /api/unanswered` - List unanswered questions
