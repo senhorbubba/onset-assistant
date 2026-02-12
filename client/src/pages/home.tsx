@@ -21,7 +21,7 @@ export default function Home() {
       <header className="relative z-10 w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <img src={onsetLogo} alt="Onset" className="w-10 h-10 rounded-lg" />
-          <h1 className="text-xl font-bold font-display tracking-tight">Onset</h1>
+          <h1 className="text-xl font-bold font-display tracking-tight">KnowBot</h1>
         </div>
         
         <Link href="/admin">
