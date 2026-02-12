@@ -88,16 +88,22 @@ export async function fetchSheetData(spreadsheetId: string, sheetName?: string):
   }
 
   const headers = rows[0].map((h: string) => h.toLowerCase().trim());
-  
-  const topicIdx = headers.findIndex((h: string) => h.includes('topic'));
-  const questionIdx = headers.findIndex((h: string) => h.includes('question'));
-  const answerIdx = headers.findIndex((h: string) => h.includes('answer'));
-  const keywordsIdx = headers.findIndex((h: string) => h.includes('keyword') || h.includes('tag'));
-  const linkIdx = headers.findIndex((h: string) => h.includes('link') || h.includes('url'));
 
-  if (topicIdx === -1 || questionIdx === -1 || answerIdx === -1) {
+  const topicIdx = headers.findIndex((h: string) => h.includes('topic'));
+  const questionIdx = headers.findIndex((h: string) => h.includes('subtopic') || h.includes('question'));
+  const answerIdx = headers.findIndex((h: string) => h.includes('key takeaway') || h.includes('answer'));
+  const contextIdx = headers.findIndex((h: string) => h.includes('search context') || h.includes('transcription'));
+  const keywordsIdx = headers.findIndex((h: string) => h.includes('keyword') || h.includes('tag'));
+  const linkIdx = headers.findIndex((h: string) => h.includes('final timestamp link') || h.includes('link') || h.includes('url'));
+  const expertIdx = headers.findIndex((h: string) => h.includes('expert') || h.includes('source'));
+
+  if (topicIdx === -1) {
     console.error('Sheet headers found:', headers);
-    throw new Error('Sheet must have columns for Topic, Question, and Answer. Found: ' + headers.join(', '));
+    throw new Error('Sheet must have a Topic column. Found: ' + headers.join(', '));
+  }
+  if (questionIdx === -1) {
+    console.error('Sheet headers found:', headers);
+    throw new Error('Sheet must have a Subtopic/Question column. Found: ' + headers.join(', '));
   }
 
   const data: SheetRow[] = [];
@@ -105,9 +111,21 @@ export async function fetchSheetData(spreadsheetId: string, sheetName?: string):
     const row = rows[i];
     const topic = row[topicIdx]?.trim();
     const question = row[questionIdx]?.trim();
-    const answer = row[answerIdx]?.trim();
 
-    if (!topic || !question || !answer) continue;
+    if (!topic || !question) continue;
+
+    let answer = '';
+    if (answerIdx !== -1 && row[answerIdx]?.trim()) {
+      answer = row[answerIdx].trim();
+    } else if (contextIdx !== -1 && row[contextIdx]?.trim()) {
+      answer = row[contextIdx].trim();
+    }
+
+    if (!answer) continue;
+
+    if (expertIdx !== -1 && row[expertIdx]?.trim()) {
+      answer += `\n\nSource: ${row[expertIdx].trim()}`;
+    }
 
     const keywords = keywordsIdx !== -1 && row[keywordsIdx]
       ? row[keywordsIdx].split(',').map((k: string) => k.trim()).filter(Boolean)
@@ -121,20 +139,8 @@ export async function fetchSheetData(spreadsheetId: string, sheetName?: string):
   return data;
 }
 
-let cachedSpreadsheetId: string | null = null;
-
-export async function getSpreadsheetId(): Promise<string> {
-  if (cachedSpreadsheetId) return cachedSpreadsheetId;
-  
-  const id = await findSpreadsheetByName('onsetMVP');
-  if (!id) {
-    throw new Error('Could not find spreadsheet named "onsetMVP". Make sure the sheet exists and is accessible.');
-  }
-  cachedSpreadsheetId = id;
-  return id;
-}
+const SPREADSHEET_ID = '1jcYao1JlaWnaejoPYKiXK3YnBLqxGbQzH41HTdS5_8g';
 
 export async function syncFromSheet(): Promise<SheetRow[]> {
-  const spreadsheetId = await getSpreadsheetId();
-  return fetchSheetData(spreadsheetId);
+  return fetchSheetData(SPREADSHEET_ID);
 }
