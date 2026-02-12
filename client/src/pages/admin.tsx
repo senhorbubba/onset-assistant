@@ -106,8 +106,8 @@ export default function Admin() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="pt-BR">Português</SelectItem>
+                <SelectItem value="en">EN</SelectItem>
+                <SelectItem value="pt-BR">PT</SelectItem>
               </SelectContent>
             </Select>
             <Button 

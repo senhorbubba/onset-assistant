@@ -26,19 +26,19 @@ export default function Home() {
           <h1 className="text-lg sm:text-xl font-bold font-display tracking-tight">onset. Assistant</h1>
         </div>
         
-        <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+        <div className="flex items-center gap-0 sm:gap-1 shrink-0">
           <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
-            <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-xs sm:text-sm" data-testid="select-language">
+            <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-xs sm:text-sm px-2" data-testid="select-language">
               <Globe className="w-3.5 h-3.5 shrink-0" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="en">English</SelectItem>
-              <SelectItem value="pt-BR">Português</SelectItem>
+              <SelectItem value="en">EN</SelectItem>
+              <SelectItem value="pt-BR">PT</SelectItem>
             </SelectContent>
           </Select>
           <Link href="/admin">
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground text-xs sm:text-sm">
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground text-xs sm:text-sm px-2">
               {t.header.adminPanel}
             </Button>
           </Link>
