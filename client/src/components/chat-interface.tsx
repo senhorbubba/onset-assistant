@@ -93,7 +93,7 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
         <div className="flex items-center gap-3">
           <img src={onsetLogo} alt="Onset" className="w-10 h-10 rounded-xl" />
           <div>
-            <h3 className="font-bold text-lg text-foreground">Onset</h3>
+            <h3 className="font-bold text-lg text-foreground">onset. Assistant</h3>
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
               Topic: {topic}
             </p>
