@@ -4,10 +4,11 @@ import { z } from "zod";
 
 export const content = pgTable("content", {
   id: serial("id").primaryKey(),
-  topic: text("topic").notNull(), // 'AI Skills' or 'Communication'
+  topic: text("topic").notNull(),
   question: text("question").notNull(),
   answer: text("answer").notNull(),
-  keywords: text("keywords").array(), // Array of keywords for matching
+  keywords: text("keywords").array(),
+  link: text("link"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

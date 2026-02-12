@@ -27,6 +27,7 @@ export const api = {
         200: z.object({
           answer: z.string(),
           found: z.boolean(),
+          link: z.string().nullable().optional(),
         }),
       },
     },
@@ -55,6 +56,19 @@ export const api = {
       path: '/api/unanswered' as const,
       responses: {
         200: z.array(z.custom<typeof unansweredQuestions.$inferSelect>()),
+      },
+    },
+  },
+  sync: {
+    trigger: {
+      method: 'POST' as const,
+      path: '/api/sync' as const,
+      responses: {
+        200: z.object({
+          message: z.string(),
+          count: z.number(),
+        }),
+        500: errorSchemas.internal,
       },
     },
   },

@@ -7,15 +7,14 @@ import {
   type UnansweredQuestion,
   type InsertUnansweredQuestion,
 } from "@shared/schema";
-import { eq, ilike, or, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
-  // Content methods
   getAllContent(): Promise<Content[]>;
+  getContentByTopic(topic: string): Promise<Content[]>;
   createContent(item: InsertContent): Promise<Content>;
-  findContent(topic: string, query: string): Promise<Content | undefined>;
-
-  // Unanswered questions methods
+  clearAllContent(): Promise<void>;
+  bulkCreateContent(items: InsertContent[]): Promise<void>;
   logUnansweredQuestion(item: InsertUnansweredQuestion): Promise<UnansweredQuestion>;
   getUnansweredQuestions(): Promise<UnansweredQuestion[]>;
 }
@@ -25,53 +24,22 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(content);
   }
 
+  async getContentByTopic(topic: string): Promise<Content[]> {
+    return await db.select().from(content).where(eq(content.topic, topic));
+  }
+
   async createContent(item: InsertContent): Promise<Content> {
     const [newItem] = await db.insert(content).values(item).returning();
     return newItem;
   }
 
-  async findContent(topic: string, query: string): Promise<Content | undefined> {
-    // Simple keyword matching for MVP
-    // In a real app, this would use vector search or more sophisticated logic
-    // We'll look for content where the question or keywords match the query
-    
-    // Convert query to lower case for case-insensitive comparison
-    const lowerQuery = query.toLowerCase();
+  async clearAllContent(): Promise<void> {
+    await db.delete(content);
+  }
 
-    const allContent = await db
-      .select()
-      .from(content)
-      .where(eq(content.topic, topic));
-
-    // Basic scoring: find the content with the most matching keywords
-    let bestMatch: Content | undefined;
-    let maxScore = 0;
-
-    for (const item of allContent) {
-      let score = 0;
-      
-      // Check if question text is similar (basic inclusion)
-      if (item.question.toLowerCase().includes(lowerQuery) || lowerQuery.includes(item.question.toLowerCase())) {
-        score += 10;
-      }
-
-      // Check keywords
-      if (item.keywords) {
-        for (const keyword of item.keywords) {
-          if (lowerQuery.includes(keyword.toLowerCase())) {
-            score += 5;
-          }
-        }
-      }
-
-      if (score > maxScore) {
-        maxScore = score;
-        bestMatch = item;
-      }
-    }
-
-    // Threshold for matching
-    return maxScore > 0 ? bestMatch : undefined;
+  async bulkCreateContent(items: InsertContent[]): Promise<void> {
+    if (items.length === 0) return;
+    await db.insert(content).values(items);
   }
 
   async logUnansweredQuestion(item: InsertUnansweredQuestion): Promise<UnansweredQuestion> {

@@ -48,3 +48,23 @@ export function useUnansweredList() {
     },
   });
 }
+
+export function useSyncFromSheet() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch(api.sync.trigger.path, {
+        method: api.sync.trigger.method,
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to sync");
+      }
+      return api.sync.trigger.responses[200].parse(await res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.content.list.path] });
+    },
+  });
+}

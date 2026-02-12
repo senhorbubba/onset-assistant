@@ -1,4 +1,4 @@
-import { useContentList, useCreateContent, useUnansweredList } from "@/hooks/use-content";
+import { useContentList, useCreateContent, useUnansweredList, useSyncFromSheet } from "@/hooks/use-content";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, Plus, ArrowLeft, CheckCircle2, AlertCircle, RefreshCw, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 import { useForm } from "react-hook-form";
@@ -28,8 +28,25 @@ export default function Admin() {
   const { data: content, isLoading: contentLoading } = useContentList();
   const { data: unanswered, isLoading: unansweredLoading } = useUnansweredList();
   const createMutation = useCreateContent();
+  const syncMutation = useSyncFromSheet();
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+
+  const handleSync = async () => {
+    try {
+      const result = await syncMutation.mutateAsync();
+      toast({
+        title: "Sync Complete",
+        description: result.message,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Sync Failed",
+        description: error.message || "Could not sync from Google Sheets",
+        variant: "destructive",
+      });
+    }
+  };
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -82,9 +99,25 @@ export default function Admin() {
             </div>
           </div>
           
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button 
+              variant="outline" 
+              className="gap-2"
+              onClick={handleSync}
+              disabled={syncMutation.isPending}
+              data-testid="button-sync-sheets"
+            >
+              {syncMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+              {syncMutation.isPending ? "Syncing..." : "Sync from Google Sheets"}
+            </Button>
+          
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2 shadow-lg shadow-primary/20">
+              <Button className="gap-2 shadow-lg shadow-primary/20" data-testid="button-add-content">
                 <Plus className="w-4 h-4" />
                 Add Content
               </Button>
@@ -146,6 +179,7 @@ export default function Admin() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <Tabs defaultValue="content" className="w-full">
@@ -182,6 +216,7 @@ export default function Admin() {
                           <TableHead>Topic</TableHead>
                           <TableHead>Question</TableHead>
                           <TableHead>Keywords</TableHead>
+                          <TableHead>Link</TableHead>
                           <TableHead className="w-[100px]">Status</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -198,6 +233,16 @@ export default function Admin() {
                               {item.keywords?.join(", ")}
                             </TableCell>
                             <TableCell>
+                              {item.link ? (
+                                <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 text-sm">
+                                  <ExternalLink className="w-3 h-3" />
+                                  View
+                                </a>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
                               <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
                                 <CheckCircle2 className="w-3 h-3" />
                                 Active
@@ -207,7 +252,7 @@ export default function Admin() {
                         ))}
                         {content?.length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                               No content found. Add some knowledge!
                             </TableCell>
                           </TableRow>

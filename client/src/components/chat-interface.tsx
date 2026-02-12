@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useChat } from "@/hooks/use-chat";
-import { Send, Bot, User, Sparkles, Loader2 } from "lucide-react";
+import { Send, Bot, User, Sparkles, Loader2, ExternalLink } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,7 @@ interface Message {
   id: string;
   role: "user" | "bot";
   content: string;
+  link?: string | null;
   timestamp: Date;
 }
 
@@ -61,6 +62,7 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
         id: (Date.now() + 1).toString(),
         role: "bot",
         content: response.answer,
+        link: response.link,
         timestamp: new Date(),
       };
 
@@ -135,6 +137,18 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
                   : "bg-white text-foreground border border-border/50 rounded-tl-none"
               )}>
                 {msg.content}
+                {msg.link && (
+                  <a 
+                    href={msg.link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="mt-2 flex items-center gap-1 text-primary hover:underline text-xs font-medium"
+                    data-testid="link-resource"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Learn more
+                  </a>
+                )}
               </div>
             </motion.div>
           ))}
