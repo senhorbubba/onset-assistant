@@ -18,45 +18,45 @@ export default function Home() {
         <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-accent/5 rounded-full blur-3xl opacity-60" />
       </div>
 
-      <header className="relative z-10 w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
+      <header className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex justify-between items-center gap-2">
         <div className="flex items-center gap-2">
-          <img src={onsetLogo} alt="Onset" className="w-10 h-10 rounded-lg" />
-          <h1 className="text-xl font-bold font-display tracking-tight">onset. Assistant</h1>
+          <img src={onsetLogo} alt="Onset" className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg" />
+          <h1 className="text-lg sm:text-xl font-bold font-display tracking-tight">onset. Assistant</h1>
         </div>
         
         <Link href="/admin">
-          <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground text-xs sm:text-sm">
             Admin Panel
           </Button>
         </Link>
       </header>
 
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-12 flex flex-col items-center">
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12 flex flex-col items-center">
         {!topic ? (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center text-center max-w-2xl"
           >
-            <div className="mb-6 p-4 rounded-2xl bg-white shadow-xl shadow-slate-200/50 border border-slate-100 rotate-3">
-              <MessageSquareText className="w-12 h-12 text-primary" />
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-2xl bg-white shadow-xl shadow-slate-200/50 border border-slate-100 rotate-3">
+              <MessageSquareText className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
             </div>
             
-            <h2 className="text-5xl md:text-6xl font-bold font-display text-slate-900 mb-6 tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold font-display text-slate-900 mb-4 sm:mb-6 tracking-tight leading-tight">
               Instant answers,<br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
                 zero waiting.
               </span>
             </h2>
             
-            <p className="text-lg md:text-xl text-slate-500 mb-10 max-w-lg leading-relaxed">
+            <p className="text-base sm:text-lg md:text-xl text-slate-500 mb-6 sm:mb-10 max-w-lg leading-relaxed px-2">
               Select a topic below to start chatting with our intelligent assistant. Get answers instantly from our curated knowledge base.
             </p>
 
-            <div className="w-full max-w-xs space-y-4">
+            <div className="w-full max-w-xs space-y-4 px-2">
               <div className="bg-white p-1 rounded-xl shadow-lg border border-slate-100">
                 <Select onValueChange={(val) => setTopic(val)}>
-                  <SelectTrigger className="w-full h-12 border-none bg-transparent focus:ring-0 text-base">
+                  <SelectTrigger className="w-full h-12 border-none bg-transparent focus:ring-0 text-base" data-testid="select-topic">
                     <SelectValue placeholder="Select a topic to begin..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -66,8 +66,8 @@ export default function Home() {
                 </Select>
               </div>
               
-              <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
-                <ShieldQuestion className="w-4 h-4" />
+              <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-400">
+                <ShieldQuestion className="w-4 h-4 shrink-0" />
                 <span>Responses verified by experts</span>
               </div>
             </div>
@@ -78,11 +78,12 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1 }}
             className="w-full flex flex-col items-center"
           >
-            <div className="w-full max-w-4xl mb-6 flex justify-between items-center">
+            <div className="w-full max-w-4xl mb-3 sm:mb-6 flex justify-between items-center">
               <Button 
                 variant="ghost" 
+                size="sm"
                 onClick={() => setTopic("")}
-                className="text-muted-foreground hover:text-foreground -ml-4"
+                className="text-muted-foreground hover:text-foreground -ml-2 sm:-ml-4 text-xs sm:text-sm"
               >
                 ← Choose another topic
               </Button>
@@ -95,8 +96,8 @@ export default function Home() {
 
       {/* Features Grid (Only show on landing) */}
       {!topic && (
-        <section className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <section className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
             {[
               { 
                 title: "Curated Knowledge", 
@@ -120,13 +121,13 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
+                className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-sm"
               >
-                <div className="mb-4 p-2 bg-primary/10 rounded-lg w-fit">
-                  <feature.icon className="w-6 h-6 text-primary" />
+                <div className="mb-3 sm:mb-4 p-2 bg-primary/10 rounded-lg w-fit">
+                  <feature.icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                 </div>
-                <h3 className="font-bold text-lg mb-2 text-slate-900">{feature.title}</h3>
-                <p className="text-slate-500 leading-relaxed">{feature.desc}</p>
+                <h3 className="font-bold text-base sm:text-lg mb-1 sm:mb-2 text-slate-900">{feature.title}</h3>
+                <p className="text-slate-500 leading-relaxed text-sm sm:text-base">{feature.desc}</p>
               </motion.div>
             ))}
           </div>

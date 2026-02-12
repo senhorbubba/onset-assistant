@@ -85,24 +85,25 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-slate-50/50">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+          <div className="flex items-center gap-3 sm:gap-4">
             <Link href="/">
-              <Button variant="outline" size="icon" className="rounded-full">
+              <Button variant="outline" size="icon" className="rounded-full shrink-0">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold font-display text-slate-900">Admin Dashboard</h1>
-              <p className="text-slate-500">Manage knowledge base and review questions</p>
+              <h1 className="text-xl sm:text-2xl font-bold font-display text-slate-900">Admin Dashboard</h1>
+              <p className="text-sm text-slate-500">Manage knowledge base and review questions</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap pl-12 sm:pl-0">
             <Button 
               variant="outline" 
-              className="gap-2"
+              size="sm"
+              className="gap-2 text-xs sm:text-sm"
               onClick={handleSync}
               disabled={syncMutation.isPending}
               data-testid="button-sync-sheets"
@@ -112,17 +113,17 @@ export default function Admin() {
               ) : (
                 <RefreshCw className="w-4 h-4" />
               )}
-              {syncMutation.isPending ? "Syncing..." : "Sync from Google Sheets"}
+              {syncMutation.isPending ? "Syncing..." : "Sync Sheets"}
             </Button>
           
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2 shadow-lg shadow-primary/20" data-testid="button-add-content">
+              <Button size="sm" className="gap-2 shadow-lg shadow-primary/20 text-xs sm:text-sm" data-testid="button-add-content">
                 <Plus className="w-4 h-4" />
                 Add Content
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>Add Knowledge Base Item</DialogTitle>
               </DialogHeader>
@@ -183,10 +184,10 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="content" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-8">
-            <TabsTrigger value="content">Knowledge Base</TabsTrigger>
-            <TabsTrigger value="unanswered" className="relative">
-              Unanswered Questions
+          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6 sm:mb-8">
+            <TabsTrigger value="content" className="text-xs sm:text-sm">Knowledge Base</TabsTrigger>
+            <TabsTrigger value="unanswered" className="relative text-xs sm:text-sm">
+              Unanswered
               {unanswered && unanswered.length > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
                   {unanswered.length}
@@ -197,136 +198,205 @@ export default function Admin() {
 
           <TabsContent value="content">
             <Card className="border-none shadow-md">
-              <CardHeader>
-                <CardTitle>Content Library</CardTitle>
-                <CardDescription>
+              <CardHeader className="px-4 sm:px-6">
+                <CardTitle className="text-lg sm:text-xl">Content Library</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
                   Current questions and answers in the database.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 sm:px-6">
                 {contentLoading ? (
                   <div className="flex justify-center p-8">
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
                   </div>
                 ) : (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Topic</TableHead>
-                          <TableHead>Question</TableHead>
-                          <TableHead>Keywords</TableHead>
-                          <TableHead>Link</TableHead>
-                          <TableHead className="w-[100px]">Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {content?.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium">
-                              <Badge variant="secondary" className="bg-slate-100 text-slate-700">
-                                {item.topic}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{item.question}</TableCell>
-                            <TableCell className="text-muted-foreground text-sm">
-                              {item.keywords?.join(", ")}
-                            </TableCell>
-                            <TableCell>
-                              {item.link ? (
-                                <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 text-sm">
-                                  <ExternalLink className="w-3 h-3" />
-                                  View
-                                </a>
-                              ) : (
-                                <span className="text-muted-foreground text-xs">-</span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
-                                <CheckCircle2 className="w-3 h-3" />
-                                Active
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {content?.length === 0 && (
+                  <>
+                    {/* Desktop table */}
+                    <div className="hidden sm:block rounded-md border">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                              No content found. Add some knowledge!
-                            </TableCell>
+                            <TableHead>Topic</TableHead>
+                            <TableHead>Question</TableHead>
+                            <TableHead>Keywords</TableHead>
+                            <TableHead>Link</TableHead>
+                            <TableHead className="w-[100px]">Status</TableHead>
                           </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                          {content?.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="font-medium">
+                                <Badge variant="secondary" className="bg-slate-100 text-slate-700">
+                                  {item.topic}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{item.question}</TableCell>
+                              <TableCell className="text-muted-foreground text-sm">
+                                {item.keywords?.join(", ")}
+                              </TableCell>
+                              <TableCell>
+                                {item.link ? (
+                                  <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 text-sm">
+                                    <ExternalLink className="w-3 h-3" />
+                                    View
+                                  </a>
+                                ) : (
+                                  <span className="text-muted-foreground text-xs">-</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  Active
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {content?.length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                No content found. Add some knowledge!
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    {/* Mobile cards */}
+                    <div className="sm:hidden space-y-3">
+                      {content?.map((item) => (
+                        <div key={item.id} className="bg-white rounded-lg border p-3 space-y-2">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <Badge variant="secondary" className="bg-slate-100 text-slate-700 text-xs">
+                              {item.topic}
+                            </Badge>
+                            <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
+                              <CheckCircle2 className="w-3 h-3" />
+                              Active
+                            </div>
+                          </div>
+                          <p className="text-sm font-medium">{item.question}</p>
+                          {item.keywords && item.keywords.length > 0 && (
+                            <p className="text-xs text-muted-foreground">{item.keywords.join(", ")}</p>
+                          )}
+                          {item.link && (
+                            <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 text-xs">
+                              <ExternalLink className="w-3 h-3" />
+                              View link
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                      {content?.length === 0 && (
+                        <p className="text-center py-8 text-muted-foreground text-sm">No content found. Add some knowledge!</p>
+                      )}
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="unanswered">
-            <Card className="border-none shadow-md border-t-4 border-t-amber-400">
-              <CardHeader>
-                <CardTitle>Unanswered Questions</CardTitle>
-                <CardDescription>
+            <Card className="border-none shadow-md">
+              <CardHeader className="px-4 sm:px-6">
+                <CardTitle className="text-lg sm:text-xl">Unanswered Questions</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
                   Questions the bot couldn't answer. Review and add to knowledge base.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 sm:px-6">
                 {unansweredLoading ? (
                   <div className="flex justify-center p-8">
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
                   </div>
                 ) : (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Topic</TableHead>
-                          <TableHead>Question Asked</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead className="text-right">Action</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {unanswered?.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>
-                              <Badge variant="outline">{item.topic}</Badge>
-                            </TableCell>
-                            <TableCell className="font-medium">{item.question}</TableCell>
-                            <TableCell className="text-muted-foreground text-sm">
-                              {new Date(item.createdAt || "").toLocaleDateString()}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button 
-                                size="sm" 
-                                variant="secondary"
-                                onClick={() => {
-                                  setOpen(true);
-                                  form.setValue("question", item.question);
-                                  form.setValue("topic", item.topic);
-                                }}
-                              >
-                                Answer
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {unanswered?.length === 0 && (
+                  <>
+                    {/* Desktop table */}
+                    <div className="hidden sm:block rounded-md border">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={4} className="text-center py-12">
-                              <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                <CheckCircle2 className="w-8 h-8 text-green-500" />
-                                <p>All caught up! No unanswered questions.</p>
-                              </div>
-                            </TableCell>
+                            <TableHead>Topic</TableHead>
+                            <TableHead>Question Asked</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead className="text-right">Action</TableHead>
                           </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                          {unanswered?.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell>
+                                <Badge variant="outline">{item.topic}</Badge>
+                              </TableCell>
+                              <TableCell className="font-medium">{item.question}</TableCell>
+                              <TableCell className="text-muted-foreground text-sm">
+                                {new Date(item.createdAt || "").toLocaleDateString()}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button 
+                                  size="sm" 
+                                  variant="secondary"
+                                  onClick={() => {
+                                    setOpen(true);
+                                    form.setValue("question", item.question);
+                                    form.setValue("topic", item.topic);
+                                  }}
+                                >
+                                  Answer
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {unanswered?.length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={4} className="text-center py-12">
+                                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                  <CheckCircle2 className="w-8 h-8 text-green-500" />
+                                  <p>All caught up! No unanswered questions.</p>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    {/* Mobile cards */}
+                    <div className="sm:hidden space-y-3">
+                      {unanswered?.map((item) => (
+                        <div key={item.id} className="bg-white rounded-lg border p-3 space-y-2">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <Badge variant="outline" className="text-xs">{item.topic}</Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(item.createdAt || "").toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-sm font-medium">{item.question}</p>
+                          <Button 
+                            size="sm" 
+                            variant="secondary"
+                            className="w-full"
+                            onClick={() => {
+                              setOpen(true);
+                              form.setValue("question", item.question);
+                              form.setValue("topic", item.topic);
+                            }}
+                          >
+                            Answer
+                          </Button>
+                        </div>
+                      ))}
+                      {unanswered?.length === 0 && (
+                        <div className="text-center py-12">
+                          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                            <CheckCircle2 className="w-8 h-8 text-green-500" />
+                            <p className="text-sm">All caught up! No unanswered questions.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>

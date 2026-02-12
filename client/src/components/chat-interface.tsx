@@ -87,27 +87,27 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
   };
 
   return (
-    <div className="flex flex-col h-[600px] w-full max-w-4xl mx-auto glass rounded-2xl overflow-hidden shadow-2xl border border-white/20">
+    <div className="flex flex-col h-[calc(100dvh-140px)] sm:h-[600px] w-full max-w-4xl mx-auto glass rounded-none sm:rounded-2xl overflow-hidden shadow-none sm:shadow-2xl border-0 sm:border sm:border-white/20">
       {/* Header */}
-      <div className="p-4 bg-white/50 border-b border-border/50 flex items-center justify-between backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <img src={onsetLogo} alt="Onset" className="w-10 h-10 rounded-xl" />
+      <div className="p-3 sm:p-4 bg-white/50 border-b border-border/50 flex items-center justify-between backdrop-blur-sm">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <img src={onsetLogo} alt="Onset" className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl" />
           <div>
-            <h3 className="font-bold text-lg text-foreground">onset. Assistant</h3>
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+            <h3 className="font-bold text-base sm:text-lg text-foreground">onset. Assistant</h3>
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider">
               Topic: {topic}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-xs font-medium text-muted-foreground">Online</span>
+          <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">Online</span>
         </div>
       </div>
 
       {/* Messages Area */}
       <div 
-        className="flex-1 overflow-y-auto p-6 space-y-6 bg-gradient-to-b from-white/30 to-white/10"
+        className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6 bg-gradient-to-b from-white/30 to-white/10"
         ref={scrollRef}
       >
         <AnimatePresence initial={false}>
@@ -118,20 +118,20 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.2 }}
               className={cn(
-                "flex gap-4 max-w-[85%]",
+                "flex gap-2 sm:gap-4 max-w-[90%] sm:max-w-[85%]",
                 msg.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
               )}
             >
               {msg.role === "user" ? (
-                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm bg-primary text-primary-foreground">
-                  <User className="w-4 h-4" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm bg-primary text-primary-foreground">
+                  <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
               ) : (
-                <img src={onsetLogo} alt="Onset" className="w-8 h-8 rounded-full shrink-0 shadow-sm border border-border" />
+                <img src={onsetLogo} alt="Onset" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full shrink-0 shadow-sm border border-border" />
               )}
               
               <div className={cn(
-                "p-4 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap",
+                "p-3 sm:p-4 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap",
                 msg.role === "user" 
                   ? "bg-primary text-primary-foreground rounded-tr-none" 
                   : "bg-white text-foreground border border-border/50 rounded-tl-none"
@@ -144,14 +144,14 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
                   const embedSrc = `https://www.youtube.com/embed/${videoId}?start=${startTime}`;
                   return (
                     <div className="mt-3">
-                      <iframe
-                        className="w-full rounded-lg"
-                        width="100%"
-                        height="200"
-                        src={embedSrc}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
+                      <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                        <iframe
+                          className="absolute inset-0 w-full h-full rounded-lg"
+                          src={embedSrc}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
                     </div>
                   );
                 })()}
@@ -175,10 +175,10 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex gap-4 mr-auto max-w-[85%]"
+              className="flex gap-2 sm:gap-4 mr-auto max-w-[90%] sm:max-w-[85%]"
             >
-              <img src={onsetLogo} alt="Onset" className="w-8 h-8 rounded-full shrink-0 border border-border" />
-              <div className="p-4 bg-white border border-border/50 rounded-2xl rounded-tl-none flex items-center gap-2 shadow-sm">
+              <img src={onsetLogo} alt="Onset" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full shrink-0 border border-border" />
+              <div className="p-3 sm:p-4 bg-white border border-border/50 rounded-2xl rounded-tl-none flex items-center gap-2 shadow-sm">
                 <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce [animation-delay:-0.3s]" />
                 <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce [animation-delay:-0.15s]" />
                 <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" />
@@ -189,20 +189,22 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-white/50 border-t border-border/50 backdrop-blur-sm">
+      <div className="p-3 sm:p-4 bg-white/50 border-t border-border/50 backdrop-blur-sm">
         <div className="flex gap-2 relative">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={`Ask about ${topic}...`}
-            className="min-h-[60px] max-h-[120px] pr-12 resize-none rounded-xl border-border bg-white shadow-sm focus-visible:ring-primary/20"
+            className="min-h-[48px] sm:min-h-[60px] max-h-[100px] sm:max-h-[120px] pr-12 resize-none rounded-xl border-border bg-white shadow-sm focus-visible:ring-primary/20 text-sm sm:text-base"
+            data-testid="input-question"
           />
           <Button
             size="icon"
-            className="absolute right-2 bottom-2 h-8 w-8 rounded-lg shadow-md transition-transform active:scale-95"
+            className="absolute right-2 bottom-2 rounded-lg shadow-md transition-transform active:scale-95"
             onClick={handleSend}
             disabled={!input.trim() || chatMutation.isPending}
+            data-testid="button-send"
           >
             {chatMutation.isPending ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -211,7 +213,7 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
             )}
           </Button>
         </div>
-        <p className="text-center text-[10px] text-muted-foreground mt-2">
+        <p className="hidden sm:block text-center text-[10px] text-muted-foreground mt-2">
           Press Enter to send, Shift + Enter for new line
         </p>
       </div>
