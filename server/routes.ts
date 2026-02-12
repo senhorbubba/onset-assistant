@@ -20,10 +20,11 @@ async function findBestAnswer(topic: string, question: string): Promise<{ answer
   }
 
   const contentContext = contentItems.map((item, i) => {
-    let entry = `[${i}] Question: ${item.question}\nAnswer: ${item.answer}`;
+    let entry = `[${i}] Subtopic: ${item.question}`;
     if (item.keywords && item.keywords.length > 0) {
       entry += `\nKeywords: ${item.keywords.join(', ')}`;
     }
+    entry += `\nKey Takeaway: ${item.answer}`;
     return entry;
   }).join('\n\n');
 
@@ -33,16 +34,21 @@ async function findBestAnswer(topic: string, question: string): Promise<{ answer
       messages: [
         {
           role: "system",
-          content: `You are a helpful assistant that answers questions ONLY based on the provided knowledge base content. You must not make up information or use knowledge outside of what is provided.
+          content: `You are a strict knowledge base assistant. You can ONLY answer using the curated video content provided below. Each entry represents a video segment with a subtopic, keywords, and a key takeaway.
 
-Rules:
-1. Only answer using the content provided below.
-2. If the user's question matches or is related to any entry in the knowledge base, respond with EXACTLY this format:
+Your job:
+1. Read the user's question carefully.
+2. Check if the question relates to any entry by comparing it against the subtopic, keywords, and key takeaway of each entry.
+3. A match is valid ONLY if the user's question is genuinely about the same subject as the entry's subtopic and keywords. Do not stretch or force a match.
+4. If you find a valid match, respond with EXACTLY this format:
    MATCH:[index_number]
-   [your answer based on the matched entry's content, rephrased for clarity]
-3. If the question does NOT match any content in the knowledge base, respond EXACTLY with: "NOT_FOUND"
-4. Do not add any information beyond what is in the knowledge base.
-5. The index number should correspond to the [N] prefix of the matched entry.
+   [Provide a helpful answer based ONLY on the key takeaway of the matched entry. You may rephrase for clarity but do NOT add any information that is not in the entry.]
+5. If no entry is a genuine match for the user's question, respond EXACTLY with: "NOT_FOUND"
+
+CRITICAL RULES:
+- NEVER invent, guess, or use your own knowledge. You are NOT a general assistant.
+- If the question is vaguely related but not a clear match, respond with "NOT_FOUND". When in doubt, say NOT_FOUND.
+- The index number must correspond to the [N] prefix of the matched entry.
 
 Knowledge Base for topic "${topic}":
 ${contentContext}`
