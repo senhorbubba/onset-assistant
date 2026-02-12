@@ -24,7 +24,11 @@ async function findBestAnswer(topic: string, question: string): Promise<{ answer
     if (item.keywords && item.keywords.length > 0) {
       entry += `\nKeywords: ${item.keywords.join(', ')}`;
     }
-    entry += `\nKey Takeaway: ${item.answer}`;
+    const answerParts = item.answer.split('\n\nSource: ');
+    entry += `\nKey Takeaway: ${answerParts[0]}`;
+    if (answerParts[1]) {
+      entry += `\nExpert/Source: ${answerParts[1]}`;
+    }
     return entry;
   }).join('\n\n');
 
@@ -34,21 +38,22 @@ async function findBestAnswer(topic: string, question: string): Promise<{ answer
       messages: [
         {
           role: "system",
-          content: `You are a strict knowledge base assistant. You can ONLY answer using the curated video content provided below. Each entry represents a video segment with a subtopic, keywords, and a key takeaway.
+          content: `You are a knowledge base assistant. You ONLY answer using the curated content below. Each entry has a subtopic, keywords, key takeaway, and expert/source.
 
-Your job:
-1. Read the user's question carefully.
-2. Check if the question relates to any entry by comparing it against the subtopic, keywords, and key takeaway of each entry.
-3. A match is valid ONLY if the user's question is genuinely about the same subject as the entry's subtopic and keywords. Do not stretch or force a match.
-4. If you find a valid match, respond with EXACTLY this format:
+INSTRUCTIONS:
+1. Read the user's question.
+2. Check if the question relates to any entry. Compare against the subtopic, keywords, AND key takeaway. If the user's question touches on the same general subject area as an entry, that counts as a match.
+3. If you find a match, respond with EXACTLY this format on the first line:
    MATCH:[index_number]
-   [Provide a helpful answer based ONLY on the key takeaway of the matched entry. You may rephrase for clarity but do NOT add any information that is not in the entry.]
-5. If no entry is a genuine match for the user's question, respond EXACTLY with: "NOT_FOUND"
+   Then on subsequent lines, rephrase the key takeaway as a natural, helpful answer. Use ONLY information from the matched entry's key takeaway. Then add: "— [Expert/Source name]"
+4. If NO entry is related to the question at all (completely different subject), respond EXACTLY with: NOT_FOUND
 
-CRITICAL RULES:
-- NEVER invent, guess, or use your own knowledge. You are NOT a general assistant.
-- If the question is vaguely related but not a clear match, respond with "NOT_FOUND". When in doubt, say NOT_FOUND.
-- The index number must correspond to the [N] prefix of the matched entry.
+RULES:
+- NEVER invent answers or use your own knowledge.
+- The [index_number] must match the [N] prefix of the entry.
+- Always credit the expert/source.
+- A question about the same general topic as an entry IS a valid match. For example, a question about "prompts" matches an entry about "how to start a prompt".
+- Only say NOT_FOUND for questions about completely unrelated subjects not covered at all.
 
 Knowledge Base for topic "${topic}":
 ${contentContext}`
@@ -63,20 +68,39 @@ ${contentContext}`
 
     const aiAnswer = response.choices[0]?.message?.content?.trim() || "";
 
-    if (aiAnswer === "NOT_FOUND" || aiAnswer.includes("NOT_FOUND")) {
-      return { answer: "", found: false };
+    if (!aiAnswer || aiAnswer === "NOT_FOUND" || aiAnswer.includes("NOT_FOUND")) {
+      console.log("AI returned empty or NOT_FOUND, trying keyword fallback");
+      return fallbackKeywordMatch(contentItems, question);
     }
 
-    const matchIndexResult = aiAnswer.match(/^MATCH:\[?(\d+)\]?/);
+    const matchIndexResult = aiAnswer.match(/MATCH:\[?(\d+)\]?/);
     let link: string | undefined;
     let cleanAnswer = aiAnswer;
+    let matchedIdx = -1;
 
     if (matchIndexResult) {
-      const idx = parseInt(matchIndexResult[1], 10);
-      if (idx >= 0 && idx < contentItems.length && contentItems[idx].link) {
-        link = contentItems[idx].link!;
+      matchedIdx = parseInt(matchIndexResult[1], 10);
+      if (matchedIdx >= 0 && matchedIdx < contentItems.length) {
+        if (contentItems[matchedIdx].link) {
+          link = contentItems[matchedIdx].link!;
+        }
       }
-      cleanAnswer = aiAnswer.replace(/^MATCH:\[?\d+\]?\s*\n?/, '').trim();
+      cleanAnswer = aiAnswer.replace(/MATCH:\[?\d+\]?\s*\n?/, '').trim();
+    }
+
+    cleanAnswer = cleanAnswer.replace(/\n\nSource:\s*/g, '\n— ').replace(/\nSource:\s*/g, '\n— ').replace(/^Source:\s*/g, '— ');
+
+    if (!cleanAnswer && matchedIdx >= 0 && matchedIdx < contentItems.length) {
+      const matched = contentItems[matchedIdx];
+      const answerParts = matched.answer.split('\n\nSource: ');
+      cleanAnswer = answerParts[0];
+      if (answerParts[1]) {
+        cleanAnswer += `\n— ${answerParts[1]}`;
+      }
+    }
+
+    if (!cleanAnswer) {
+      return { answer: "", found: false };
     }
 
     return { answer: cleanAnswer, found: true, link };
@@ -87,19 +111,33 @@ ${contentContext}`
 }
 
 function fallbackKeywordMatch(contentItems: Content[], query: string): { answer: string; found: boolean; link?: string } {
-  const lowerQuery = query.toLowerCase();
+  const lowerQuery = query.toLowerCase().replace(/[?!.,]/g, '');
+  const queryWords = lowerQuery.split(/\s+/).filter(w => w.length > 2);
   let bestMatch: Content | undefined;
   let maxScore = 0;
 
   for (const item of contentItems) {
     let score = 0;
-    if (item.question.toLowerCase().includes(lowerQuery) || lowerQuery.includes(item.question.toLowerCase())) {
+    const lowerQuestion = item.question.toLowerCase();
+    if (lowerQuestion.includes(lowerQuery) || lowerQuery.includes(lowerQuestion)) {
       score += 10;
+    }
+    const questionWords = lowerQuestion.split(/\s+/).filter(w => w.length > 2);
+    for (const qw of queryWords) {
+      if (questionWords.some(w => w.includes(qw) || qw.includes(w))) {
+        score += 3;
+      }
     }
     if (item.keywords) {
       for (const keyword of item.keywords) {
-        if (lowerQuery.includes(keyword.toLowerCase())) {
+        const lowerKeyword = keyword.toLowerCase();
+        if (lowerQuery.includes(lowerKeyword)) {
           score += 5;
+        }
+        for (const qw of queryWords) {
+          if (lowerKeyword.includes(qw) || qw.includes(lowerKeyword)) {
+            score += 2;
+          }
         }
       }
     }
@@ -110,7 +148,8 @@ function fallbackKeywordMatch(contentItems: Content[], query: string): { answer:
   }
 
   if (bestMatch && maxScore > 0) {
-    return { answer: bestMatch.answer, found: true, link: bestMatch.link || undefined };
+    const formattedAnswer = bestMatch.answer.replace(/\n\nSource:\s*/g, '\n— ').replace(/\nSource:\s*/g, '\n— ');
+    return { answer: formattedAnswer, found: true, link: bestMatch.link || undefined };
   }
   return { answer: "", found: false };
 }

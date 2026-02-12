@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useChat } from "@/hooks/use-chat";
-import { Send, User, Sparkles, Loader2, ExternalLink } from "lucide-react";
+import { Send, User, Sparkles, Loader2, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -137,16 +137,34 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
                   : "bg-white text-foreground border border-border/50 rounded-tl-none"
               )}>
                 {msg.content}
-                {msg.link && (
+                {msg.link && msg.link.includes('youtube.com') && (() => {
+                  const url = new URL(msg.link!);
+                  const videoId = url.searchParams.get('v');
+                  const startTime = url.searchParams.get('t')?.replace('s', '') || '0';
+                  const embedSrc = `https://www.youtube.com/embed/${videoId}?start=${startTime}`;
+                  return (
+                    <div className="mt-3">
+                      <iframe
+                        className="w-full rounded-lg"
+                        width="100%"
+                        height="200"
+                        src={embedSrc}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  );
+                })()}
+                {msg.link && !msg.link.includes('youtube.com') && (
                   <a 
                     href={msg.link} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="mt-2 flex items-center gap-1 text-primary hover:underline text-xs font-medium"
+                    className="mt-2 flex items-center gap-2 text-primary hover:underline text-sm font-medium"
                     data-testid="link-resource"
                   >
-                    <ExternalLink className="w-3 h-3" />
-                    Learn more
+                    <Play className="w-4 h-4" />
+                    Watch video talking about this
                   </a>
                 )}
               </div>
