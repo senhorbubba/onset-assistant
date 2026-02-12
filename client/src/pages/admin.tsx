@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, ArrowLeft, CheckCircle2, AlertCircle, RefreshCw, ExternalLink } from "lucide-react";
+import { Loader2, Plus, ArrowLeft, CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Globe } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 import { useForm } from "react-hook-form";
@@ -16,8 +16,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertContentSchema, type InsertContent } from "@shared/schema";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/lib/language-context";
+import type { Language } from "@/lib/i18n";
 
-// Extend schema for form validation
 const formSchema = insertContentSchema.extend({
   keywords: z.string().transform(str => str.split(',').map(s => s.trim()).filter(Boolean))
 });
@@ -31,18 +32,19 @@ export default function Admin() {
   const syncMutation = useSyncFromSheet();
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+  const { language, setLanguage, t } = useLanguage();
 
   const handleSync = async () => {
     try {
       const result = await syncMutation.mutateAsync();
       toast({
-        title: "Sync Complete",
+        title: t.admin.syncComplete,
         description: result.message,
       });
     } catch (error: any) {
       toast({
-        title: "Sync Failed",
-        description: error.message || "Could not sync from Google Sheets",
+        title: t.admin.syncFailed,
+        description: error.message || t.admin.syncError,
         variant: "destructive",
       });
     }
@@ -60,8 +62,6 @@ export default function Admin() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      // TypeScript needs help here because the transform above changes the type
-      // We need to pass the array of strings to the mutation
       const payload: InsertContent = {
         ...data,
         keywords: data.keywords as unknown as string[] 
@@ -69,15 +69,15 @@ export default function Admin() {
       
       await createMutation.mutateAsync(payload);
       toast({
-        title: "Success",
-        description: "Content created successfully",
+        title: t.admin.success,
+        description: t.admin.contentCreated,
       });
       setOpen(false);
       form.reset();
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to create content",
+        title: t.admin.error,
+        description: t.admin.createFailed,
         variant: "destructive",
       });
     }
@@ -94,12 +94,22 @@ export default function Admin() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold font-display text-slate-900">Admin Dashboard</h1>
-              <p className="text-sm text-slate-500">Manage knowledge base and review questions</p>
+              <h1 className="text-xl sm:text-2xl font-bold font-display text-slate-900">{t.admin.dashboard}</h1>
+              <p className="text-sm text-slate-500">{t.admin.manageKB}</p>
             </div>
           </div>
           
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap pl-12 sm:pl-0">
+            <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
+              <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-xs sm:text-sm" data-testid="select-language-admin">
+                <Globe className="w-3.5 h-3.5 shrink-0" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="pt-BR">Português</SelectItem>
+              </SelectContent>
+            </Select>
             <Button 
               variant="outline" 
               size="sm"
@@ -113,30 +123,30 @@ export default function Admin() {
               ) : (
                 <RefreshCw className="w-4 h-4" />
               )}
-              {syncMutation.isPending ? "Syncing..." : "Sync Sheets"}
+              {syncMutation.isPending ? t.admin.syncing : t.admin.syncSheets}
             </Button>
           
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="gap-2 shadow-lg shadow-primary/20 text-xs sm:text-sm" data-testid="button-add-content">
                 <Plus className="w-4 h-4" />
-                Add Content
+                {t.admin.addContent}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle>Add Knowledge Base Item</DialogTitle>
+                <DialogTitle>{t.admin.addKBItem}</DialogTitle>
               </DialogHeader>
               
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Topic</label>
+                  <label className="text-sm font-medium">{t.admin.topic}</label>
                   <Select 
                     defaultValue="AI Skills" 
                     onValueChange={(val) => form.setValue("topic", val)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select topic" />
+                      <SelectValue placeholder={t.admin.selectTopic} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="AI Skills">AI Skills</SelectItem>
@@ -146,18 +156,18 @@ export default function Admin() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Question</label>
-                  <Input {...form.register("question")} placeholder="e.g. What is a neural network?" />
+                  <label className="text-sm font-medium">{t.admin.question}</label>
+                  <Input {...form.register("question")} placeholder={t.admin.questionPlaceholder} />
                   {form.formState.errors.question && (
                     <p className="text-xs text-red-500">{form.formState.errors.question.message}</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Answer</label>
+                  <label className="text-sm font-medium">{t.admin.answerLabel}</label>
                   <Textarea 
                     {...form.register("answer")} 
-                    placeholder="Enter the detailed answer..." 
+                    placeholder={t.admin.answerPlaceholder} 
                     className="h-32 resize-none"
                   />
                   {form.formState.errors.answer && (
@@ -166,15 +176,15 @@ export default function Admin() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Keywords (comma separated)</label>
-                  <Input {...form.register("keywords")} placeholder="neural, network, deep learning, AI" />
-                  <p className="text-xs text-muted-foreground">Used for matching user questions</p>
+                  <label className="text-sm font-medium">{t.admin.keywordsLabel}</label>
+                  <Input {...form.register("keywords")} placeholder={t.admin.keywordsPlaceholder} />
+                  <p className="text-xs text-muted-foreground">{t.admin.keywordsHelp}</p>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t.admin.cancel}</Button>
                   <Button type="submit" disabled={createMutation.isPending}>
-                    {createMutation.isPending ? "Creating..." : "Create Content"}
+                    {createMutation.isPending ? t.admin.creating : t.admin.createContent}
                   </Button>
                 </div>
               </form>
@@ -185,9 +195,9 @@ export default function Admin() {
 
         <Tabs defaultValue="content" className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-2 mb-6 sm:mb-8">
-            <TabsTrigger value="content" className="text-xs sm:text-sm">Knowledge Base</TabsTrigger>
+            <TabsTrigger value="content" className="text-xs sm:text-sm">{t.admin.knowledgeBase}</TabsTrigger>
             <TabsTrigger value="unanswered" className="relative text-xs sm:text-sm">
-              Unanswered
+              {t.admin.unanswered}
               {unanswered && unanswered.length > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
                   {unanswered.length}
@@ -199,9 +209,9 @@ export default function Admin() {
           <TabsContent value="content">
             <Card className="border-none shadow-md">
               <CardHeader className="px-4 sm:px-6">
-                <CardTitle className="text-lg sm:text-xl">Content Library</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">{t.admin.contentLibrary}</CardTitle>
                 <CardDescription className="text-xs sm:text-sm">
-                  Current questions and answers in the database.
+                  {t.admin.contentDesc}
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-4 sm:px-6">
@@ -211,16 +221,15 @@ export default function Admin() {
                   </div>
                 ) : (
                   <>
-                    {/* Desktop table */}
                     <div className="hidden sm:block rounded-md border">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Topic</TableHead>
-                            <TableHead>Question</TableHead>
-                            <TableHead>Keywords</TableHead>
-                            <TableHead>Link</TableHead>
-                            <TableHead className="w-[100px]">Status</TableHead>
+                            <TableHead>{t.admin.topic}</TableHead>
+                            <TableHead>{t.admin.question}</TableHead>
+                            <TableHead>{t.admin.keywords}</TableHead>
+                            <TableHead>{t.admin.link}</TableHead>
+                            <TableHead className="w-[100px]">{t.admin.status}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -239,7 +248,7 @@ export default function Admin() {
                                 {item.link ? (
                                   <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 text-sm">
                                     <ExternalLink className="w-3 h-3" />
-                                    View
+                                    {t.admin.view}
                                   </a>
                                 ) : (
                                   <span className="text-muted-foreground text-xs">-</span>
@@ -248,7 +257,7 @@ export default function Admin() {
                               <TableCell>
                                 <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
                                   <CheckCircle2 className="w-3 h-3" />
-                                  Active
+                                  {t.admin.active}
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -256,14 +265,13 @@ export default function Admin() {
                           {content?.length === 0 && (
                             <TableRow>
                               <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                No content found. Add some knowledge!
+                                {t.admin.noContent}
                               </TableCell>
                             </TableRow>
                           )}
                         </TableBody>
                       </Table>
                     </div>
-                    {/* Mobile cards */}
                     <div className="sm:hidden space-y-3">
                       {content?.map((item) => (
                         <div key={item.id} className="bg-white rounded-lg border p-3 space-y-2">
@@ -273,7 +281,7 @@ export default function Admin() {
                             </Badge>
                             <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
                               <CheckCircle2 className="w-3 h-3" />
-                              Active
+                              {t.admin.active}
                             </div>
                           </div>
                           <p className="text-sm font-medium">{item.question}</p>
@@ -283,13 +291,13 @@ export default function Admin() {
                           {item.link && (
                             <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 text-xs">
                               <ExternalLink className="w-3 h-3" />
-                              View link
+                              {t.admin.viewLink}
                             </a>
                           )}
                         </div>
                       ))}
                       {content?.length === 0 && (
-                        <p className="text-center py-8 text-muted-foreground text-sm">No content found. Add some knowledge!</p>
+                        <p className="text-center py-8 text-muted-foreground text-sm">{t.admin.noContent}</p>
                       )}
                     </div>
                   </>
@@ -301,9 +309,9 @@ export default function Admin() {
           <TabsContent value="unanswered">
             <Card className="border-none shadow-md">
               <CardHeader className="px-4 sm:px-6">
-                <CardTitle className="text-lg sm:text-xl">Unanswered Questions</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">{t.admin.unansweredQuestions}</CardTitle>
                 <CardDescription className="text-xs sm:text-sm">
-                  Questions the bot couldn't answer. Review and add to knowledge base.
+                  {t.admin.unansweredDesc}
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-4 sm:px-6">
@@ -313,15 +321,14 @@ export default function Admin() {
                   </div>
                 ) : (
                   <>
-                    {/* Desktop table */}
                     <div className="hidden sm:block rounded-md border">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Topic</TableHead>
-                            <TableHead>Question Asked</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead className="text-right">Action</TableHead>
+                            <TableHead>{t.admin.topic}</TableHead>
+                            <TableHead>{t.admin.questionAsked}</TableHead>
+                            <TableHead>{t.admin.date}</TableHead>
+                            <TableHead className="text-right">{t.admin.action}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -344,7 +351,7 @@ export default function Admin() {
                                     form.setValue("topic", item.topic);
                                   }}
                                 >
-                                  Answer
+                                  {t.admin.answer}
                                 </Button>
                               </TableCell>
                             </TableRow>
@@ -354,7 +361,7 @@ export default function Admin() {
                               <TableCell colSpan={4} className="text-center py-12">
                                 <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                   <CheckCircle2 className="w-8 h-8 text-green-500" />
-                                  <p>All caught up! No unanswered questions.</p>
+                                  <p>{t.admin.allCaughtUp}</p>
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -362,7 +369,6 @@ export default function Admin() {
                         </TableBody>
                       </Table>
                     </div>
-                    {/* Mobile cards */}
                     <div className="sm:hidden space-y-3">
                       {unanswered?.map((item) => (
                         <div key={item.id} className="bg-white rounded-lg border p-3 space-y-2">
@@ -383,7 +389,7 @@ export default function Admin() {
                               form.setValue("topic", item.topic);
                             }}
                           >
-                            Answer
+                            {t.admin.answer}
                           </Button>
                         </div>
                       ))}
@@ -391,7 +397,7 @@ export default function Admin() {
                         <div className="text-center py-12">
                           <div className="flex flex-col items-center gap-2 text-muted-foreground">
                             <CheckCircle2 className="w-8 h-8 text-green-500" />
-                            <p className="text-sm">All caught up! No unanswered questions.</p>
+                            <p className="text-sm">{t.admin.allCaughtUp}</p>
                           </div>
                         </div>
                       )}

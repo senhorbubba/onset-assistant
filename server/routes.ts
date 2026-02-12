@@ -12,11 +12,14 @@ const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
-async function findBestAnswer(topic: string, question: string): Promise<{ answer: string; found: boolean; link?: string }> {
+async function findBestAnswer(topic: string, question: string, language: string = "en"): Promise<{ answer: string; found: boolean; link?: string }> {
   const contentItems = await storage.getContentByTopic(topic);
 
+  const isPt = language === "pt-BR";
   if (contentItems.length === 0) {
-    return { answer: "There is no content available for this topic yet. Please try again later.", found: false };
+    return { answer: isPt 
+      ? "Ainda não há conteúdo disponível para este tópico. Por favor, tente novamente mais tarde." 
+      : "There is no content available for this topic yet. Please try again later.", found: false };
   }
 
   const contentContext = contentItems.map((item, i) => {
@@ -41,7 +44,7 @@ async function findBestAnswer(topic: string, question: string): Promise<{ answer
           content: `You are a strict knowledge base assistant. You can ONLY answer using the curated entries below.
 
 INSTRUCTIONS:
-1. Read the user's question carefully.
+1. Read the user's question carefully. The user may ask in English or Portuguese — understand the intent regardless of language.
 2. For each entry, check if the user's question is specifically asking about the SAME specific subtopic described in that entry. The entry's subtopic, keywords, and key takeaway must directly answer what the user is asking.
 3. A match is ONLY valid if the entry's key takeaway actually answers the user's question. Sharing a word (like "AI") is NOT enough — the specific subject must match.
 4. If you find a genuine match, respond EXACTLY like this:
@@ -62,6 +65,7 @@ RULES:
 - NEVER invent answers. NEVER use your own knowledge.
 - When in doubt, respond NOT_FOUND. A human will review the question later.
 - The [index_number] must match the [N] prefix of the entry.
+${isPt ? '- IMPORTANT: Your answer MUST be written in Brazilian Portuguese (pt-BR). Translate the key takeaway into natural Portuguese. Keep expert/source names unchanged.' : ''}
 
 Knowledge Base for topic "${topic}":
 ${contentContext}`
@@ -174,9 +178,9 @@ export async function registerRoutes(
   // Chat endpoint - uses OpenAI for intelligent matching
   app.post(api.chat.ask.path, async (req, res) => {
     try {
-      const { topic, question } = api.chat.ask.input.parse(req.body);
+      const { topic, question, language } = api.chat.ask.input.parse(req.body);
 
-      const result = await findBestAnswer(topic, question);
+      const result = await findBestAnswer(topic, question, language || "en");
 
       if (result.found) {
         res.json({
@@ -186,8 +190,11 @@ export async function registerRoutes(
         });
       } else {
         await storage.logUnansweredQuestion({ topic, question });
+        const notFoundMsg = language === "pt-BR"
+          ? "Desculpe, ainda não tenho uma resposta para essa pergunta em nossa base de conhecimento. Registrei para nossa equipe analisar e retornar."
+          : "I'm sorry, I don't have an answer for that question in our knowledge base yet. I've logged it for our team to review and they'll follow up with you.";
         res.json({
-          answer: "I'm sorry, I don't have an answer for that question in our knowledge base yet. I've logged it for our team to review and they'll follow up with you.",
+          answer: notFoundMsg,
           found: false
         });
       }

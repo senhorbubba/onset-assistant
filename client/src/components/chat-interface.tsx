@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/language-context";
 import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
 
 interface Message {
@@ -20,11 +21,12 @@ interface ChatInterfaceProps {
 }
 
 export function ChatInterface({ topic }: ChatInterfaceProps) {
+  const { language, t } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       role: "bot",
-      content: `Hello! I'm your assistant for **${topic}**. Ask me anything about this topic!`,
+      content: t.chat.welcomeMessage(topic),
       timestamp: new Date(),
     },
   ]);
@@ -34,11 +36,21 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
   const chatMutation = useChat();
 
   useEffect(() => {
-    // Scroll to bottom on new message
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    setMessages([
+      {
+        id: "welcome",
+        role: "bot",
+        content: t.chat.welcomeMessage(topic),
+        timestamp: new Date(),
+      },
+    ]);
+  }, [language, topic]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -57,6 +69,7 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
       const response = await chatMutation.mutateAsync({
         topic,
         question: userMessage.content,
+        language,
       });
 
       const botMessage: Message = {
@@ -72,7 +85,7 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "bot",
-        content: "I'm having trouble connecting right now. Please try again later.",
+        content: t.chat.errorMessage,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -88,24 +101,22 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-140px)] sm:h-[600px] w-full max-w-4xl mx-auto glass rounded-none sm:rounded-2xl overflow-hidden shadow-none sm:shadow-2xl border-0 sm:border sm:border-white/20">
-      {/* Header */}
       <div className="p-3 sm:p-4 bg-white/50 border-b border-border/50 flex items-center justify-between backdrop-blur-sm">
         <div className="flex items-center gap-2 sm:gap-3">
           <img src={onsetLogo} alt="Onset" className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl" />
           <div>
             <h3 className="font-bold text-base sm:text-lg text-foreground">onset. Assistant</h3>
             <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider">
-              Topic: {topic}
+              {t.chat.topic}: {topic}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">Online</span>
+          <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">{t.chat.online}</span>
         </div>
       </div>
 
-      {/* Messages Area */}
       <div 
         className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6 bg-gradient-to-b from-white/30 to-white/10"
         ref={scrollRef}
@@ -164,7 +175,7 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
                     data-testid="link-resource"
                   >
                     <Play className="w-4 h-4" />
-                    Watch video talking about this
+                    {t.chat.watchVideo}
                   </a>
                 )}
               </div>
@@ -188,14 +199,13 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
         </AnimatePresence>
       </div>
 
-      {/* Input Area */}
       <div className="p-3 sm:p-4 bg-white/50 border-t border-border/50 backdrop-blur-sm">
         <div className="flex gap-2 relative">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={`Ask about ${topic}...`}
+            placeholder={t.chat.placeholder(topic)}
             className="min-h-[48px] sm:min-h-[60px] max-h-[100px] sm:max-h-[120px] pr-12 resize-none rounded-xl border-border bg-white shadow-sm focus-visible:ring-primary/20 text-sm sm:text-base"
             data-testid="input-question"
           />
@@ -214,7 +224,7 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
           </Button>
         </div>
         <p className="hidden sm:block text-center text-[10px] text-muted-foreground mt-2">
-          Press Enter to send, Shift + Enter for new line
+          {t.chat.enterToSend}
         </p>
       </div>
     </div>

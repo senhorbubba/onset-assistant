@@ -22,6 +22,7 @@ export const api = {
       input: z.object({
         topic: z.string(),
         question: z.string(),
+        language: z.string().optional(),
       }),
       responses: {
         200: z.object({

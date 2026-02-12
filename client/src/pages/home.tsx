@@ -1,18 +1,20 @@
 import { useState } from "react";
 import { ChatInterface } from "@/components/chat-interface";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquareText, ShieldQuestion, ArrowRight, BookOpen, Zap, BrainCircuit } from "lucide-react";
+import { MessageSquareText, ShieldQuestion, ArrowRight, BookOpen, Zap, BrainCircuit, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { useLanguage } from "@/lib/language-context";
+import type { Language } from "@/lib/i18n";
 import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
 
 export default function Home() {
   const [topic, setTopic] = useState<string>("");
+  const { language, setLanguage, t } = useLanguage();
 
   return (
     <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans text-foreground">
-      {/* Background Decor */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl opacity-60" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-accent/5 rounded-full blur-3xl opacity-60" />
@@ -24,11 +26,23 @@ export default function Home() {
           <h1 className="text-lg sm:text-xl font-bold font-display tracking-tight">onset. Assistant</h1>
         </div>
         
-        <Link href="/admin">
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground text-xs sm:text-sm">
-            Admin Panel
-          </Button>
-        </Link>
+        <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+          <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
+            <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-xs sm:text-sm" data-testid="select-language">
+              <Globe className="w-3.5 h-3.5 shrink-0" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">English</SelectItem>
+              <SelectItem value="pt-BR">Português</SelectItem>
+            </SelectContent>
+          </Select>
+          <Link href="/admin">
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground text-xs sm:text-sm">
+              {t.header.adminPanel}
+            </Button>
+          </Link>
+        </div>
       </header>
 
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12 flex flex-col items-center">
@@ -43,21 +57,21 @@ export default function Home() {
             </div>
             
             <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold font-display text-slate-900 mb-4 sm:mb-6 tracking-tight leading-tight">
-              Instant answers,<br/>
+              {t.home.heroTitle1}<br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
-                zero waiting.
+                {t.home.heroTitle2}
               </span>
             </h2>
             
             <p className="text-base sm:text-lg md:text-xl text-slate-500 mb-6 sm:mb-10 max-w-lg leading-relaxed px-2">
-              Select a topic below to start chatting with our intelligent assistant. Get answers instantly from our curated knowledge base.
+              {t.home.heroSubtitle}
             </p>
 
             <div className="w-full max-w-xs space-y-4 px-2">
               <div className="bg-white p-1 rounded-xl shadow-lg border border-slate-100">
                 <Select onValueChange={(val) => setTopic(val)}>
                   <SelectTrigger className="w-full h-12 border-none bg-transparent focus:ring-0 text-base" data-testid="select-topic">
-                    <SelectValue placeholder="Select a topic to begin..." />
+                    <SelectValue placeholder={t.home.selectTopic} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="AI Skills">AI Skills</SelectItem>
@@ -68,7 +82,7 @@ export default function Home() {
               
               <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-400">
                 <ShieldQuestion className="w-4 h-4 shrink-0" />
-                <span>Responses verified by experts</span>
+                <span>{t.home.verifiedByExperts}</span>
               </div>
             </div>
           </motion.div>
@@ -85,7 +99,7 @@ export default function Home() {
                 onClick={() => setTopic("")}
                 className="text-muted-foreground hover:text-foreground -ml-2 sm:-ml-4 text-xs sm:text-sm"
               >
-                ← Choose another topic
+                ← {t.home.chooseAnotherTopic}
               </Button>
             </div>
             
@@ -94,24 +108,23 @@ export default function Home() {
         )}
       </main>
 
-      {/* Features Grid (Only show on landing) */}
       {!topic && (
         <section className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
             {[
               { 
-                title: "Curated Knowledge", 
-                desc: "Every answer is sourced from verified content in our database.",
+                title: t.home.featureCurated, 
+                desc: t.home.featureCuratedDesc,
                 icon: BookOpen 
               },
               { 
-                title: "Smart Matching", 
-                desc: "Uses keyword analysis to find the most relevant answers instantly.",
+                title: t.home.featureSmart, 
+                desc: t.home.featureSmartDesc,
                 icon: Zap 
               },
               { 
-                title: "Always Learning", 
-                desc: "Unanswered questions are logged for review by human experts.",
+                title: t.home.featureLearning, 
+                desc: t.home.featureLearningDesc,
                 icon: BrainCircuit 
               }
             ].map((feature, i) => (
