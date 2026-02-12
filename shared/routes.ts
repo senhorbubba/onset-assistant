@@ -60,6 +60,11 @@ export const api = {
   },
 };
 
+// Type exports for frontend hooks
+export type ChatRequest = z.infer<typeof api.chat.ask.input>;
+export type ChatResponse = z.infer<typeof api.chat.ask.responses[200]>;
+export type { InsertContent } from './schema';
+
 export function buildUrl(path: string, params?: Record<string, string | number>): string {
   let url = path;
   if (params) {

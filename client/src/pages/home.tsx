@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChatInterface } from "@/components/chat-interface";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bot, MessageSquareText, ShieldQuestion, ArrowRight } from "lucide-react";
+import { Bot, MessageSquareText, ShieldQuestion, ArrowRight, BookOpen, Zap, BrainCircuit } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -102,17 +102,17 @@ export default function Home() {
               { 
                 title: "Curated Knowledge", 
                 desc: "Every answer is sourced from verified content in our database.",
-                icon: "📚" 
+                icon: BookOpen 
               },
               { 
                 title: "Smart Matching", 
                 desc: "Uses keyword analysis to find the most relevant answers instantly.",
-                icon: "⚡" 
+                icon: Zap 
               },
               { 
                 title: "Always Learning", 
                 desc: "Unanswered questions are logged for review by human experts.",
-                icon: "🧠" 
+                icon: BrainCircuit 
               }
             ].map((feature, i) => (
               <motion.div
@@ -123,7 +123,9 @@ export default function Home() {
                 viewport={{ once: true }}
                 className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="text-3xl mb-4">{feature.icon}</div>
+                <div className="mb-4 p-2 bg-primary/10 rounded-lg w-fit">
+                  <feature.icon className="w-6 h-6 text-primary" />
+                </div>
                 <h3 className="font-bold text-lg mb-2 text-slate-900">{feature.title}</h3>
                 <p className="text-slate-500 leading-relaxed">{feature.desc}</p>
               </motion.div>

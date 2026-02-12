@@ -34,14 +34,3 @@ export type Content = typeof content.$inferSelect;
 export type InsertContent = z.infer<typeof insertContentSchema>;
 export type UnansweredQuestion = typeof unansweredQuestions.$inferSelect;
 export type InsertUnansweredQuestion = z.infer<typeof insertUnansweredQuestionSchema>;
-
-// API Types
-export type ChatRequest = {
-  topic: string;
-  question: string;
-};
-
-export type ChatResponse = {
-  answer: string;
-  found: boolean;
-};
