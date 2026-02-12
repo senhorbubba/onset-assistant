@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useChat } from "@/hooks/use-chat";
-import { Send, Bot, User, Sparkles, Loader2, ExternalLink } from "lucide-react";
+import { Send, User, Sparkles, Loader2, ExternalLink } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
 
 interface Message {
   id: string;
@@ -90,11 +91,9 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
       {/* Header */}
       <div className="p-4 bg-white/50 border-b border-border/50 flex items-center justify-between backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-xl">
-            <Sparkles className="w-5 h-5 text-primary" />
-          </div>
+          <img src={onsetLogo} alt="Onset" className="w-10 h-10 rounded-xl" />
           <div>
-            <h3 className="font-bold text-lg text-foreground">Assistant</h3>
+            <h3 className="font-bold text-lg text-foreground">Onset Assistant</h3>
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
               Topic: {topic}
             </p>
@@ -123,12 +122,13 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
                 msg.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
               )}
             >
-              <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm",
-                msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-white text-primary border border-border"
-              )}>
-                {msg.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-              </div>
+              {msg.role === "user" ? (
+                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm bg-primary text-primary-foreground">
+                  <User className="w-4 h-4" />
+                </div>
+              ) : (
+                <img src={onsetLogo} alt="Onset" className="w-8 h-8 rounded-full shrink-0 shadow-sm border border-border" />
+              )}
               
               <div className={cn(
                 "p-4 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap",
@@ -159,9 +159,7 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
               animate={{ opacity: 1, y: 0 }}
               className="flex gap-4 mr-auto max-w-[85%]"
             >
-              <div className="w-8 h-8 rounded-full bg-white text-primary border border-border flex items-center justify-center shrink-0">
-                <Bot className="w-4 h-4" />
-              </div>
+              <img src={onsetLogo} alt="Onset" className="w-8 h-8 rounded-full shrink-0 border border-border" />
               <div className="p-4 bg-white border border-border/50 rounded-2xl rounded-tl-none flex items-center gap-2 shadow-sm">
                 <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce [animation-delay:-0.3s]" />
                 <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce [animation-delay:-0.15s]" />

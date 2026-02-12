@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { ChatInterface } from "@/components/chat-interface";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bot, MessageSquareText, ShieldQuestion, ArrowRight, BookOpen, Zap, BrainCircuit } from "lucide-react";
+import { MessageSquareText, ShieldQuestion, ArrowRight, BookOpen, Zap, BrainCircuit } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
 
 export default function Home() {
   const [topic, setTopic] = useState<string>("");
@@ -19,10 +20,8 @@ export default function Home() {
 
       <header className="relative z-10 w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <div className="bg-primary text-primary-foreground p-2 rounded-lg shadow-lg shadow-primary/20">
-            <Bot className="w-6 h-6" />
-          </div>
-          <h1 className="text-xl font-bold font-display tracking-tight">KnowBot</h1>
+          <img src={onsetLogo} alt="Onset" className="w-10 h-10 rounded-lg" />
+          <h1 className="text-xl font-bold font-display tracking-tight">Onset</h1>
         </div>
         
         <Link href="/admin">
