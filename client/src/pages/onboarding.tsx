@@ -33,8 +33,8 @@ export default function Onboarding() {
       if (!res.ok) throw new Error("Failed to save profile");
       return res.json();
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+    onSuccess: async (savedProfile) => {
+      queryClient.setQueryData(["/api/profile"], savedProfile);
       navigate("/");
     },
   });
