@@ -125,16 +125,26 @@ export default function Profile() {
             </h1>
             <p className="text-sm text-slate-500 truncate">{user?.email || ""}</p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => logout()}
-            className="shrink-0"
-            data-testid="button-logout"
-          >
-            <LogOut className="w-4 h-4 mr-1" />
-            {t.profile.signOut}
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => navigate("/")}
+              data-testid="button-back-learning"
+            >
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              {t.profile.backToHome}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => logout()}
+              data-testid="button-logout"
+            >
+              <LogOut className="w-4 h-4 mr-1" />
+              {t.profile.signOut}
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
