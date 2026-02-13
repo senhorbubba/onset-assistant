@@ -2,10 +2,13 @@ import { db } from "./db";
 import {
   content,
   unansweredQuestions,
+  userProfiles,
   type Content,
   type InsertContent,
   type UnansweredQuestion,
   type InsertUnansweredQuestion,
+  type UserProfile,
+  type InsertUserProfile,
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
@@ -17,6 +20,8 @@ export interface IStorage {
   bulkCreateContent(items: InsertContent[]): Promise<void>;
   logUnansweredQuestion(item: InsertUnansweredQuestion): Promise<UnansweredQuestion>;
   getUnansweredQuestions(): Promise<UnansweredQuestion[]>;
+  getUserProfile(userId: string): Promise<UserProfile | undefined>;
+  upsertUserProfile(profile: InsertUserProfile): Promise<UserProfile>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -49,6 +54,26 @@ export class DatabaseStorage implements IStorage {
 
   async getUnansweredQuestions(): Promise<UnansweredQuestion[]> {
     return await db.select().from(unansweredQuestions);
+  }
+
+  async getUserProfile(userId: string): Promise<UserProfile | undefined> {
+    const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
+    return profile;
+  }
+
+  async upsertUserProfile(profile: InsertUserProfile): Promise<UserProfile> {
+    const [result] = await db
+      .insert(userProfiles)
+      .values(profile)
+      .onConflictDoUpdate({
+        target: userProfiles.userId,
+        set: {
+          ...profile,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return result;
   }
 }
 

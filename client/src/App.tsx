@@ -7,12 +7,14 @@ import { LanguageProvider } from "@/lib/language-context";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Admin from "@/pages/admin";
+import Onboarding from "@/pages/onboarding";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/admin" component={Admin} />
+      <Route path="/onboarding" component={Onboarding} />
       <Route component={NotFound} />
     </Switch>
   );

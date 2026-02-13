@@ -76,6 +76,33 @@ export const translations = {
       error: "Error",
       createFailed: "Failed to create content",
     },
+    auth: {
+      signIn: "Sign in",
+      signOut: "Sign out",
+      signInWith: "Sign in with Google",
+    },
+    onboarding: {
+      title: "Let's personalize your experience",
+      subtitle: "Help us tailor answers to your context. You can skip this anytime.",
+      step: "Step",
+      of: "of",
+      next: "Next",
+      back: "Back",
+      finish: "Finish",
+      skip: "Skip for now",
+      roleQuestion: "What best describes your role?",
+      rolePlaceholder: "e.g. Marketing Manager, Developer, Entrepreneur",
+      industryQuestion: "What industry do you work in?",
+      industryPlaceholder: "e.g. Technology, Healthcare, Education",
+      experienceQuestion: "What's your experience level?",
+      experienceBeginner: "Beginner",
+      experienceIntermediate: "Intermediate",
+      experienceAdvanced: "Advanced",
+      goalQuestion: "What's your main learning goal?",
+      goalPlaceholder: "e.g. Improve team communication, Learn AI basics",
+      challengeQuestion: "What's your biggest challenge right now?",
+      challengePlaceholder: "e.g. Keeping up with AI trends, Remote team management",
+    },
     langPicker: {
       language: "Language",
     },
@@ -155,6 +182,33 @@ export const translations = {
       error: "Erro",
       createFailed: "Falha ao criar conteúdo",
     },
+    auth: {
+      signIn: "Entrar",
+      signOut: "Sair",
+      signInWith: "Entrar com Google",
+    },
+    onboarding: {
+      title: "Vamos personalizar sua experiência",
+      subtitle: "Nos ajude a adaptar as respostas ao seu contexto. Você pode pular quando quiser.",
+      step: "Etapa",
+      of: "de",
+      next: "Próximo",
+      back: "Voltar",
+      finish: "Finalizar",
+      skip: "Pular por enquanto",
+      roleQuestion: "O que melhor descreve sua função?",
+      rolePlaceholder: "ex: Gerente de Marketing, Desenvolvedor, Empreendedor",
+      industryQuestion: "Em qual setor você trabalha?",
+      industryPlaceholder: "ex: Tecnologia, Saúde, Educação",
+      experienceQuestion: "Qual seu nível de experiência?",
+      experienceBeginner: "Iniciante",
+      experienceIntermediate: "Intermediário",
+      experienceAdvanced: "Avançado",
+      goalQuestion: "Qual seu principal objetivo de aprendizado?",
+      goalPlaceholder: "ex: Melhorar comunicação da equipe, Aprender fundamentos de IA",
+      challengeQuestion: "Qual seu maior desafio atualmente?",
+      challengePlaceholder: "ex: Acompanhar tendências de IA, Gestão de equipe remota",
+    },
     langPicker: {
       language: "Idioma",
     },
@@ -233,6 +287,33 @@ export interface Translations {
     contentCreated: string;
     error: string;
     createFailed: string;
+  };
+  auth: {
+    signIn: string;
+    signOut: string;
+    signInWith: string;
+  };
+  onboarding: {
+    title: string;
+    subtitle: string;
+    step: string;
+    of: string;
+    next: string;
+    back: string;
+    finish: string;
+    skip: string;
+    roleQuestion: string;
+    rolePlaceholder: string;
+    industryQuestion: string;
+    industryPlaceholder: string;
+    experienceQuestion: string;
+    experienceBeginner: string;
+    experienceIntermediate: string;
+    experienceAdvanced: string;
+    goalQuestion: string;
+    goalPlaceholder: string;
+    challengeQuestion: string;
+    challengePlaceholder: string;
   };
   langPicker: { language: string };
 }

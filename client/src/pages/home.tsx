@@ -1,17 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChatInterface } from "@/components/chat-interface";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquareText, ShieldQuestion, ArrowRight, BookOpen, Zap, BrainCircuit, Globe } from "lucide-react";
+import { MessageSquareText, ShieldQuestion, ArrowRight, BookOpen, Zap, BrainCircuit, Globe, LogIn, LogOut, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useLanguage } from "@/lib/language-context";
 import type { Language } from "@/lib/i18n";
+import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
 
 export default function Home() {
   const [topic, setTopic] = useState<string>("");
   const { language, setLanguage, t } = useLanguage();
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const [, navigate] = useLocation();
+
+  const { data: profile } = useQuery({
+    queryKey: ["/api/profile"],
+    queryFn: async () => {
+      const res = await fetch("/api/profile", { credentials: "include" });
+      if (res.status === 401) return null;
+      if (!res.ok) throw new Error("Failed to fetch profile");
+      return res.json();
+    },
+    enabled: isAuthenticated,
+  });
+
+  useEffect(() => {
+    if (isAuthenticated && profile !== undefined && (profile === null || !profile.completedOnboarding)) {
+      navigate("/onboarding");
+    }
+  }, [isAuthenticated, profile, navigate]);
 
   return (
     <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans text-foreground">
@@ -38,10 +60,33 @@ export default function Home() {
             </SelectContent>
           </Select>
           <Link href="/admin">
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground text-xs sm:text-sm px-2">
+            <Button variant="ghost" size="sm" className="text-muted-foreground text-xs sm:text-sm px-2">
               {t.header.adminPanel}
             </Button>
           </Link>
+          {!authLoading && (
+            isAuthenticated ? (
+              <div className="flex items-center gap-1">
+                <Avatar className="w-7 h-7">
+                  <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || ""} />
+                  <AvatarFallback className="text-xs">
+                    {(user?.firstName?.[0] || "").toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <Button variant="ghost" size="sm" onClick={() => logout()} className="text-muted-foreground text-xs sm:text-sm px-2" data-testid="button-logout">
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline ml-1">{t.auth.signOut}</span>
+                </Button>
+              </div>
+            ) : (
+              <a href="/api/login">
+                <Button variant="ghost" size="sm" className="text-muted-foreground text-xs sm:text-sm px-2" data-testid="button-login">
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span className="ml-1">{t.auth.signIn}</span>
+                </Button>
+              </a>
+            )
+          )}
         </div>
       </header>
 

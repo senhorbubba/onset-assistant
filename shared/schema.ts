@@ -1,6 +1,30 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+export * from "./models/auth";
+
+export const userProfiles = pgTable("user_profiles", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().unique(),
+  role: text("role"),
+  industry: text("industry"),
+  experience: text("experience"),
+  goal: text("goal"),
+  challenge: text("challenge"),
+  completedOnboarding: boolean("completed_onboarding").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type UserProfile = typeof userProfiles.$inferSelect;
+export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 
 export const content = pgTable("content", {
   id: serial("id").primaryKey(),

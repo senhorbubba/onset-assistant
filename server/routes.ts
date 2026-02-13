@@ -5,14 +5,15 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import OpenAI from "openai";
 import { syncFromSheet } from "./google-sheets";
-import type { Content } from "@shared/schema";
+import type { Content, UserProfile } from "@shared/schema";
+import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
-async function findBestAnswer(topic: string, question: string, language: string = "en"): Promise<{ answer: string; found: boolean; link?: string }> {
+async function findBestAnswer(topic: string, question: string, language: string = "en", profile?: UserProfile | null): Promise<{ answer: string; found: boolean; link?: string }> {
   const contentItems = await storage.getContentByTopic(topic);
 
   const isPt = language === "pt-BR";
@@ -66,6 +67,15 @@ RULES:
 - When in doubt, respond NOT_FOUND. A human will review the question later.
 - The [index_number] must match the [N] prefix of the entry.
 ${isPt ? '- IMPORTANT: Your answer MUST be written in Brazilian Portuguese (pt-BR). Translate the key takeaway into natural Portuguese. Keep expert/source names unchanged.' : ''}
+${profile && profile.completedOnboarding ? `
+USER PROFILE (use this to tailor HOW you phrase your answer, but NEVER invent content):
+- Role: ${profile.role || 'Not specified'}
+- Industry: ${profile.industry || 'Not specified'}
+- Experience level: ${profile.experience || 'Not specified'}
+- Learning goal: ${profile.goal || 'Not specified'}
+- Main challenge: ${profile.challenge || 'Not specified'}
+
+When you find a match, tailor the explanation to this person's context. For example, use examples relevant to their industry, adjust complexity based on experience level, and connect the answer to their stated goal or challenge. But ONLY use information from the knowledge base entries — do NOT add facts or advice from your own knowledge.` : ''}
 
 Knowledge Base for topic "${topic}":
 ${contentContext}`
@@ -175,12 +185,58 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  await setupAuth(app);
+  registerAuthRoutes(app);
+
+  // Profile endpoints
+  app.get("/api/profile", async (req: any, res) => {
+    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const profile = await storage.getUserProfile(req.user.claims.sub);
+    res.json(profile || null);
+  });
+
+  const profileInputSchema = z.object({
+    role: z.string().max(200).optional().default(""),
+    industry: z.string().max(200).optional().default(""),
+    experience: z.string().max(50).optional().default(""),
+    goal: z.string().max(500).optional().default(""),
+    challenge: z.string().max(500).optional().default(""),
+  });
+
+  app.post("/api/profile", async (req: any, res) => {
+    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    try {
+      const userId = req.user.claims.sub;
+      const parsed = profileInputSchema.parse(req.body);
+      const profile = await storage.upsertUserProfile({
+        userId,
+        ...parsed,
+        completedOnboarding: true,
+      });
+      res.json(profile);
+    } catch (error: any) {
+      if (error?.name === "ZodError") {
+        return res.status(400).json({ message: "Invalid profile data" });
+      }
+      throw error;
+    }
+  });
+
   // Chat endpoint - uses OpenAI for intelligent matching
-  app.post(api.chat.ask.path, async (req, res) => {
+  app.post(api.chat.ask.path, async (req: any, res) => {
     try {
       const { topic, question, language } = api.chat.ask.input.parse(req.body);
 
-      const result = await findBestAnswer(topic, question, language || "en");
+      let profile: UserProfile | null = null;
+      if (req.isAuthenticated?.() && req.user?.claims?.sub) {
+        profile = await storage.getUserProfile(req.user.claims.sub) || null;
+      }
+
+      const result = await findBestAnswer(topic, question, language || "en", profile);
 
       if (result.found) {
         res.json({
