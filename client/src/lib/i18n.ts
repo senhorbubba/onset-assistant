@@ -138,6 +138,10 @@ export const translations = {
       recentQuestions: "Recent Questions",
       noHistory: "No learning history yet. Start asking questions to build your summary!",
       backToHome: "Back to Home",
+      adminMode: "Admin Mode",
+      adminModeDesc: "Access the admin panel to manage knowledge base and review questions.",
+      openAdminPanel: "Open Admin Panel",
+      signOut: "Sign Out",
     },
     langPicker: {
       language: "Language",
@@ -280,6 +284,10 @@ export const translations = {
       recentQuestions: "Perguntas Recentes",
       noHistory: "Nenhum histórico de aprendizado ainda. Comece a fazer perguntas para construir seu resumo!",
       backToHome: "Voltar ao Início",
+      adminMode: "Modo Admin",
+      adminModeDesc: "Acesse o painel administrativo para gerenciar a base de conhecimento e revisar perguntas.",
+      openAdminPanel: "Abrir Painel Admin",
+      signOut: "Sair",
     },
     langPicker: {
       language: "Idioma",
@@ -422,6 +430,10 @@ export interface Translations {
     recentQuestions: string;
     noHistory: string;
     backToHome: string;
+    adminMode: string;
+    adminModeDesc: string;
+    openAdminPanel: string;
+    signOut: string;
   };
   langPicker: { language: string };
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,13 +7,14 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/hooks/use-auth";
-import { ArrowLeft, Save, Loader2, MessageSquare, BookOpen, CheckCircle, Clock } from "lucide-react";
+import { ArrowLeft, Save, Loader2, MessageSquare, BookOpen, CheckCircle, Clock, LogOut, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
 
 export default function Profile() {
   const { t } = useLanguage();
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -111,28 +112,36 @@ export default function Profile() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 pb-12">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-6" data-testid="text-profile-title">
-          {t.profile.title}
-        </h1>
+        <div className="flex items-center gap-4 mb-8">
+          <Avatar className="w-14 h-14 sm:w-16 sm:h-16 ring-2 ring-primary/20 ring-offset-2">
+            <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || ""} />
+            <AvatarFallback className="text-lg bg-primary/10 text-primary font-bold">
+              {(user?.firstName?.[0] || "").toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 truncate" data-testid="text-profile-title">
+              {`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || t.profile.title}
+            </h1>
+            <p className="text-sm text-slate-500 truncate">{user?.email || ""}</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => logout()}
+            className="shrink-0"
+            data-testid="button-logout"
+          >
+            <LogOut className="w-4 h-4 mr-1" />
+            {t.profile.signOut}
+          </Button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card className="p-6">
               <h2 className="text-lg font-bold text-slate-900 mb-4">{t.profile.personalInfo}</h2>
               <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-600 mb-1 block">{t.profile.name}</label>
-                  <Input
-                    value={`${user?.firstName || ""} ${user?.lastName || ""}`.trim()}
-                    disabled
-                    className="bg-slate-50"
-                    data-testid="input-profile-name"
-                  />
-                  <p className="text-xs text-slate-400 mt-1">
-                    {t.profile.name} is managed by your login provider.
-                  </p>
-                </div>
-
                 <div>
                   <label className="text-sm font-medium text-slate-600 mb-1 block">{t.profile.role}</label>
                   <Input
@@ -244,6 +253,22 @@ export default function Profile() {
                   </div>
                 </div>
               </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-slate-100 rounded-lg">
+                  <Settings className="w-5 h-5 text-slate-600" />
+                </div>
+                <h2 className="text-lg font-bold text-slate-900">{t.profile.adminMode}</h2>
+              </div>
+              <p className="text-sm text-slate-500 mb-4">{t.profile.adminModeDesc}</p>
+              <Link href="/admin">
+                <Button variant="outline" className="w-full" data-testid="button-open-admin">
+                  <Settings className="w-4 h-4 mr-2" />
+                  {t.profile.openAdminPanel}
+                </Button>
+              </Link>
             </Card>
 
             <Card className="p-6">

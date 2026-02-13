@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ChatInterface } from "@/components/chat-interface";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquareText, ShieldQuestion, ArrowRight, BookOpen, Zap, BrainCircuit, Globe, LogIn, LogOut, User } from "lucide-react";
+import { MessageSquareText, ShieldQuestion, ArrowRight, BookOpen, Zap, BrainCircuit, Globe, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
@@ -15,7 +15,7 @@ import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
 export default function Home() {
   const [topic, setTopic] = useState<string>("");
   const { language, setLanguage, t } = useLanguage();
-  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [, navigate] = useLocation();
 
   const { data: profile } = useQuery({
@@ -48,7 +48,7 @@ export default function Home() {
           <h1 className="text-lg sm:text-xl font-bold font-display tracking-tight">onset. Assistant</h1>
         </div>
         
-        <div className="flex items-center gap-0 sm:gap-1 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
             <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-xs sm:text-sm px-2" data-testid="select-language">
               <Globe className="w-3.5 h-3.5 shrink-0" />
@@ -59,27 +59,16 @@ export default function Home() {
               <SelectItem value="pt-BR">PT</SelectItem>
             </SelectContent>
           </Select>
-          <Link href="/admin">
-            <Button variant="ghost" size="sm" className="text-muted-foreground text-xs sm:text-sm px-2">
-              {t.header.adminPanel}
-            </Button>
-          </Link>
           {!authLoading && (
             isAuthenticated ? (
-              <div className="flex items-center gap-1">
-                <Link href="/profile">
-                  <Avatar className="w-7 h-7 cursor-pointer" data-testid="link-profile">
-                    <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || ""} />
-                    <AvatarFallback className="text-xs">
-                      {(user?.firstName?.[0] || "").toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Link>
-                <Button variant="ghost" size="sm" onClick={() => logout()} className="text-muted-foreground text-xs sm:text-sm px-2" data-testid="button-logout">
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline ml-1">{t.auth.signOut}</span>
-                </Button>
-              </div>
+              <Link href="/profile">
+                <Avatar className="w-8 h-8 sm:w-9 sm:h-9 cursor-pointer ring-2 ring-primary/20 ring-offset-1" data-testid="link-profile">
+                  <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || ""} />
+                  <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
+                    {(user?.firstName?.[0] || "").toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
             ) : (
               <a href="/api/login">
                 <Button variant="ghost" size="sm" className="text-muted-foreground text-xs sm:text-sm px-2" data-testid="button-login">
