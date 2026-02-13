@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/language-context";
+import { useAuth } from "@/hooks/use-auth";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
 
 interface Message {
@@ -22,6 +24,38 @@ interface ChatInterfaceProps {
 
 export function ChatInterface({ topic }: ChatInterfaceProps) {
   const { language, t } = useLanguage();
+  const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: topicExp, isLoading: expLoading } = useQuery({
+    queryKey: ["/api/topic-experience", topic],
+    queryFn: async () => {
+      const res = await fetch(`/api/topic-experience/${encodeURIComponent(topic)}`, { credentials: "include" });
+      if (res.status === 401) return null;
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    enabled: isAuthenticated,
+  });
+
+  const saveExperience = useMutation({
+    mutationFn: async (experience: string) => {
+      const res = await fetch("/api/topic-experience", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ topic, experience }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/topic-experience", topic] });
+    },
+  });
+
+  const needsExperiencePrompt = isAuthenticated && !expLoading && topicExp === null;
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -98,6 +132,39 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
       handleSend();
     }
   };
+
+  if (needsExperiencePrompt) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full max-w-4xl mx-auto py-12 px-4">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-lg p-6 sm:p-8 max-w-md w-full text-center">
+          <div className="mb-4 p-3 bg-primary/10 rounded-xl w-fit mx-auto">
+            <img src={onsetLogo} alt="Onset" className="w-10 h-10 rounded-lg" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 mb-2" data-testid="text-experience-question">
+            {t.topicExperience.question(topic)}
+          </h3>
+          <div className="space-y-3 mt-6">
+            {[
+              { value: "beginner", label: t.topicExperience.beginner },
+              { value: "intermediate", label: t.topicExperience.intermediate },
+              { value: "advanced", label: t.topicExperience.advanced },
+            ].map((opt) => (
+              <Button
+                key={opt.value}
+                variant="outline"
+                className="w-full h-12"
+                onClick={() => saveExperience.mutate(opt.value)}
+                disabled={saveExperience.isPending}
+                data-testid={`button-topic-exp-${opt.value}`}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[calc(100dvh-140px)] sm:h-[600px] w-full max-w-4xl mx-auto glass rounded-none sm:rounded-2xl overflow-hidden shadow-none sm:shadow-2xl border-0 sm:border sm:border-white/20">

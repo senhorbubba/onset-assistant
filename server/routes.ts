@@ -5,7 +5,7 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import OpenAI from "openai";
 import { syncFromSheet } from "./google-sheets";
-import type { Content, UserProfile } from "@shared/schema";
+import type { Content, UserProfile, TopicExperience } from "@shared/schema";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 const openai = new OpenAI({
@@ -13,7 +13,7 @@ const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
-async function findBestAnswer(topic: string, question: string, language: string = "en", profile?: UserProfile | null): Promise<{ answer: string; found: boolean; link?: string }> {
+async function findBestAnswer(topic: string, question: string, language: string = "en", profile?: UserProfile | null, topicExp?: TopicExperience | null): Promise<{ answer: string; found: boolean; link?: string }> {
   const contentItems = await storage.getContentByTopic(topic);
 
   const isPt = language === "pt-BR";
@@ -71,11 +71,14 @@ ${profile && profile.completedOnboarding ? `
 USER PROFILE (use this to tailor HOW you phrase your answer, but NEVER invent content):
 - Role: ${profile.role || 'Not specified'}
 - Industry: ${profile.industry || 'Not specified'}
-- Experience level: ${profile.experience || 'Not specified'}
+- Experience level for this topic: ${topicExp?.experience || 'Not specified'}
 - Learning goal: ${profile.goal || 'Not specified'}
 - Main challenge: ${profile.challenge || 'Not specified'}
+- Learning preference: ${profile.learningPreference === 'quick_tips' ? 'Quick tips & key takeaways — keep it brief and actionable' : profile.learningPreference === 'step_by_step' ? 'Step-by-step explanations — break down the concept clearly' : profile.learningPreference === 'examples' ? 'Real-world examples & case studies — illustrate with practical scenarios' : 'Not specified'}
 
-When you find a match, tailor the explanation to this person's context. For example, use examples relevant to their industry, adjust complexity based on experience level, and connect the answer to their stated goal or challenge. But ONLY use information from the knowledge base entries — do NOT add facts or advice from your own knowledge.` : ''}
+MICROLEARNING FORMAT: Keep your answer concise and focused — one key insight at a time. Do NOT create a long study plan. Deliver a single, digestible piece of knowledge that matches the user's learning preference. Adjust complexity based on their experience level for this topic.
+
+When you find a match, tailor the explanation to this person's context. Use their learning preference to structure the response. But ONLY use information from the knowledge base entries — do NOT add facts or advice from your own knowledge.` : ''}
 
 Knowledge Base for topic "${topic}":
 ${contentContext}`
@@ -200,9 +203,9 @@ export async function registerRoutes(
   const profileInputSchema = z.object({
     role: z.string().max(200).optional().default(""),
     industry: z.string().max(200).optional().default(""),
-    experience: z.string().max(50).optional().default(""),
     goal: z.string().max(500).optional().default(""),
     challenge: z.string().max(500).optional().default(""),
+    learningPreference: z.string().max(50).optional().default(""),
   });
 
   app.post("/api/profile", async (req: any, res) => {
@@ -226,17 +229,65 @@ export async function registerRoutes(
     }
   });
 
+  // Topic experience endpoints
+  app.get("/api/topic-experience/:topic", async (req: any, res) => {
+    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const exp = await storage.getTopicExperience(req.user.claims.sub, req.params.topic);
+    res.json(exp || null);
+  });
+
+  app.post("/api/topic-experience", async (req: any, res) => {
+    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const { topic, experience } = z.object({
+      topic: z.string(),
+      experience: z.enum(["beginner", "intermediate", "advanced"]),
+    }).parse(req.body);
+    const result = await storage.setTopicExperience({
+      userId: req.user.claims.sub,
+      topic,
+      experience,
+    });
+    res.json(result);
+  });
+
+  // Chat history endpoints
+  app.get("/api/chat-history", async (req: any, res) => {
+    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const history = await storage.getChatHistory(req.user.claims.sub);
+    res.json(history);
+  });
+
   // Chat endpoint - uses OpenAI for intelligent matching
   app.post(api.chat.ask.path, async (req: any, res) => {
     try {
       const { topic, question, language } = api.chat.ask.input.parse(req.body);
 
       let profile: UserProfile | null = null;
-      if (req.isAuthenticated?.() && req.user?.claims?.sub) {
-        profile = await storage.getUserProfile(req.user.claims.sub) || null;
+      let topicExp: TopicExperience | null = null;
+      const userId = req.isAuthenticated?.() ? req.user?.claims?.sub : null;
+
+      if (userId) {
+        profile = await storage.getUserProfile(userId) || null;
+        topicExp = await storage.getTopicExperience(userId, topic) || null;
       }
 
-      const result = await findBestAnswer(topic, question, language || "en", profile);
+      const result = await findBestAnswer(topic, question, language || "en", profile, topicExp);
+
+      if (userId) {
+        await storage.logChatHistory({
+          userId,
+          topic,
+          question,
+          answer: result.answer || (language === "pt-BR" ? "Sem resposta encontrada" : "No answer found"),
+          found: result.found,
+        });
+      }
 
       if (result.found) {
         res.json({

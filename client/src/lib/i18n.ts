@@ -102,6 +102,42 @@ export const translations = {
       goalPlaceholder: "e.g. Improve team communication, Learn AI basics",
       challengeQuestion: "What's your biggest challenge right now?",
       challengePlaceholder: "e.g. Keeping up with AI trends, Remote team management",
+      learningPreferenceQuestion: "How do you prefer to learn?",
+      learningQuickTips: "Quick tips & key takeaways",
+      learningStepByStep: "Step-by-step explanations",
+      learningExamples: "Real-world examples & case studies",
+    },
+    topicExperience: {
+      question: (topic: string) => `Before we start, what's your experience level with ${topic}?`,
+      beginner: "Beginner",
+      intermediate: "Intermediate",
+      advanced: "Advanced",
+    },
+    profile: {
+      title: "My Profile",
+      editProfile: "Edit Profile",
+      learningSummary: "Learning Summary",
+      personalInfo: "Personal Information",
+      name: "Name",
+      namePlaceholder: "Your name",
+      role: "Role",
+      industry: "Industry",
+      goal: "Learning Goal",
+      challenge: "Main Challenge",
+      learningPreference: "Learning Preference",
+      quickTips: "Quick tips & key takeaways",
+      stepByStep: "Step-by-step explanations",
+      examples: "Real-world examples & case studies",
+      save: "Save Changes",
+      saving: "Saving...",
+      saved: "Profile Updated",
+      savedDesc: "Your changes have been saved.",
+      questionsAsked: "Questions Asked",
+      topicsExplored: "Topics Explored",
+      answersReceived: "Answers Received",
+      recentQuestions: "Recent Questions",
+      noHistory: "No learning history yet. Start asking questions to build your summary!",
+      backToHome: "Back to Home",
     },
     langPicker: {
       language: "Language",
@@ -208,6 +244,42 @@ export const translations = {
       goalPlaceholder: "ex: Melhorar comunicação da equipe, Aprender fundamentos de IA",
       challengeQuestion: "Qual seu maior desafio atualmente?",
       challengePlaceholder: "ex: Acompanhar tendências de IA, Gestão de equipe remota",
+      learningPreferenceQuestion: "Como você prefere aprender?",
+      learningQuickTips: "Dicas rápidas e pontos-chave",
+      learningStepByStep: "Explicações passo a passo",
+      learningExamples: "Exemplos reais e estudos de caso",
+    },
+    topicExperience: {
+      question: (topic: string) => `Antes de começar, qual seu nível de experiência com ${topic}?`,
+      beginner: "Iniciante",
+      intermediate: "Intermediário",
+      advanced: "Avançado",
+    },
+    profile: {
+      title: "Meu Perfil",
+      editProfile: "Editar Perfil",
+      learningSummary: "Resumo de Aprendizado",
+      personalInfo: "Informações Pessoais",
+      name: "Nome",
+      namePlaceholder: "Seu nome",
+      role: "Função",
+      industry: "Setor",
+      goal: "Objetivo de Aprendizado",
+      challenge: "Principal Desafio",
+      learningPreference: "Preferência de Aprendizado",
+      quickTips: "Dicas rápidas e pontos-chave",
+      stepByStep: "Explicações passo a passo",
+      examples: "Exemplos reais e estudos de caso",
+      save: "Salvar Alterações",
+      saving: "Salvando...",
+      saved: "Perfil Atualizado",
+      savedDesc: "Suas alterações foram salvas.",
+      questionsAsked: "Perguntas Feitas",
+      topicsExplored: "Tópicos Explorados",
+      answersReceived: "Respostas Recebidas",
+      recentQuestions: "Perguntas Recentes",
+      noHistory: "Nenhum histórico de aprendizado ainda. Comece a fazer perguntas para construir seu resumo!",
+      backToHome: "Voltar ao Início",
     },
     langPicker: {
       language: "Idioma",
@@ -314,6 +386,42 @@ export interface Translations {
     goalPlaceholder: string;
     challengeQuestion: string;
     challengePlaceholder: string;
+    learningPreferenceQuestion: string;
+    learningQuickTips: string;
+    learningStepByStep: string;
+    learningExamples: string;
+  };
+  topicExperience: {
+    question: (topic: string) => string;
+    beginner: string;
+    intermediate: string;
+    advanced: string;
+  };
+  profile: {
+    title: string;
+    editProfile: string;
+    learningSummary: string;
+    personalInfo: string;
+    name: string;
+    namePlaceholder: string;
+    role: string;
+    industry: string;
+    goal: string;
+    challenge: string;
+    learningPreference: string;
+    quickTips: string;
+    stepByStep: string;
+    examples: string;
+    save: string;
+    saving: string;
+    saved: string;
+    savedDesc: string;
+    questionsAsked: string;
+    topicsExplored: string;
+    answersReceived: string;
+    recentQuestions: string;
+    noHistory: string;
+    backToHome: string;
   };
   langPicker: { language: string };
 }

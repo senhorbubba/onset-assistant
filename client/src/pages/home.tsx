@@ -67,12 +67,14 @@ export default function Home() {
           {!authLoading && (
             isAuthenticated ? (
               <div className="flex items-center gap-1">
-                <Avatar className="w-7 h-7">
-                  <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || ""} />
-                  <AvatarFallback className="text-xs">
-                    {(user?.firstName?.[0] || "").toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <Link href="/profile">
+                  <Avatar className="w-7 h-7 cursor-pointer" data-testid="link-profile">
+                    <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || ""} />
+                    <AvatarFallback className="text-xs">
+                      {(user?.firstName?.[0] || "").toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Link>
                 <Button variant="ghost" size="sm" onClick={() => logout()} className="text-muted-foreground text-xs sm:text-sm px-2" data-testid="button-logout">
                   <LogOut className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline ml-1">{t.auth.signOut}</span>

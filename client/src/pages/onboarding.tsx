@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useLanguage } from "@/lib/language-context";
-import { ArrowRight, ArrowLeft, Sparkles, User, Building2, BarChart3, Target, HelpCircle } from "lucide-react";
+import { ArrowRight, ArrowLeft, Sparkles, User, Building2, Target, HelpCircle, GraduationCap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
 
@@ -15,14 +15,14 @@ export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [role, setRole] = useState("");
   const [industry, setIndustry] = useState("");
-  const [experience, setExperience] = useState("");
   const [goal, setGoal] = useState("");
   const [challenge, setChallenge] = useState("");
+  const [learningPreference, setLearningPreference] = useState("");
   const { t } = useLanguage();
   const [, navigate] = useLocation();
 
   const saveProfile = useMutation({
-    mutationFn: async (data: { role: string; industry: string; experience: string; goal: string; challenge: string }) => {
+    mutationFn: async (data: { role: string; industry: string; goal: string; challenge: string; learningPreference: string }) => {
       const res = await fetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -38,20 +38,20 @@ export default function Onboarding() {
   });
 
   const handleFinish = () => {
-    saveProfile.mutate({ role, industry, experience, goal, challenge });
+    saveProfile.mutate({ role, industry, goal, challenge, learningPreference });
   };
 
   const handleSkip = () => {
-    saveProfile.mutate({ role: "", industry: "", experience: "", goal: "", challenge: "" });
+    saveProfile.mutate({ role: "", industry: "", goal: "", challenge: "", learningPreference: "" });
   };
 
-  const stepIcons = [User, Building2, BarChart3, Target, HelpCircle];
+  const stepIcons = [User, Building2, Target, HelpCircle, GraduationCap];
   const StepIcon = stepIcons[step];
 
-  const experienceOptions = [
-    { value: "beginner", label: t.onboarding.experienceBeginner },
-    { value: "intermediate", label: t.onboarding.experienceIntermediate },
-    { value: "advanced", label: t.onboarding.experienceAdvanced },
+  const learningOptions = [
+    { value: "quick_tips", label: t.onboarding.learningQuickTips },
+    { value: "step_by_step", label: t.onboarding.learningStepByStep },
+    { value: "examples", label: t.onboarding.learningExamples },
   ];
 
   const renderStepContent = () => {
@@ -85,25 +85,6 @@ export default function Onboarding() {
       case 2:
         return (
           <div className="space-y-4">
-            <label className="text-base font-medium text-slate-700">{t.onboarding.experienceQuestion}</label>
-            <div className="grid grid-cols-3 gap-3">
-              {experienceOptions.map((opt) => (
-                <Button
-                  key={opt.value}
-                  data-testid={`button-experience-${opt.value}`}
-                  variant={experience === opt.value ? "default" : "outline"}
-                  className="h-12"
-                  onClick={() => setExperience(opt.value)}
-                >
-                  {opt.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        );
-      case 3:
-        return (
-          <div className="space-y-4">
             <label className="text-base font-medium text-slate-700">{t.onboarding.goalQuestion}</label>
             <Input
               data-testid="input-goal"
@@ -114,7 +95,7 @@ export default function Onboarding() {
             />
           </div>
         );
-      case 4:
+      case 3:
         return (
           <div className="space-y-4">
             <label className="text-base font-medium text-slate-700">{t.onboarding.challengeQuestion}</label>
@@ -125,6 +106,25 @@ export default function Onboarding() {
               placeholder={t.onboarding.challengePlaceholder}
               className="h-12 text-base"
             />
+          </div>
+        );
+      case 4:
+        return (
+          <div className="space-y-4">
+            <label className="text-base font-medium text-slate-700">{t.onboarding.learningPreferenceQuestion}</label>
+            <div className="space-y-3">
+              {learningOptions.map((opt) => (
+                <Button
+                  key={opt.value}
+                  data-testid={`button-learning-${opt.value}`}
+                  variant={learningPreference === opt.value ? "default" : "outline"}
+                  className="w-full h-12 justify-start text-left"
+                  onClick={() => setLearningPreference(opt.value)}
+                >
+                  {opt.label}
+                </Button>
+              ))}
+            </div>
           </div>
         );
       default:

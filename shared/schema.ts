@@ -9,9 +9,9 @@ export const userProfiles = pgTable("user_profiles", {
   userId: varchar("user_id").notNull().unique(),
   role: text("role"),
   industry: text("industry"),
-  experience: text("experience"),
   goal: text("goal"),
   challenge: text("challenge"),
+  learningPreference: text("learning_preference"),
   completedOnboarding: boolean("completed_onboarding").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -25,6 +25,40 @@ export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
 
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
+
+export const topicExperience = pgTable("topic_experience", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  topic: text("topic").notNull(),
+  experience: text("experience").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertTopicExperienceSchema = createInsertSchema(topicExperience).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type TopicExperience = typeof topicExperience.$inferSelect;
+export type InsertTopicExperience = z.infer<typeof insertTopicExperienceSchema>;
+
+export const chatHistory = pgTable("chat_history", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  topic: text("topic").notNull(),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+  found: boolean("found").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertChatHistorySchema = createInsertSchema(chatHistory).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type ChatHistory = typeof chatHistory.$inferSelect;
+export type InsertChatHistory = z.infer<typeof insertChatHistorySchema>;
 
 export const content = pgTable("content", {
   id: serial("id").primaryKey(),
