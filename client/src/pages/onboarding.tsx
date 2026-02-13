@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -20,6 +20,7 @@ export default function Onboarding() {
   const [learningPreference, setLearningPreference] = useState("");
   const { t } = useLanguage();
   const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
 
   const saveProfile = useMutation({
     mutationFn: async (data: { role: string; industry: string; goal: string; challenge: string; learningPreference: string }) => {
@@ -32,7 +33,8 @@ export default function Onboarding() {
       if (!res.ok) throw new Error("Failed to save profile");
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
       navigate("/");
     },
   });
@@ -187,17 +189,21 @@ export default function Onboarding() {
           </AnimatePresence>
 
           <div className="flex items-center justify-between mt-8 gap-3">
-            {step > 0 ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setStep(step - 1)}
-                data-testid="button-back"
-              >
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                {t.onboarding.back}
-              </Button>
-            ) : (
+            <div className="flex items-center gap-2">
+              {step > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setStep(step - 1)}
+                  data-testid="button-back"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  {t.onboarding.back}
+                </Button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="sm"
@@ -207,26 +213,26 @@ export default function Onboarding() {
               >
                 {t.onboarding.skip}
               </Button>
-            )}
 
-            {step < TOTAL_STEPS - 1 ? (
-              <Button
-                onClick={() => setStep(step + 1)}
-                data-testid="button-next"
-              >
-                {t.onboarding.next}
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
-            ) : (
-              <Button
-                onClick={handleFinish}
-                disabled={saveProfile.isPending}
-                data-testid="button-finish"
-              >
-                {t.onboarding.finish}
-                <Sparkles className="w-4 h-4 ml-1" />
-              </Button>
-            )}
+              {step < TOTAL_STEPS - 1 ? (
+                <Button
+                  onClick={() => setStep(step + 1)}
+                  data-testid="button-next"
+                >
+                  {t.onboarding.next}
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleFinish}
+                  disabled={saveProfile.isPending}
+                  data-testid="button-finish"
+                >
+                  {t.onboarding.finish}
+                  <Sparkles className="w-4 h-4 ml-1" />
+                </Button>
+              )}
+            </div>
           </div>
         </Card>
       </div>
