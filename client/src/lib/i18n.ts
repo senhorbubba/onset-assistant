@@ -6,9 +6,10 @@ export const translations = {
       adminPanel: "Admin Panel",
     },
     home: {
-      heroTitle1: "Instant answers,",
-      heroTitle2: "zero waiting.",
-      heroSubtitle: "Select a topic below to start chatting with our intelligent assistant. Get answers instantly from our curated knowledge base.",
+      heroTitle1: "Stop searching.",
+      heroTitle2: "Start learning.",
+      heroSubtitle: "Select a topic and enter a guided learning session.",
+      heroTagline: "Trusted insights. Practical application. Built for real business decisions.",
       selectTopic: "Select a topic to begin...",
       verifiedByExperts: "Responses verified by experts",
       chooseAnotherTopic: "Choose another topic",
@@ -84,9 +85,10 @@ export const translations = {
       adminPanel: "Painel Admin",
     },
     home: {
-      heroTitle1: "Respostas instantâneas,",
-      heroTitle2: "sem espera.",
-      heroSubtitle: "Selecione um tópico abaixo para iniciar uma conversa com nosso assistente inteligente. Obtenha respostas instantâneas da nossa base de conhecimento.",
+      heroTitle1: "Pare de procurar.",
+      heroTitle2: "Comece a aprender.",
+      heroSubtitle: "Selecione um tópico e entre em uma sessão de aprendizado guiada.",
+      heroTagline: "Insights confiáveis. Aplicação prática. Feito para decisões reais de negócios.",
       selectTopic: "Selecione um tópico para começar...",
       verifiedByExperts: "Respostas verificadas por especialistas",
       chooseAnotherTopic: "Escolher outro tópico",
@@ -165,6 +167,7 @@ export interface Translations {
     heroTitle1: string;
     heroTitle2: string;
     heroSubtitle: string;
+    heroTagline: string;
     selectTopic: string;
     verifiedByExperts: string;
     chooseAnotherTopic: string;

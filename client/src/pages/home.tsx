@@ -63,8 +63,11 @@ export default function Home() {
               </span>
             </h2>
             
-            <p className="text-base sm:text-lg md:text-xl text-slate-500 mb-6 sm:mb-10 max-w-lg leading-relaxed px-2">
+            <p className="text-base sm:text-lg md:text-xl text-slate-500 mb-3 sm:mb-4 max-w-lg leading-relaxed px-2">
               {t.home.heroSubtitle}
+            </p>
+            <p className="text-sm sm:text-base text-slate-400 mb-6 sm:mb-10 max-w-lg leading-relaxed px-2">
+              {t.home.heroTagline}
             </p>
 
             <div className="w-full max-w-xs space-y-4 px-2">
