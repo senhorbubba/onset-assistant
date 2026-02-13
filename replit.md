@@ -56,6 +56,8 @@ A chatbot web application branded "onset. Assistant" that answers user questions
 - `POST /api/content` - Add new content item
 - `GET /api/unanswered` - List unanswered questions
 - `POST /api/sync` - Sync content from Google Sheets (clears and replaces all content)
+- `GET /api/admin/users` - List all registered users with question counts per topic (requires auth)
+- `GET /api/admin/users/export` - Export all users as CSV file (requires auth)
 - `GET /api/auth/user` - Get current authenticated user
 - `GET /api/login` - Initiate login flow
 - `GET /api/logout` - Logout

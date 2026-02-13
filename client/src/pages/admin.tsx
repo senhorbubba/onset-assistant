@@ -8,10 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, ArrowLeft, CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Globe } from "lucide-react";
+import { Loader2, Plus, ArrowLeft, CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Globe, Users, Download } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertContentSchema, type InsertContent } from "@shared/schema";
 import { z } from "zod";
@@ -28,11 +29,34 @@ type FormData = z.input<typeof formSchema>;
 export default function Admin() {
   const { data: content, isLoading: contentLoading } = useContentList();
   const { data: unanswered, isLoading: unansweredLoading } = useUnansweredList();
+  const { data: usersList, isLoading: usersLoading } = useQuery<Array<{
+    id: string; email: string | null; firstName: string | null; lastName: string | null;
+    createdAt: string | null; aiSkillsCount: number; communicationCount: number;
+  }>>({ queryKey: ["/api/admin/users"] });
   const createMutation = useCreateContent();
   const syncMutation = useSyncFromSheet();
   const [open, setOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const { toast } = useToast();
   const { language, setLanguage, t } = useLanguage();
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/admin/users/export", { credentials: "include" });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "users_export.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast({ title: t.admin.error, description: "Export failed", variant: "destructive" });
+    }
+    setExporting(false);
+  };
 
   const handleSync = async () => {
     try {
@@ -194,7 +218,7 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="content" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6 sm:mb-8">
+          <TabsList className="grid w-full max-w-lg grid-cols-3 mb-6 sm:mb-8">
             <TabsTrigger value="content" className="text-xs sm:text-sm">{t.admin.knowledgeBase}</TabsTrigger>
             <TabsTrigger value="unanswered" className="relative text-xs sm:text-sm">
               {t.admin.unanswered}
@@ -202,6 +226,13 @@ export default function Admin() {
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
                   {unanswered.length}
                 </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="users" className="text-xs sm:text-sm" data-testid="tab-users">
+              <Users className="w-3.5 h-3.5 mr-1" />
+              {t.admin.users}
+              {usersList && usersList.length > 0 && (
+                <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0">{usersList.length}</Badge>
               )}
             </TabsTrigger>
           </TabsList>
@@ -400,6 +431,110 @@ export default function Admin() {
                             <p className="text-sm">{t.admin.allCaughtUp}</p>
                           </div>
                         </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="users">
+            <Card className="border-none shadow-md">
+              <CardHeader className="px-4 sm:px-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-lg sm:text-xl">{t.admin.usersTitle}</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">
+                      {t.admin.usersDesc}
+                    </CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 text-xs sm:text-sm"
+                    onClick={handleExport}
+                    disabled={exporting || !usersList?.length}
+                    data-testid="button-export-users"
+                  >
+                    {exporting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4" />
+                    )}
+                    {exporting ? t.admin.exporting : t.admin.exportExcel}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="px-4 sm:px-6">
+                {usersLoading ? (
+                  <div className="flex justify-center p-8">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <>
+                    {usersList && usersList.length > 0 && (
+                      <div className="mb-4">
+                        <Badge variant="secondary">{t.admin.totalUsers}: {usersList.length}</Badge>
+                      </div>
+                    )}
+                    <div className="hidden sm:block rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{t.admin.userName}</TableHead>
+                            <TableHead>{t.admin.userEmail}</TableHead>
+                            <TableHead className="text-center">{t.admin.aiSkillsQuestions}</TableHead>
+                            <TableHead className="text-center">{t.admin.communicationQuestions}</TableHead>
+                            <TableHead>{t.admin.registered}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {usersList?.map((user) => (
+                            <TableRow key={user.id} data-testid={`row-user-${user.id}`}>
+                              <TableCell className="font-medium">
+                                {`${user.firstName || ""} ${user.lastName || ""}`.trim() || "-"}
+                              </TableCell>
+                              <TableCell className="text-muted-foreground text-sm">{user.email || "-"}</TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant="secondary">{user.aiSkillsCount}</Badge>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant="secondary">{user.communicationCount}</Badge>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground text-sm">
+                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {(!usersList || usersList.length === 0) && (
+                            <TableRow>
+                              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                {t.admin.noUsers}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    <div className="sm:hidden space-y-3">
+                      {usersList?.map((user) => (
+                        <div key={user.id} className="bg-white rounded-lg border p-3 space-y-2" data-testid={`card-user-${user.id}`}>
+                          <p className="text-sm font-medium">
+                            {`${user.firstName || ""} ${user.lastName || ""}`.trim() || "-"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{user.email || "-"}</p>
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <span className="text-xs text-muted-foreground">AI Skills: <Badge variant="secondary" className="ml-1">{user.aiSkillsCount}</Badge></span>
+                            <span className="text-xs text-muted-foreground">Communication: <Badge variant="secondary" className="ml-1">{user.communicationCount}</Badge></span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
+                          </p>
+                        </div>
+                      ))}
+                      {(!usersList || usersList.length === 0) && (
+                        <p className="text-center py-8 text-muted-foreground text-sm">{t.admin.noUsers}</p>
                       )}
                     </div>
                   </>

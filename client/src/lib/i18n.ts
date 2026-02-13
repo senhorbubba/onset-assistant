@@ -75,6 +75,18 @@ export const translations = {
       contentCreated: "Content created successfully",
       error: "Error",
       createFailed: "Failed to create content",
+      users: "Users",
+      usersTitle: "Registered Users",
+      usersDesc: "All users who signed up and their question activity.",
+      userName: "Name",
+      userEmail: "Email",
+      aiSkillsQuestions: "AI Skills Qs",
+      communicationQuestions: "Communication Qs",
+      registered: "Registered",
+      exportExcel: "Export to Excel",
+      exporting: "Exporting...",
+      noUsers: "No users registered yet.",
+      totalUsers: "Total Users",
     },
     auth: {
       signIn: "Sign in",
@@ -265,6 +277,18 @@ export const translations = {
       contentCreated: "Conteúdo criado com sucesso",
       error: "Erro",
       createFailed: "Falha ao criar conteúdo",
+      users: "Usuários",
+      usersTitle: "Usuários Registrados",
+      usersDesc: "Todos os usuários cadastrados e suas atividades de perguntas.",
+      userName: "Nome",
+      userEmail: "E-mail",
+      aiSkillsQuestions: "Perguntas AI Skills",
+      communicationQuestions: "Perguntas Communication",
+      registered: "Registrado",
+      exportExcel: "Exportar para Excel",
+      exporting: "Exportando...",
+      noUsers: "Nenhum usuário registrado ainda.",
+      totalUsers: "Total de Usuários",
     },
     auth: {
       signIn: "Entrar",
@@ -455,6 +479,18 @@ export interface Translations {
     contentCreated: string;
     error: string;
     createFailed: string;
+    users: string;
+    usersTitle: string;
+    usersDesc: string;
+    userName: string;
+    userEmail: string;
+    aiSkillsQuestions: string;
+    communicationQuestions: string;
+    registered: string;
+    exportExcel: string;
+    exporting: string;
+    noUsers: string;
+    totalUsers: string;
   };
   auth: {
     signIn: string;

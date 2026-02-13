@@ -274,6 +274,41 @@ export async function registerRoutes(
     res.json(history);
   });
 
+  app.get("/api/admin/users", async (req: any, res) => {
+    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    try {
+      const usersWithStats = await storage.getAllUsersWithStats();
+      res.json(usersWithStats);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.get("/api/admin/users/export", async (req: any, res) => {
+    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    try {
+      const usersWithStats = await storage.getAllUsersWithStats();
+      const BOM = "\uFEFF";
+      const header = "Name,Email,AI Skills Questions,Communication Questions,Registered";
+      const rows = usersWithStats.map((u) => {
+        const name = `${u.firstName || ""} ${u.lastName || ""}`.trim() || "-";
+        const email = u.email || "-";
+        const registered = u.createdAt ? new Date(u.createdAt).toISOString().split("T")[0] : "-";
+        return `"${name.replace(/"/g, '""')}","${email.replace(/"/g, '""')}",${u.aiSkillsCount},${u.communicationCount},"${registered}"`;
+      });
+      const csv = BOM + header + "\n" + rows.join("\n");
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader("Content-Disposition", "attachment; filename=users_export.csv");
+      res.send(csv);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to export users" });
+    }
+  });
+
   // Chat endpoint - uses OpenAI for intelligent matching
   app.post(api.chat.ask.path, async (req: any, res) => {
     try {

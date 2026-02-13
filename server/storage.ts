@@ -5,6 +5,7 @@ import {
   userProfiles,
   topicExperience,
   chatHistory,
+  users,
   type Content,
   type InsertContent,
   type UnansweredQuestion,
@@ -16,7 +17,7 @@ import {
   type ChatHistory,
   type InsertChatHistory,
 } from "@shared/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql, count } from "drizzle-orm";
 
 export interface IStorage {
   getAllContent(): Promise<Content[]>;
@@ -33,6 +34,15 @@ export interface IStorage {
   logChatHistory(data: InsertChatHistory): Promise<ChatHistory>;
   getChatHistory(userId: string): Promise<ChatHistory[]>;
   getChatHistoryByTopic(userId: string, topic: string): Promise<ChatHistory[]>;
+  getAllUsersWithStats(): Promise<Array<{
+    id: string;
+    email: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    createdAt: Date | null;
+    aiSkillsCount: number;
+    communicationCount: number;
+  }>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -128,6 +138,32 @@ export class DatabaseStorage implements IStorage {
       .from(chatHistory)
       .where(and(eq(chatHistory.userId, userId), eq(chatHistory.topic, topic)))
       .orderBy(desc(chatHistory.createdAt));
+  }
+
+  async getAllUsersWithStats(): Promise<Array<{
+    id: string;
+    email: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    createdAt: Date | null;
+    aiSkillsCount: number;
+    communicationCount: number;
+  }>> {
+    const results = await db.execute(sql`
+      SELECT
+        u.id,
+        u.email,
+        u.first_name AS "firstName",
+        u.last_name AS "lastName",
+        u.created_at AS "createdAt",
+        COALESCE(SUM(CASE WHEN ch.topic = 'AI Skills' THEN 1 ELSE 0 END), 0)::int AS "aiSkillsCount",
+        COALESCE(SUM(CASE WHEN ch.topic = 'Communication' THEN 1 ELSE 0 END), 0)::int AS "communicationCount"
+      FROM users u
+      LEFT JOIN chat_history ch ON ch.user_id = u.id
+      GROUP BY u.id, u.email, u.first_name, u.last_name, u.created_at
+      ORDER BY u.created_at DESC
+    `);
+    return results.rows as any;
   }
 }
 
