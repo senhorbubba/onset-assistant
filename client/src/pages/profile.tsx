@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/hooks/use-auth";
@@ -154,42 +154,58 @@ export default function Profile() {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-slate-600 mb-1 block">{t.profile.role}</label>
-                  <Input
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    placeholder={t.onboarding.rolePlaceholder}
-                    data-testid="input-profile-role"
-                  />
+                  <Select value={role} onValueChange={setRole}>
+                    <SelectTrigger data-testid="select-profile-role">
+                      <SelectValue placeholder={t.onboarding.rolePlaceholder} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(t.onboarding.roleOptions).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
                   <label className="text-sm font-medium text-slate-600 mb-1 block">{t.profile.industry}</label>
-                  <Input
-                    value={industry}
-                    onChange={(e) => setIndustry(e.target.value)}
-                    placeholder={t.onboarding.industryPlaceholder}
-                    data-testid="input-profile-industry"
-                  />
+                  <Select value={industry} onValueChange={setIndustry}>
+                    <SelectTrigger data-testid="select-profile-industry">
+                      <SelectValue placeholder={t.onboarding.industryPlaceholder} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(t.onboarding.industryOptions).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
                   <label className="text-sm font-medium text-slate-600 mb-1 block">{t.profile.goal}</label>
-                  <Input
-                    value={goal}
-                    onChange={(e) => setGoal(e.target.value)}
-                    placeholder={t.onboarding.goalPlaceholder}
-                    data-testid="input-profile-goal"
-                  />
+                  <Select value={goal} onValueChange={setGoal}>
+                    <SelectTrigger data-testid="select-profile-goal">
+                      <SelectValue placeholder={t.onboarding.goalPlaceholder} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(t.onboarding.goalOptions).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
                   <label className="text-sm font-medium text-slate-600 mb-1 block">{t.profile.challenge}</label>
-                  <Input
-                    value={challenge}
-                    onChange={(e) => setChallenge(e.target.value)}
-                    placeholder={t.onboarding.challengePlaceholder}
-                    data-testid="input-profile-challenge"
-                  />
+                  <Select value={challenge} onValueChange={setChallenge}>
+                    <SelectTrigger data-testid="select-profile-challenge">
+                      <SelectValue placeholder={t.onboarding.challengePlaceholder} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(t.onboarding.challengeOptions).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </Card>

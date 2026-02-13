@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/lib/language-context";
 import { ArrowRight, ArrowLeft, Sparkles, User, Building2, Target, HelpCircle, GraduationCap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -62,52 +62,64 @@ export default function Onboarding() {
         return (
           <div className="space-y-4">
             <label className="text-base font-medium text-slate-700">{t.onboarding.roleQuestion}</label>
-            <Input
-              data-testid="input-role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              placeholder={t.onboarding.rolePlaceholder}
-              className="h-12 text-base"
-            />
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger className="h-12 text-base" data-testid="select-role">
+                <SelectValue placeholder={t.onboarding.rolePlaceholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(t.onboarding.roleOptions).map(([key, label]) => (
+                  <SelectItem key={key} value={key} data-testid={`option-role-${key}`}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         );
       case 1:
         return (
           <div className="space-y-4">
             <label className="text-base font-medium text-slate-700">{t.onboarding.industryQuestion}</label>
-            <Input
-              data-testid="input-industry"
-              value={industry}
-              onChange={(e) => setIndustry(e.target.value)}
-              placeholder={t.onboarding.industryPlaceholder}
-              className="h-12 text-base"
-            />
+            <Select value={industry} onValueChange={setIndustry}>
+              <SelectTrigger className="h-12 text-base" data-testid="select-industry">
+                <SelectValue placeholder={t.onboarding.industryPlaceholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(t.onboarding.industryOptions).map(([key, label]) => (
+                  <SelectItem key={key} value={key} data-testid={`option-industry-${key}`}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         );
       case 2:
         return (
           <div className="space-y-4">
             <label className="text-base font-medium text-slate-700">{t.onboarding.goalQuestion}</label>
-            <Input
-              data-testid="input-goal"
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
-              placeholder={t.onboarding.goalPlaceholder}
-              className="h-12 text-base"
-            />
+            <Select value={goal} onValueChange={setGoal}>
+              <SelectTrigger className="h-12 text-base" data-testid="select-goal">
+                <SelectValue placeholder={t.onboarding.goalPlaceholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(t.onboarding.goalOptions).map(([key, label]) => (
+                  <SelectItem key={key} value={key} data-testid={`option-goal-${key}`}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         );
       case 3:
         return (
           <div className="space-y-4">
             <label className="text-base font-medium text-slate-700">{t.onboarding.challengeQuestion}</label>
-            <Input
-              data-testid="input-challenge"
-              value={challenge}
-              onChange={(e) => setChallenge(e.target.value)}
-              placeholder={t.onboarding.challengePlaceholder}
-              className="h-12 text-base"
-            />
+            <Select value={challenge} onValueChange={setChallenge}>
+              <SelectTrigger className="h-12 text-base" data-testid="select-challenge">
+                <SelectValue placeholder={t.onboarding.challengePlaceholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(t.onboarding.challengeOptions).map(([key, label]) => (
+                  <SelectItem key={key} value={key} data-testid={`option-challenge-${key}`}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         );
       case 4:

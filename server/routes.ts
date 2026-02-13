@@ -13,6 +13,17 @@ const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
+const profileLabels: Record<string, Record<string, string>> = {
+  role: { manager: "Manager / Team Lead", executive: "Executive / Director", entrepreneur: "Entrepreneur / Founder", consultant: "Consultant / Advisor", specialist: "Specialist / Analyst", creative: "Creative Professional", educator: "Educator / Trainer", student: "Student / Learner", other: "Other" },
+  industry: { technology: "Technology / IT", healthcare: "Healthcare / Pharma", finance: "Finance / Banking", education: "Education / Training", marketing: "Marketing / Advertising", retail: "Retail / E-commerce", manufacturing: "Manufacturing / Engineering", media: "Media / Entertainment", consulting: "Consulting / Professional Services", nonprofit: "Non-profit / Government", other: "Other" },
+  goal: { ai_basics: "Understand AI fundamentals", ai_productivity: "Use AI to boost productivity", communication: "Improve communication skills", leadership: "Develop leadership abilities", career_growth: "Accelerate career growth", team_management: "Better team management", innovation: "Drive innovation", stay_current: "Stay current with trends" },
+  challenge: { time: "Finding time to learn", overwhelm: "Too much information", practical: "Turning knowledge into practice", keeping_up: "Keeping up with rapid changes", confidence: "Building confidence in new skills", team_adoption: "Getting team to adopt new approaches", measuring: "Measuring progress and impact", starting: "Not sure where to start" },
+};
+
+function getProfileLabel(field: string, key: string): string {
+  return profileLabels[field]?.[key] || key || "Not specified";
+}
+
 async function findBestAnswer(topic: string, question: string, language: string = "en", profile?: UserProfile | null, topicExp?: TopicExperience | null): Promise<{ answer: string; found: boolean; link?: string }> {
   const contentItems = await storage.getContentByTopic(topic);
 
@@ -69,11 +80,11 @@ RULES:
 ${isPt ? '- IMPORTANT: Your answer MUST be written in Brazilian Portuguese (pt-BR). Translate the key takeaway into natural Portuguese. Keep expert/source names unchanged.' : ''}
 ${profile && profile.completedOnboarding ? `
 USER PROFILE (use this to tailor HOW you phrase your answer, but NEVER invent content):
-- Role: ${profile.role || 'Not specified'}
-- Industry: ${profile.industry || 'Not specified'}
+- Role: ${getProfileLabel('role', profile.role || '')}
+- Industry: ${getProfileLabel('industry', profile.industry || '')}
 - Experience level for this topic: ${topicExp?.experience || 'Not specified'}
-- Learning goal: ${profile.goal || 'Not specified'}
-- Main challenge: ${profile.challenge || 'Not specified'}
+- Learning goal: ${getProfileLabel('goal', profile.goal || '')}
+- Main challenge: ${getProfileLabel('challenge', profile.challenge || '')}
 - Learning preference: ${profile.learningPreference === 'quick_tips' ? 'Quick tips & key takeaways — keep it brief and actionable' : profile.learningPreference === 'step_by_step' ? 'Step-by-step explanations — break down the concept clearly' : profile.learningPreference === 'examples' ? 'Real-world examples & case studies — illustrate with practical scenarios' : 'Not specified'}
 
 MICROLEARNING FORMAT: Keep your answer concise and focused — one key insight at a time. Do NOT create a long study plan. Deliver a single, digestible piece of knowledge that matches the user's learning preference. Adjust complexity based on their experience level for this topic.

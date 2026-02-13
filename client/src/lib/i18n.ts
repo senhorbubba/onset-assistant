@@ -91,17 +91,61 @@ export const translations = {
       finish: "Finish",
       skip: "Skip for now",
       roleQuestion: "What best describes your role?",
-      rolePlaceholder: "e.g. Marketing Manager, Developer, Entrepreneur",
+      rolePlaceholder: "Select your role",
+      roleOptions: {
+        manager: "Manager / Team Lead",
+        executive: "Executive / Director",
+        entrepreneur: "Entrepreneur / Founder",
+        consultant: "Consultant / Advisor",
+        specialist: "Specialist / Analyst",
+        creative: "Creative Professional",
+        educator: "Educator / Trainer",
+        student: "Student / Learner",
+        other: "Other",
+      },
       industryQuestion: "What industry do you work in?",
-      industryPlaceholder: "e.g. Technology, Healthcare, Education",
+      industryPlaceholder: "Select your industry",
+      industryOptions: {
+        technology: "Technology / IT",
+        healthcare: "Healthcare / Pharma",
+        finance: "Finance / Banking",
+        education: "Education / Training",
+        marketing: "Marketing / Advertising",
+        retail: "Retail / E-commerce",
+        manufacturing: "Manufacturing / Engineering",
+        media: "Media / Entertainment",
+        consulting: "Consulting / Professional Services",
+        nonprofit: "Non-profit / Government",
+        other: "Other",
+      },
       experienceQuestion: "What's your experience level?",
       experienceBeginner: "Beginner",
       experienceIntermediate: "Intermediate",
       experienceAdvanced: "Advanced",
       goalQuestion: "What's your main learning goal?",
-      goalPlaceholder: "e.g. Improve team communication, Learn AI basics",
+      goalPlaceholder: "Select your goal",
+      goalOptions: {
+        ai_basics: "Understand AI fundamentals",
+        ai_productivity: "Use AI to boost productivity",
+        communication: "Improve communication skills",
+        leadership: "Develop leadership abilities",
+        career_growth: "Accelerate career growth",
+        team_management: "Better team management",
+        innovation: "Drive innovation in my work",
+        stay_current: "Stay current with trends",
+      },
       challengeQuestion: "What's your biggest challenge right now?",
-      challengePlaceholder: "e.g. Keeping up with AI trends, Remote team management",
+      challengePlaceholder: "Select your challenge",
+      challengeOptions: {
+        time: "Finding time to learn",
+        overwhelm: "Too much information, hard to filter",
+        practical: "Turning knowledge into practice",
+        keeping_up: "Keeping up with rapid changes",
+        confidence: "Building confidence in new skills",
+        team_adoption: "Getting my team to adopt new approaches",
+        measuring: "Measuring progress and impact",
+        starting: "Not sure where to start",
+      },
       learningPreferenceQuestion: "How do you prefer to learn?",
       learningQuickTips: "Quick tips & key takeaways",
       learningStepByStep: "Step-by-step explanations",
@@ -237,17 +281,61 @@ export const translations = {
       finish: "Finalizar",
       skip: "Pular por enquanto",
       roleQuestion: "O que melhor descreve sua função?",
-      rolePlaceholder: "ex: Gerente de Marketing, Desenvolvedor, Empreendedor",
+      rolePlaceholder: "Selecione sua função",
+      roleOptions: {
+        manager: "Gerente / Líder de Equipe",
+        executive: "Executivo / Diretor",
+        entrepreneur: "Empreendedor / Fundador",
+        consultant: "Consultor / Assessor",
+        specialist: "Especialista / Analista",
+        creative: "Profissional Criativo",
+        educator: "Educador / Treinador",
+        student: "Estudante / Aprendiz",
+        other: "Outro",
+      },
       industryQuestion: "Em qual setor você trabalha?",
-      industryPlaceholder: "ex: Tecnologia, Saúde, Educação",
+      industryPlaceholder: "Selecione seu setor",
+      industryOptions: {
+        technology: "Tecnologia / TI",
+        healthcare: "Saúde / Farmacêutica",
+        finance: "Finanças / Bancos",
+        education: "Educação / Treinamento",
+        marketing: "Marketing / Publicidade",
+        retail: "Varejo / E-commerce",
+        manufacturing: "Manufatura / Engenharia",
+        media: "Mídia / Entretenimento",
+        consulting: "Consultoria / Serviços Profissionais",
+        nonprofit: "Terceiro Setor / Governo",
+        other: "Outro",
+      },
       experienceQuestion: "Qual seu nível de experiência?",
       experienceBeginner: "Iniciante",
       experienceIntermediate: "Intermediário",
       experienceAdvanced: "Avançado",
       goalQuestion: "Qual seu principal objetivo de aprendizado?",
-      goalPlaceholder: "ex: Melhorar comunicação da equipe, Aprender fundamentos de IA",
+      goalPlaceholder: "Selecione seu objetivo",
+      goalOptions: {
+        ai_basics: "Entender fundamentos de IA",
+        ai_productivity: "Usar IA para aumentar produtividade",
+        communication: "Melhorar habilidades de comunicação",
+        leadership: "Desenvolver habilidades de liderança",
+        career_growth: "Acelerar crescimento na carreira",
+        team_management: "Melhorar gestão de equipe",
+        innovation: "Impulsionar inovação no trabalho",
+        stay_current: "Manter-se atualizado com tendências",
+      },
       challengeQuestion: "Qual seu maior desafio atualmente?",
-      challengePlaceholder: "ex: Acompanhar tendências de IA, Gestão de equipe remota",
+      challengePlaceholder: "Selecione seu desafio",
+      challengeOptions: {
+        time: "Encontrar tempo para aprender",
+        overwhelm: "Muita informação, difícil filtrar",
+        practical: "Transformar conhecimento em prática",
+        keeping_up: "Acompanhar mudanças rápidas",
+        confidence: "Construir confiança em novas habilidades",
+        team_adoption: "Engajar equipe em novas abordagens",
+        measuring: "Medir progresso e impacto",
+        starting: "Não sei por onde começar",
+      },
       learningPreferenceQuestion: "Como você prefere aprender?",
       learningQuickTips: "Dicas rápidas e pontos-chave",
       learningStepByStep: "Explicações passo a passo",
@@ -384,16 +472,20 @@ export interface Translations {
     skip: string;
     roleQuestion: string;
     rolePlaceholder: string;
+    roleOptions: Record<string, string>;
     industryQuestion: string;
     industryPlaceholder: string;
+    industryOptions: Record<string, string>;
     experienceQuestion: string;
     experienceBeginner: string;
     experienceIntermediate: string;
     experienceAdvanced: string;
     goalQuestion: string;
     goalPlaceholder: string;
+    goalOptions: Record<string, string>;
     challengeQuestion: string;
     challengePlaceholder: string;
+    challengeOptions: Record<string, string>;
     learningPreferenceQuestion: string;
     learningQuickTips: string;
     learningStepByStep: string;
