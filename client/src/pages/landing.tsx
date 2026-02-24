@@ -282,7 +282,12 @@ export default function Landing() {
 
       <section className="min-h-[calc(100dvh-57px)] sm:min-h-0 sm:py-24 lg:py-32 bg-white flex items-center">
         <div className="max-w-6xl mx-auto px-6 sm:px-8 text-center w-full">
-          <p className="text-xs sm:text-sm text-muted-foreground tracking-wide uppercase mb-4 sm:mb-5 max-w-[200px] sm:max-w-none mx-auto">{t.hero.badge}</p>
+          <div className="mb-6 sm:mb-8">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary text-[11px] sm:text-xs font-medium tracking-wide">
+              <Sparkles className="w-3 h-3" />
+              {t.hero.badge}
+            </span>
+          </div>
           <h1
             className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-display leading-tight mb-5 sm:mb-6"
             data-testid="text-hero-title"
