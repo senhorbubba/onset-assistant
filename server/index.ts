@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes, seedDatabase } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { runMigrations } from "./db";
 
 const app = express();
 const httpServer = createServer(app);
@@ -60,6 +61,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  await runMigrations();
   await registerRoutes(httpServer, app);
   await seedDatabase();
 
