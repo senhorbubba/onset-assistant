@@ -24,6 +24,8 @@ import {
   FileText,
   Code2,
   MessageCircle,
+  Menu,
+  X,
 } from "lucide-react";
 import onsetLogo from "@assets/onset_logo.png";
 
@@ -214,6 +216,7 @@ const iconMap: Record<string, any> = {
 export default function Landing() {
   const { language, setLanguage } = useLanguage();
   const t = landingText[language] || landingText.en;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-foreground">
@@ -245,8 +248,22 @@ export default function Landing() {
                 {t.nav.tryIt}
               </Button>
             </Link>
+            <button
+              className="md:hidden p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-slate-100 transition-colors"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              data-testid="button-mobile-menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-slate-100 bg-white px-4 py-3 flex flex-col gap-3">
+            <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1" data-testid="link-features-mobile">{t.nav.features}</a>
+            <a href="#use-cases" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1" data-testid="link-use-cases-mobile">{t.nav.useCases}</a>
+            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1" data-testid="link-how-it-works-mobile">{t.nav.howItWorks}</a>
+          </div>
+        )}
       </nav>
 
       <section className="py-16 sm:py-24 lg:py-32 bg-white">
