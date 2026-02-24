@@ -39,7 +39,8 @@ const landingText = {
       tryIt: "Try It Free",
     },
     hero: {
-      badge: "AI-Powered Knowledge. Human-Curated Truth.",
+      badgeLine1: "AI-Powered Knowledge.",
+      badgeLine2: "Human-Curated Truth.",
       title: "Learning that adapts to",
       titleHighlight: "you.",
       subtitle:
@@ -121,7 +122,8 @@ const landingText = {
       tryIt: "Teste Grátis",
     },
     hero: {
-      badge: "Conhecimento com IA. Verdade curada por humanos.",
+      badgeLine1: "Conhecimento com IA.",
+      badgeLine2: "Verdade curada por humanos.",
       title: "Aprendizado que se adapta a",
       titleHighlight: "você.",
       subtitle:
@@ -282,10 +284,13 @@ export default function Landing() {
 
       <section className="min-h-[calc(100dvh-57px)] sm:min-h-0 sm:py-24 lg:py-32 bg-white flex items-center">
         <div className="max-w-6xl mx-auto px-6 sm:px-8 text-center w-full">
-          <div className="mb-6 sm:mb-8">
+          <div className="mb-6 sm:mb-8 flex flex-col items-center gap-1.5">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary text-[11px] sm:text-xs font-medium tracking-wide">
               <Sparkles className="w-3 h-3" />
-              {t.hero.badge}
+              {t.hero.badgeLine1}
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary text-[11px] sm:text-xs font-medium tracking-wide">
+              {t.hero.badgeLine2}
             </span>
           </div>
           <h1
