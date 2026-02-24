@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/lib/language-context";
 import { ArrowRight, ArrowLeft, Sparkles, User, Building2, Target, HelpCircle, GraduationCap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import onsetLogo from "@assets/onset_logo_final.png";
+import onsetLogo from "@assets/onset_logo.png";
 
 const TOTAL_STEPS = 5;
 

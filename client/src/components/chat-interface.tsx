@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import onsetLogo from "@assets/onset_logo_final.png";
+import onsetLogo from "@assets/onset_logo.png";
 
 interface Message {
   id: string;

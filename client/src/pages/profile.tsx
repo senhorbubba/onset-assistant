@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Save, Loader2, MessageSquare, BookOpen, CheckCircle, Clock, LogOut, Settings, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import onsetLogo from "@assets/onset_logo_final.png";
+import onsetLogo from "@assets/onset_logo.png";
 
 export default function Profile() {
   const { t } = useLanguage();

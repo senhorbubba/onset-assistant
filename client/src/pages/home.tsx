@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTopics } from "@/hooks/use-content";
-import onsetLogo from "@assets/onset_logo_final.png";
+import onsetLogo from "@assets/onset_logo.png";
 
 export default function Home() {
   const [topic, setTopic] = useState<string>("");

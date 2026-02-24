@@ -25,7 +25,7 @@ import {
   Code2,
   MessageCircle,
 } from "lucide-react";
-import onsetLogo from "@assets/onset_logo_final.png";
+import onsetLogo from "@assets/onset_logo.png";
 
 
 const landingText = {
