@@ -70,156 +70,136 @@ async function findBestAnswer(
     return entry;
   }).join('\n\n');
 
-  const subtopicList = contentItems.map((item, i) =>
-    `- ${item.subtopic}${item.difficulty ? ` (${item.difficulty})` : ''}`
+  const subtopicList = contentItems.map((item) =>
+    `• ${item.subtopic}${item.difficulty ? ` (${item.difficulty})` : ''}`
   ).join('\n');
 
   try {
     const profileContext = profile && profile.completedOnboarding ? `
-USER PROFILE (use this to tailor HOW you phrase your answer, but NEVER invent content):
-- Role: ${getProfileLabel('role', profile.role || '')}
-- Industry: ${getProfileLabel('industry', profile.industry || '')}
-- Experience level for this topic: ${topicExp?.experience || 'Not specified'}
-- Learning goal: ${getProfileLabel('goal', profile.goal || '')}
-- Main challenge: ${getProfileLabel('challenge', profile.challenge || '')}
-- Learning preference: ${profile.learningPreference === 'quick_tips' ? 'Quick tips & key takeaways — keep it brief and actionable' : profile.learningPreference === 'step_by_step' ? 'Step-by-step explanations — break down the concept clearly' : profile.learningPreference === 'examples' ? 'Real-world examples & case studies — illustrate with practical scenarios' : 'Not specified'}` : '';
+User: ${getProfileLabel('role', profile.role || '')} in ${getProfileLabel('industry', profile.industry || '')}. Experience: ${topicExp?.experience || 'unknown'}. Preference: ${profile.learningPreference === 'quick_tips' ? 'brief tips' : profile.learningPreference === 'step_by_step' ? 'step-by-step' : profile.learningPreference === 'examples' ? 'real-world examples' : 'general'}.` : '';
 
-    const systemPrompt = `You are "onset. Assistant", a friendly and conversational knowledge base assistant for the topic "${topic}". You help users learn from a curated knowledge base. You NEVER invent information — you ONLY use what's in the knowledge base below.
+    // PHASE 1: Classify intent and find matching entry using lightweight prompt
+    const classifyPrompt = `You are a learning coach for "${topic}". You have ${contentItems.length} learning entries available.
 
-YOUR BEHAVIOR — classify each user message into one of these categories and respond accordingly:
+Given the user's message and conversation history, respond with ONE of these:
+- MATCH:[number] — if the question specifically relates to one of the entries below. Use the entry number.
+- EXPLORE — if the question is general, broad, or the user is exploring (e.g. "help me improve", "what can I learn", "I want to be better at...").
+- PLAN — if the user asks for a learning plan or says "yes" to a suggestion.
+- OFF_TOPIC — if unrelated to "${topic}".
+- NOT_FOUND — if it's specifically about "${topic}" but no entry covers it.
 
-**CATEGORY 1: SPECIFIC QUESTION** — The user asks something specific that clearly matches one or more entries in the knowledge base.
-→ Find the best matching entry. Respond with:
-  MATCH:[index_number]
-  [Rephrase the key takeaway naturally, tailored to the user's question. Use ONLY info from the matched entry.]
+Respond with ONLY the classification tag, nothing else.
+${isPt ? 'The user may write in Portuguese.' : ''}
 
-**CATEGORY 2: GENERAL / EXPLORATORY** — The user asks a broad or vague question, seems unsure what to learn, asks "what can I learn?", "tell me about...", "I want to improve...", or is exploring the topic.
-→ Do NOT just say NOT_FOUND. Instead, engage the user conversationally:
-  - Acknowledge their interest
-  - Ask 1-2 clarifying questions to understand what they're looking for
-  - Suggest relevant subtopics from the knowledge base that might interest them
-  - Offer to create a learning path based on available content
-→ Respond with:
-  EXPLORE
-  [Your conversational response — ask what aspect interests them, suggest subtopics, offer a learning plan. Be warm and helpful.]
+ENTRIES:
+${contentItems.map((item, i) => `[${i}] ${item.subtopic} — Keywords: ${item.keywords || 'none'}`).join('\n')}`;
 
-**CATEGORY 3: LEARNING PLAN REQUEST** — The user agrees to a learning plan, or says "yes" to your suggestion, or asks to see available topics/content.
-→ Present a structured learning path using the available subtopics from the knowledge base. Group by difficulty if possible. Be practical and brief.
-→ Respond with:
-  PLAN
-  [Your learning plan using ONLY subtopics from the knowledge base. Organize logically.]
-
-**CATEGORY 4: OFF-TOPIC** — The question has nothing to do with "${topic}" or any content in the knowledge base.
-→ Respond with:
-  OFF_TOPIC
-  [Politely explain that this question is outside the "${topic}" knowledge base. Suggest what topics are available.]
-
-**CATEGORY 5: NO MATCH** — The question IS about "${topic}" and is specific enough, but no entry in the knowledge base covers it.
-→ Respond with:
-  NOT_FOUND
-  [Explain that the knowledge base doesn't cover this specific aspect yet, and that a human will review the question.]
-
-RULES:
-- NEVER invent facts, data, or advice from your own knowledge. ONLY use the knowledge base.
-- When suggesting subtopics or creating plans, use the actual subtopics listed in the knowledge base.
-- Be conversational, warm, and helpful — not robotic.
-- Pay attention to conversation history to understand context (e.g., if user says "yes" after you offered a plan).
-- The [index_number] in MATCH must correspond to the [N] prefix of the entry.
-${isPt ? '- IMPORTANT: Your ENTIRE response MUST be written in Brazilian Portuguese (pt-BR).' : ''}
-${profileContext}
-${profileContext ? '\nMICROLEARNING FORMAT: When giving a direct answer (MATCH), keep it concise — one key insight. Tailor to the user\'s learning preference and experience level. But ONLY use information from the knowledge base.' : ''}
-
-AVAILABLE SUBTOPICS in "${topic}":
-${subtopicList}
-
-FULL KNOWLEDGE BASE for "${topic}":
-${contentContext}`;
-
-    const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
-      { role: "system", content: systemPrompt }
+    const classifyMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+      { role: "system", content: classifyPrompt }
     ];
 
     if (history && history.length > 0) {
-      const recentHistory = history.slice(-10);
+      const recentHistory = history.slice(-6);
       for (const msg of recentHistory) {
-        messages.push({
+        classifyMessages.push({
           role: msg.role === "user" ? "user" : "assistant",
           content: msg.content,
         });
       }
     }
+    classifyMessages.push({ role: "user", content: question });
 
-    messages.push({ role: "user", content: question });
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-5-nano",
-      messages,
-      max_completion_tokens: 800,
+    const classifyResponse = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: classifyMessages,
+      max_completion_tokens: 50,
     });
 
-    const aiAnswer = response.choices[0]?.message?.content?.trim() || "";
+    const classification = classifyResponse.choices[0]?.message?.content?.trim() || "";
 
-    if (!aiAnswer) {
-      return fallbackKeywordMatch(contentItems, question);
-    }
+    // PHASE 2: Generate response based on classification
+    const matchResult = classification.match(/MATCH:\[?(\d+)\]?/);
 
-    const categoryMatch = aiAnswer.match(/^(MATCH|EXPLORE|PLAN|OFF_TOPIC|NOT_FOUND)\b/);
-    const category = categoryMatch ? categoryMatch[1] : null;
+    if (matchResult) {
+      const matchedIdx = parseInt(matchResult[1], 10);
+      if (matchedIdx >= 0 && matchedIdx < contentItems.length) {
+        const entry = contentItems[matchedIdx];
+        const answerPrompt = `You are "onset. Assistant", a friendly learning coach. Answer the user's question using ONLY the information from this knowledge base entry. Be concise and natural. One key insight.
+${isPt ? 'Respond in Brazilian Portuguese.' : ''}
+${profileContext}
 
-    if (category === "NOT_FOUND") {
-      const cleanMsg = aiAnswer.replace(/^NOT_FOUND\s*\n?/, '').trim();
-      return { answer: cleanMsg || "", found: false };
-    }
+Entry: ${entry.subtopic}
+Context: ${entry.searchContext || ''}
+Key Takeaway: ${entry.keyTakeaway || ''}
+Difficulty: ${entry.difficulty || ''}
+Use Case: ${entry.useCase || ''}`;
 
-    if (category === "OFF_TOPIC") {
-      const cleanMsg = aiAnswer.replace(/^OFF_TOPIC\s*\n?/, '').trim();
-      return {
-        answer: cleanMsg || (isPt
-          ? `Essa pergunta está fora do escopo da nossa base de conhecimento sobre "${topic}". Posso ajudar com os subtópicos disponíveis — gostaria de ver o que temos?`
-          : `That question is outside the scope of our "${topic}" knowledge base. I can help with the available subtopics — would you like to see what we have?`),
-        found: true,
-      };
-    }
-
-    if (category === "EXPLORE") {
-      const cleanMsg = aiAnswer.replace(/^EXPLORE\s*\n?/, '').trim();
-      return { answer: cleanMsg, found: true };
-    }
-
-    if (category === "PLAN") {
-      const cleanMsg = aiAnswer.replace(/^PLAN\s*\n?/, '').trim();
-      return { answer: cleanMsg, found: true };
-    }
-
-    if (category === "MATCH") {
-      const matchIndexResult = aiAnswer.match(/MATCH:\[?(\d+)\]?/);
-      let link: string | undefined;
-      let cleanAnswer = aiAnswer;
-      let matchedIdx = -1;
-
-      if (matchIndexResult) {
-        matchedIdx = parseInt(matchIndexResult[1], 10);
-        if (matchedIdx >= 0 && matchedIdx < contentItems.length) {
-          if (contentItems[matchedIdx].timestampLink) {
-            link = contentItems[matchedIdx].timestampLink!;
+        const answerMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+          { role: "system", content: answerPrompt }
+        ];
+        if (history && history.length > 0) {
+          for (const msg of history.slice(-4)) {
+            answerMessages.push({ role: msg.role === "user" ? "user" : "assistant", content: msg.content });
           }
         }
-        cleanAnswer = aiAnswer.replace(/MATCH:\[?\d+\]?\s*\n?/, '').trim();
-      }
+        answerMessages.push({ role: "user", content: question });
 
-      if (!cleanAnswer && matchedIdx >= 0 && matchedIdx < contentItems.length) {
-        const matched = contentItems[matchedIdx];
-        cleanAnswer = matched.keyTakeaway || matched.subtopic;
-      }
+        const answerResponse = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: answerMessages,
+          max_completion_tokens: 500,
+        });
 
-      if (!cleanAnswer) {
-        return { answer: "", found: false };
+        const answer = answerResponse.choices[0]?.message?.content?.trim() || entry.keyTakeaway || entry.subtopic;
+        return { answer, found: true, link: entry.timestampLink || undefined };
       }
-
-      return { answer: cleanAnswer, found: true, link };
     }
 
-    return { answer: "", found: false };
+    if (classification.startsWith("EXPLORE") || classification.startsWith("PLAN")) {
+      const isplan = classification.startsWith("PLAN");
+      const guidePrompt = `You are "onset. Assistant", a warm learning coach for "${topic}".
+${isplan ? 'The user wants a learning plan.' : 'The user asked a general question. Engage them conversationally — acknowledge their interest, ask what aspect they want to focus on, and suggest 2-3 relevant subtopics from the list.'}
+Use ONLY these subtopics (do not invent others):
+${subtopicList}
+${isplan ? 'Organize by difficulty: Beginner → Intermediate → Advanced. Be practical and brief.' : 'Be warm and encouraging. Ask 1-2 clarifying questions.'}
+${isPt ? 'Respond in Brazilian Portuguese.' : ''}
+${profileContext}`;
+
+      const guideMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+        { role: "system", content: guidePrompt }
+      ];
+      if (history && history.length > 0) {
+        for (const msg of history.slice(-6)) {
+          guideMessages.push({ role: msg.role === "user" ? "user" : "assistant", content: msg.content });
+        }
+      }
+      guideMessages.push({ role: "user", content: question });
+
+      const guideResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: guideMessages,
+        max_completion_tokens: 600,
+      });
+
+      const guideAnswer = guideResponse.choices[0]?.message?.content?.trim() || "";
+      if (guideAnswer) {
+        return { answer: guideAnswer, found: true };
+      }
+    }
+
+    if (classification.startsWith("OFF_TOPIC")) {
+      const offTopicMsg = isPt
+        ? `Essa pergunta está fora do escopo da nossa base sobre "${topic}". Posso te ajudar com temas como feedback, empatia, comunicação assertiva e mais. O que te interessa?`
+        : `That question is outside our "${topic}" knowledge base. I can help with topics like feedback, empathy, assertive communication, and more. What interests you?`;
+      return { answer: offTopicMsg, found: true };
+    }
+
+    if (classification.startsWith("NOT_FOUND")) {
+      return { answer: "", found: false };
+    }
+
+    // Fallback: if classification didn't match any pattern, try keyword match
+    return fallbackKeywordMatch(contentItems, question);
   } catch (error) {
     console.error("OpenAI error, falling back to keyword matching:", error);
     return fallbackKeywordMatch(contentItems, question);

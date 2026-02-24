@@ -1,13 +1,15 @@
 # onset. Assistant - Knowledge Base Chatbot
 
 ## Overview
-A chatbot web application branded "onset. Assistant" that answers user questions based on curated JSON file uploads (one per topic). Users choose from dynamically available topics based on uploaded files, provide their experience level for that specific topic, and receive personalized microlearning responses. The bot uses OpenAI (gpt-5-nano) for intelligent answer matching against the knowledge base, with fallback to keyword matching. Unanswered questions are logged for curator review. The bot never invents answers - if there's no genuine match, it says it doesn't know.
+A chatbot web application branded "onset. Assistant" that answers user questions based on curated JSON file uploads (one per topic). Users choose from dynamically available topics based on uploaded files, provide their experience level for that specific topic, and receive personalized microlearning responses. The bot uses OpenAI (gpt-4o-mini) with a two-phase conversational approach: Phase 1 classifies the user's intent (specific match, general/exploratory, learning plan, off-topic, not found), and Phase 2 generates a contextual response. For general questions the bot engages conversationally and suggests relevant subtopics; for specific questions it provides answers from the knowledge base with video links. Unanswered questions are logged for curator review. The bot never invents answers beyond the knowledge base.
 
 ## Current State
 - Dynamic topics based on uploaded JSON files (one file per topic)
 - Chat interface on the home page with dynamic topic selection
 - Admin panel at /admin to upload JSON files, visually inspect knowledge base per topic, and manage users
-- OpenAI-powered intelligent answer matching (gpt-5-nano via Replit AI Integrations)
+- Two-phase conversational AI (gpt-4o-mini via Replit AI Integrations): Phase 1 classifies intent, Phase 2 generates response
+- Conversational flow: general questions get guided exploration, specific questions get knowledge base answers with video links
+- Conversation history support (last 6 messages) for multi-turn dialogues
 - Database-backed content storage with JSON structure (Unit_ID, Subtopic, Search_Context, Keywords, Key_Takeaway, Difficulty, Use_Case, Timestamp_Link)
 - Multi-language support: English (en) and Brazilian Portuguese (pt-BR)
 - Auto-detects user region (browser locale) — defaults to Portuguese for pt* locales
@@ -27,7 +29,7 @@ A chatbot web application branded "onset. Assistant" that answers user questions
 - Frontend: React + Vite + Tailwind CSS + shadcn/ui
 - Backend: Express.js + Drizzle ORM + PostgreSQL
 - Auth: Replit Auth (OpenID Connect with Google, GitHub, email/password)
-- AI: OpenAI gpt-5-nano via Replit AI Integrations (no API key needed)
+- AI: OpenAI gpt-4o-mini via Replit AI Integrations (no API key needed)
 - Data source: JSON file uploads (one file per topic, uploaded via admin panel)
 
 ## Key Files
