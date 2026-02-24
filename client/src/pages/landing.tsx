@@ -22,6 +22,8 @@ import {
   Package,
   Building2,
   FileText,
+  Code2,
+  MessageCircle,
 } from "lucide-react";
 import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
 
@@ -98,6 +100,15 @@ const landingText = {
         { number: "03", title: "Personalized Answers", desc: "Responses adapt to each user's experience level, learning preference, and pace. Always sourced, never invented." },
       ],
     },
+    deploy: {
+      title: "Works where your users are",
+      subtitle: "Deploy onset. the way that fits your business.",
+      items: [
+        { icon: "code", title: "Embed in Your App", desc: "Drop the bot into your existing website, intranet, or platform. It blends right into your current interface." },
+        { icon: "globe", title: "Standalone Website", desc: "Launch a dedicated learning portal. Fully branded, ready to go. No development needed on your side." },
+        { icon: "messageCircle", title: "WhatsApp Bot", desc: "Meet users where they already are. Deliver the same curated learning experience through WhatsApp." },
+      ],
+    },
     cta: {
       title: "Ready to see it in action?",
       subtitle: "Try the onset. Assistant now. Ask anything from our demo knowledge base.",
@@ -171,6 +182,15 @@ const landingText = {
         { number: "03", title: "Respostas Personalizadas", desc: "Respostas se adaptam ao nivel de experiencia, preferencia de aprendizado e ritmo de cada usuario. Sempre com fonte, nunca inventadas." },
       ],
     },
+    deploy: {
+      title: "Funciona onde seus usuarios estao",
+      subtitle: "Implante o onset. do jeito que faz sentido para o seu negocio.",
+      items: [
+        { icon: "code", title: "Integre no Seu App", desc: "Adicione o bot ao seu site, intranet ou plataforma. Ele se integra naturalmente a sua interface atual." },
+        { icon: "globe", title: "Site Independente", desc: "Lance um portal de aprendizado dedicado. Totalmente personalizado, pronto para usar. Sem necessidade de desenvolvimento do seu lado." },
+        { icon: "messageCircle", title: "Bot no WhatsApp", desc: "Encontre seus usuarios onde eles ja estao. A mesma experiencia de aprendizado curado via WhatsApp." },
+      ],
+    },
     cta: {
       title: "Pronto para ver em acao?",
       subtitle: "Teste o onset. Assistant agora. Pergunte qualquer coisa da nossa base de conhecimento demo.",
@@ -192,6 +212,9 @@ const iconMap: Record<string, any> = {
   headphones: HeadphonesIcon,
   package: Package,
   building: Building2,
+  code: Code2,
+  messageCircle: MessageCircle,
+  globe: Globe,
   graduationCap: GraduationCap,
   fileText: FileText,
 };
@@ -383,6 +406,38 @@ export default function Landing() {
                 )}
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 sm:py-24 bg-slate-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-3" data-testid="text-deploy-title">{t.deploy.title}</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">{t.deploy.subtitle}</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {t.deploy.items.map((item, i) => {
+              const Icon = iconMap[item.icon] || Globe;
+              return (
+                <motion.div
+                  key={i}
+                  className="text-center p-8 rounded-2xl bg-white border border-slate-100 hover:shadow-lg hover:border-primary/20 transition-all duration-300"
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: "-50px" }}
+                  variants={fadeUp}
+                  custom={i}
+                  data-testid={`card-deploy-${i}`}
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
+                    <Icon className="w-7 h-7 text-primary" />
+                  </div>
+                  <h3 className="font-bold font-display text-lg mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
