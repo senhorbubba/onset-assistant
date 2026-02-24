@@ -226,8 +226,8 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-foreground overflow-x-hidden">
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100" data-testid="nav-landing">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 grid grid-cols-3 items-center">
-          <div className="flex items-center gap-2">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between md:grid md:grid-cols-3 md:justify-items-center">
+          <div className="flex items-center gap-2 md:justify-self-start">
             <img src={onsetLogo} alt="onset." className="w-8 h-8 rounded-lg" />
             <span className="text-lg font-bold font-display tracking-tight">onset.</span>
           </div>
@@ -236,7 +236,7 @@ export default function Landing() {
             <a href="#use-cases" className="hover:text-foreground transition-colors" data-testid="link-use-cases">{t.nav.useCases}</a>
             <a href="#how-it-works" className="hover:text-foreground transition-colors" data-testid="link-how-it-works">{t.nav.howItWorks}</a>
           </div>
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-2 md:justify-self-end">
             <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
               <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-xs sm:text-sm px-2" data-testid="select-language-landing">
                 <Globe className="w-3.5 h-3.5 shrink-0" />
@@ -467,12 +467,12 @@ export default function Landing() {
       </section>
 
       <footer className="py-8 bg-slate-900 text-slate-400">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col items-center gap-3 text-center">
           <div className="flex items-center gap-2">
             <img src={onsetLogo} alt="onset." className="w-6 h-6 rounded brightness-200" />
             <span className="text-sm font-medium text-white">onset.</span>
-            <span className="text-xs">{t.footer.tagline}</span>
           </div>
+          <p className="text-xs">{t.footer.tagline}</p>
           <p className="text-xs">&copy; {new Date().getFullYear()} onset. {t.footer.rights}</p>
         </div>
       </footer>
