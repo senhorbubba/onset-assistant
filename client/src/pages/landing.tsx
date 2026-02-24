@@ -47,7 +47,7 @@ const landingText = {
       title: "Learning that adapts to",
       titleHighlight: "you.",
       subtitle:
-        "onset. delivers personalized microlearning through AI — powered by expert-curated content, never hallucinated answers. Your team learns faster, retains more, and trusts every response.",
+        "onset. delivers personalized microlearning through AI, powered by expert-curated content. No hallucinated answers, no assumptions. Your team learns faster, retains more, and trusts every response.",
       cta: "Try the Assistant",
       ctaSub: "No sign-up required",
     },
@@ -63,12 +63,12 @@ const landingText = {
         {
           icon: "brain",
           title: "Adaptive Learning",
-          desc: "The bot adjusts to your pace, style, industry, seniority, and preferences — like a personal tutor.",
+          desc: "The bot adjusts to your pace, style, industry, seniority, and preferences. Like a personal tutor.",
         },
         {
           icon: "zap",
           title: "Microlearning Format",
-          desc: "One key insight at a time. Quick tips, step-by-step guides, or real-world examples — your choice.",
+          desc: "One key insight at a time. Quick tips, step-by-step guides, or real-world examples. You choose the format.",
         },
         {
           icon: "graduation",
@@ -93,14 +93,14 @@ const landingText = {
       title: "Simple. Powerful. Trustworthy.",
       subtitle: "Three steps to smarter learning.",
       steps: [
-        { number: "01", title: "Upload Your Content", desc: "Curators upload structured knowledge as JSON files — one per topic. The bot learns only what you teach it." },
+        { number: "01", title: "Upload Your Content", desc: "Curators upload structured knowledge, one file per topic. The bot learns only what you teach it." },
         { number: "02", title: "Users Ask Questions", desc: "Learners choose a topic and ask naturally. The AI understands context, not just keywords." },
         { number: "03", title: "Personalized Answers", desc: "Responses adapt to each user's experience level, learning preference, and pace. Always sourced, never invented." },
       ],
     },
     cta: {
       title: "Ready to see it in action?",
-      subtitle: "Try the onset. Assistant now — ask anything from our demo knowledge base.",
+      subtitle: "Try the onset. Assistant now. Ask anything from our demo knowledge base.",
       button: "Launch the Assistant",
     },
     footer: {
@@ -120,7 +120,7 @@ const landingText = {
       title: "Aprendizado que se adapta a",
       titleHighlight: "voce.",
       subtitle:
-        "onset. entrega microlearning personalizado com IA — baseado em conteudo curado por especialistas, nunca respostas inventadas. Sua equipe aprende mais rapido, retém mais e confia em cada resposta.",
+        "onset. entrega microlearning personalizado com IA, baseado em conteudo curado por especialistas. Sem respostas inventadas, sem suposicoes. Sua equipe aprende mais rapido, retém mais e confia em cada resposta.",
       cta: "Testar o Assistente",
       ctaSub: "Sem necessidade de cadastro",
     },
@@ -136,12 +136,12 @@ const landingText = {
         {
           icon: "brain",
           title: "Aprendizado Adaptativo",
-          desc: "O bot se ajusta ao seu ritmo, estilo, industria, senioridade e preferencias — como um tutor pessoal.",
+          desc: "O bot se ajusta ao seu ritmo, estilo, industria, senioridade e preferencias. Como um tutor pessoal.",
         },
         {
           icon: "zap",
           title: "Formato Microlearning",
-          desc: "Um insight por vez. Dicas rapidas, passo a passo ou exemplos praticos — voce escolhe.",
+          desc: "Um insight por vez. Dicas rapidas, passo a passo ou exemplos praticos. Voce escolhe o formato.",
         },
         {
           icon: "graduation",
@@ -166,14 +166,14 @@ const landingText = {
       title: "Simples. Poderoso. Confiavel.",
       subtitle: "Tres passos para um aprendizado mais inteligente.",
       steps: [
-        { number: "01", title: "Envie seu Conteudo", desc: "Curadores enviam conhecimento estruturado em arquivos JSON — um por topico. O bot aprende apenas o que voce ensina." },
+        { number: "01", title: "Envie seu Conteudo", desc: "Curadores enviam conhecimento estruturado, um arquivo por topico. O bot aprende apenas o que voce ensina." },
         { number: "02", title: "Usuarios Fazem Perguntas", desc: "Aprendizes escolhem um topico e perguntam naturalmente. A IA entende contexto, nao apenas palavras-chave." },
         { number: "03", title: "Respostas Personalizadas", desc: "Respostas se adaptam ao nivel de experiencia, preferencia de aprendizado e ritmo de cada usuario. Sempre com fonte, nunca inventadas." },
       ],
     },
     cta: {
       title: "Pronto para ver em acao?",
-      subtitle: "Teste o onset. Assistant agora — pergunte qualquer coisa da nossa base de conhecimento demo.",
+      subtitle: "Teste o onset. Assistant agora. Pergunte qualquer coisa da nossa base de conhecimento demo.",
       button: "Abrir o Assistente",
     },
     footer: {
