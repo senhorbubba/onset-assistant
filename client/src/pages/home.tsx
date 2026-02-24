@@ -250,16 +250,24 @@ export default function Home() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center text-center max-w-md mt-8 sm:mt-16"
+            className="flex flex-col items-center text-center max-w-2xl"
           >
-            <MessageSquareText className="w-10 h-10 sm:w-12 sm:h-12 text-primary mb-4" />
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-2xl bg-white shadow-xl shadow-slate-200/50 border border-slate-100 rotate-3">
+              <MessageSquareText className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
+            </div>
             
-            <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900 mb-2 tracking-tight">
-              {t.home.selectTopic}
+            <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold font-display text-slate-900 mb-4 sm:mb-6 tracking-tight leading-tight">
+              {t.home.heroTitle1}<br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
+                {t.home.heroTitle2}
+              </span>
             </h2>
             
-            <p className="text-sm text-slate-400 mb-6">
-              {t.home.verifiedByExperts}
+            <p className="text-base sm:text-lg md:text-xl text-slate-500 mb-3 sm:mb-4 max-w-lg leading-relaxed px-2">
+              {t.home.heroSubtitle}
+            </p>
+            <p className="text-sm sm:text-base text-slate-400 mb-6 sm:mb-10 max-w-lg leading-relaxed px-2">
+              {t.home.heroTagline}
             </p>
 
             <div className="w-full max-w-xs space-y-4 px-2">
@@ -284,6 +292,11 @@ export default function Home() {
                     {t.home.noTopicsYet}
                   </div>
                 )}
+              </div>
+              
+              <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-400">
+                <ShieldQuestion className="w-4 h-4 shrink-0" />
+                <span>{t.home.verifiedByExperts}</span>
               </div>
             </div>
           </motion.div>
