@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ChatInterface } from "@/components/chat-interface";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquareText, ShieldQuestion, ArrowRight, BookOpen, Zap, BrainCircuit, Globe, LogIn } from "lucide-react";
+import { MessageSquareText, ShieldQuestion, BookOpen, Zap, BrainCircuit, Globe, LogIn, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
@@ -10,6 +10,7 @@ import type { Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useTopics } from "@/hooks/use-content";
 import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
 
 export default function Home() {
@@ -17,6 +18,7 @@ export default function Home() {
   const { language, setLanguage, t } = useLanguage();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [, navigate] = useLocation();
+  const { data: topics, isLoading: topicsLoading } = useTopics();
 
   const { data: profile } = useQuery({
     queryKey: ["/api/profile"],
@@ -108,15 +110,26 @@ export default function Home() {
 
             <div className="w-full max-w-xs space-y-4 px-2">
               <div className="bg-white p-1 rounded-xl shadow-lg border border-slate-100">
-                <Select onValueChange={(val) => setTopic(val)}>
-                  <SelectTrigger className="w-full h-12 border-none bg-transparent focus:ring-0 text-base" data-testid="select-topic">
-                    <SelectValue placeholder={t.home.selectTopic} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="AI Skills">AI Skills</SelectItem>
-                    <SelectItem value="Communication">Communication</SelectItem>
-                  </SelectContent>
-                </Select>
+                {topicsLoading ? (
+                  <div className="flex items-center justify-center h-12">
+                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  </div>
+                ) : topics && topics.length > 0 ? (
+                  <Select onValueChange={(val) => setTopic(val)}>
+                    <SelectTrigger className="w-full h-12 border-none bg-transparent focus:ring-0 text-base" data-testid="select-topic">
+                      <SelectValue placeholder={t.home.selectTopic} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {topics.map((t) => (
+                        <SelectItem key={t} value={t} data-testid={`option-topic-${t}`}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="flex items-center justify-center h-12 text-sm text-muted-foreground">
+                    {t.home.noTopicsYet}
+                  </div>
+                )}
               </div>
               
               <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-400">

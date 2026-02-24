@@ -62,11 +62,15 @@ export type InsertChatHistory = z.infer<typeof insertChatHistorySchema>;
 
 export const content = pgTable("content", {
   id: serial("id").primaryKey(),
+  unitId: text("unit_id"),
   topic: text("topic").notNull(),
-  question: text("question").notNull(),
-  answer: text("answer").notNull(),
-  keywords: text("keywords").array(),
-  link: text("link"),
+  subtopic: text("subtopic").notNull(),
+  searchContext: text("search_context"),
+  keywords: text("keywords"),
+  keyTakeaway: text("key_takeaway"),
+  difficulty: text("difficulty"),
+  useCase: text("use_case"),
+  timestampLink: text("timestamp_link"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

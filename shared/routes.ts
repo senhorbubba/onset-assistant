@@ -33,10 +33,26 @@ export const api = {
       },
     },
   },
+  topics: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/topics' as const,
+      responses: {
+        200: z.array(z.string()),
+      },
+    },
+  },
   content: {
     list: {
       method: 'GET' as const,
       path: '/api/content' as const,
+      responses: {
+        200: z.array(z.custom<typeof content.$inferSelect>()),
+      },
+    },
+    byTopic: {
+      method: 'GET' as const,
+      path: '/api/content/:topic' as const,
       responses: {
         200: z.array(z.custom<typeof content.$inferSelect>()),
       },
@@ -50,6 +66,18 @@ export const api = {
         400: errorSchemas.validation,
       },
     },
+    upload: {
+      method: 'POST' as const,
+      path: '/api/content/upload' as const,
+      responses: {
+        200: z.object({
+          message: z.string(),
+          count: z.number(),
+          topic: z.string(),
+        }),
+        400: errorSchemas.validation,
+      },
+    },
   },
   unanswered: {
     list: {
@@ -60,22 +88,8 @@ export const api = {
       },
     },
   },
-  sync: {
-    trigger: {
-      method: 'POST' as const,
-      path: '/api/sync' as const,
-      responses: {
-        200: z.object({
-          message: z.string(),
-          count: z.number(),
-        }),
-        500: errorSchemas.internal,
-      },
-    },
-  },
 };
 
-// Type exports for frontend hooks
 export type ChatRequest = z.infer<typeof api.chat.ask.input>;
 export type ChatResponse = z.infer<typeof api.chat.ask.responses[200]>;
 export type { InsertContent } from './schema';

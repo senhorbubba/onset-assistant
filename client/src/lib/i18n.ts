@@ -11,6 +11,7 @@ export const translations = {
       heroSubtitle: "Select a topic and enter a guided learning session.",
       heroTagline: "Trusted insights. Practical application. Built for real business decisions.",
       selectTopic: "Select a topic to begin...",
+      noTopicsYet: "No topics available yet. Upload content in admin.",
       verifiedByExperts: "Responses verified by experts",
       chooseAnotherTopic: "Choose another topic",
       featureCurated: "Curated Knowledge",
@@ -34,54 +35,40 @@ export const translations = {
     admin: {
       dashboard: "Admin Dashboard",
       manageKB: "Manage knowledge base and review questions",
-      syncSheets: "Sync Sheets",
-      syncing: "Syncing...",
-      addContent: "Add Content",
+      uploadJSON: "Upload JSON",
+      uploading: "Uploading...",
+      uploadFailed: "Upload Failed",
+      uploadError: "Could not upload JSON file",
+      invalidFileType: "Please select a .json file",
       knowledgeBase: "Knowledge Base",
       unanswered: "Unanswered",
       contentLibrary: "Content Library",
-      contentDesc: "Current questions and answers in the database.",
+      contentDesc: "Knowledge base content organized by topic. Upload JSON files to add or replace topics.",
       unansweredQuestions: "Unanswered Questions",
       unansweredDesc: "Questions the bot couldn't answer. Review and add to knowledge base.",
       topic: "Topic",
-      question: "Question",
+      subtopic: "Subtopic",
       questionAsked: "Question Asked",
       keywords: "Keywords",
+      keyTakeaway: "Key Takeaway",
+      difficulty: "Difficulty",
       link: "Link",
-      status: "Status",
-      active: "Active",
+      entries: "entries",
       view: "View",
-      viewLink: "View link",
       date: "Date",
-      action: "Action",
-      answer: "Answer",
-      noContent: "No content found. Add some knowledge!",
-      allCaughtUp: "All caught up! No unanswered questions.",
-      syncComplete: "Sync Complete",
-      syncFailed: "Sync Failed",
-      syncError: "Could not sync from Google Sheets",
-      addKBItem: "Add Knowledge Base Item",
+      noContent: "No content found for this topic.",
+      noTopics: "No topics uploaded yet.",
+      uploadHint: "Upload a JSON file to create your first topic.",
       selectTopic: "Select topic",
-      questionPlaceholder: "e.g. What is a neural network?",
-      answerLabel: "Answer",
-      answerPlaceholder: "Enter the detailed answer...",
-      keywordsLabel: "Keywords (comma separated)",
-      keywordsPlaceholder: "neural, network, deep learning, AI",
-      keywordsHelp: "Used for matching user questions",
-      cancel: "Cancel",
-      createContent: "Create Content",
-      creating: "Creating...",
+      selectTopicHint: "Select a topic to inspect its knowledge base.",
+      allCaughtUp: "All caught up! No unanswered questions.",
       success: "Success",
-      contentCreated: "Content created successfully",
       error: "Error",
-      createFailed: "Failed to create content",
       users: "Users",
       usersTitle: "Registered Users",
       usersDesc: "All users who signed up and their question activity.",
       userName: "Name",
       userEmail: "Email",
-      aiSkillsQuestions: "AI Skills Qs",
-      communicationQuestions: "Communication Qs",
       registered: "Registered",
       exportExcel: "Export to Excel",
       exporting: "Exporting...",
@@ -213,6 +200,7 @@ export const translations = {
       heroSubtitle: "Selecione um tópico e entre em uma sessão de aprendizado guiada.",
       heroTagline: "Insights confiáveis. Aplicação prática. Feito para decisões reais de negócios.",
       selectTopic: "Selecione um tópico para começar...",
+      noTopicsYet: "Nenhum tópico disponível ainda. Faça upload no admin.",
       verifiedByExperts: "Respostas verificadas por especialistas",
       chooseAnotherTopic: "Escolher outro tópico",
       featureCurated: "Conhecimento Curado",
@@ -236,54 +224,40 @@ export const translations = {
     admin: {
       dashboard: "Painel Administrativo",
       manageKB: "Gerencie a base de conhecimento e revise perguntas",
-      syncSheets: "Sincronizar",
-      syncing: "Sincronizando...",
-      addContent: "Adicionar",
+      uploadJSON: "Upload JSON",
+      uploading: "Enviando...",
+      uploadFailed: "Falha no Upload",
+      uploadError: "Não foi possível enviar o arquivo JSON",
+      invalidFileType: "Por favor, selecione um arquivo .json",
       knowledgeBase: "Base de Conhecimento",
       unanswered: "Sem Resposta",
       contentLibrary: "Biblioteca de Conteúdo",
-      contentDesc: "Perguntas e respostas atuais no banco de dados.",
+      contentDesc: "Conteúdo da base de conhecimento organizado por tópico. Faça upload de arquivos JSON para adicionar ou substituir tópicos.",
       unansweredQuestions: "Perguntas Sem Resposta",
       unansweredDesc: "Perguntas que o bot não conseguiu responder. Revise e adicione à base.",
       topic: "Tópico",
-      question: "Pergunta",
+      subtopic: "Subtópico",
       questionAsked: "Pergunta Feita",
       keywords: "Palavras-chave",
+      keyTakeaway: "Ponto-chave",
+      difficulty: "Dificuldade",
       link: "Link",
-      status: "Status",
-      active: "Ativo",
+      entries: "registros",
       view: "Ver",
-      viewLink: "Ver link",
       date: "Data",
-      action: "Ação",
-      answer: "Responder",
-      noContent: "Nenhum conteúdo encontrado. Adicione conhecimento!",
-      allCaughtUp: "Tudo em dia! Nenhuma pergunta sem resposta.",
-      syncComplete: "Sincronização Completa",
-      syncFailed: "Falha na Sincronização",
-      syncError: "Não foi possível sincronizar com o Google Sheets",
-      addKBItem: "Adicionar Item à Base",
+      noContent: "Nenhum conteúdo encontrado para este tópico.",
+      noTopics: "Nenhum tópico enviado ainda.",
+      uploadHint: "Faça upload de um arquivo JSON para criar seu primeiro tópico.",
       selectTopic: "Selecione o tópico",
-      questionPlaceholder: "ex: O que é uma rede neural?",
-      answerLabel: "Resposta",
-      answerPlaceholder: "Digite a resposta detalhada...",
-      keywordsLabel: "Palavras-chave (separadas por vírgula)",
-      keywordsPlaceholder: "neural, rede, aprendizado, IA",
-      keywordsHelp: "Usadas para corresponder perguntas dos usuários",
-      cancel: "Cancelar",
-      createContent: "Criar Conteúdo",
-      creating: "Criando...",
+      selectTopicHint: "Selecione um tópico para inspecionar sua base de conhecimento.",
+      allCaughtUp: "Tudo em dia! Nenhuma pergunta sem resposta.",
       success: "Sucesso",
-      contentCreated: "Conteúdo criado com sucesso",
       error: "Erro",
-      createFailed: "Falha ao criar conteúdo",
       users: "Usuários",
       usersTitle: "Usuários Registrados",
       usersDesc: "Todos os usuários cadastrados e suas atividades de perguntas.",
       userName: "Nome",
       userEmail: "E-mail",
-      aiSkillsQuestions: "Perguntas AI Skills",
-      communicationQuestions: "Perguntas Communication",
       registered: "Registrado",
       exportExcel: "Exportar para Excel",
       exporting: "Exportando...",
@@ -415,6 +389,7 @@ export interface Translations {
     heroSubtitle: string;
     heroTagline: string;
     selectTopic: string;
+    noTopicsYet: string;
     verifiedByExperts: string;
     chooseAnotherTopic: string;
     featureCurated: string;
@@ -438,9 +413,11 @@ export interface Translations {
   admin: {
     dashboard: string;
     manageKB: string;
-    syncSheets: string;
-    syncing: string;
-    addContent: string;
+    uploadJSON: string;
+    uploading: string;
+    uploadFailed: string;
+    uploadError: string;
+    invalidFileType: string;
     knowledgeBase: string;
     unanswered: string;
     contentLibrary: string;
@@ -448,44 +425,28 @@ export interface Translations {
     unansweredQuestions: string;
     unansweredDesc: string;
     topic: string;
-    question: string;
+    subtopic: string;
     questionAsked: string;
     keywords: string;
+    keyTakeaway: string;
+    difficulty: string;
     link: string;
-    status: string;
-    active: string;
+    entries: string;
     view: string;
-    viewLink: string;
     date: string;
-    action: string;
-    answer: string;
     noContent: string;
-    allCaughtUp: string;
-    syncComplete: string;
-    syncFailed: string;
-    syncError: string;
-    addKBItem: string;
+    noTopics: string;
+    uploadHint: string;
     selectTopic: string;
-    questionPlaceholder: string;
-    answerLabel: string;
-    answerPlaceholder: string;
-    keywordsLabel: string;
-    keywordsPlaceholder: string;
-    keywordsHelp: string;
-    cancel: string;
-    createContent: string;
-    creating: string;
+    selectTopicHint: string;
+    allCaughtUp: string;
     success: string;
-    contentCreated: string;
     error: string;
-    createFailed: string;
     users: string;
     usersTitle: string;
     usersDesc: string;
     userName: string;
     userEmail: string;
-    aiSkillsQuestions: string;
-    communicationQuestions: string;
     registered: string;
     exportExcel: string;
     exporting: string;

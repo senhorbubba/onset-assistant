@@ -22,7 +22,9 @@ import { eq, and, desc, sql, count } from "drizzle-orm";
 export interface IStorage {
   getAllContent(): Promise<Content[]>;
   getContentByTopic(topic: string): Promise<Content[]>;
+  getAvailableTopics(): Promise<string[]>;
   createContent(item: InsertContent): Promise<Content>;
+  clearContentByTopic(topic: string): Promise<void>;
   clearAllContent(): Promise<void>;
   bulkCreateContent(items: InsertContent[]): Promise<void>;
   logUnansweredQuestion(item: InsertUnansweredQuestion): Promise<UnansweredQuestion>;
@@ -40,8 +42,7 @@ export interface IStorage {
     firstName: string | null;
     lastName: string | null;
     createdAt: Date | null;
-    aiSkillsCount: number;
-    communicationCount: number;
+    questionCounts: Record<string, number>;
   }>>;
 }
 
@@ -54,9 +55,21 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(content).where(eq(content.topic, topic));
   }
 
+  async getAvailableTopics(): Promise<string[]> {
+    const results = await db
+      .selectDistinct({ topic: content.topic })
+      .from(content)
+      .orderBy(content.topic);
+    return results.map(r => r.topic);
+  }
+
   async createContent(item: InsertContent): Promise<Content> {
     const [newItem] = await db.insert(content).values(item).returning();
     return newItem;
+  }
+
+  async clearContentByTopic(topic: string): Promise<void> {
+    await db.delete(content).where(eq(content.topic, topic));
   }
 
   async clearAllContent(): Promise<void> {
@@ -146,24 +159,27 @@ export class DatabaseStorage implements IStorage {
     firstName: string | null;
     lastName: string | null;
     createdAt: Date | null;
-    aiSkillsCount: number;
-    communicationCount: number;
+    questionCounts: Record<string, number>;
   }>> {
-    const results = await db.execute(sql`
-      SELECT
-        u.id,
-        u.email,
-        u.first_name AS "firstName",
-        u.last_name AS "lastName",
-        u.created_at AS "createdAt",
-        COALESCE(SUM(CASE WHEN ch.topic = 'AI Skills' THEN 1 ELSE 0 END), 0)::int AS "aiSkillsCount",
-        COALESCE(SUM(CASE WHEN ch.topic = 'Communication' THEN 1 ELSE 0 END), 0)::int AS "communicationCount"
-      FROM users u
-      LEFT JOIN chat_history ch ON ch.user_id = u.id
-      GROUP BY u.id, u.email, u.first_name, u.last_name, u.created_at
-      ORDER BY u.created_at DESC
+    const allUsers = await db.select().from(users).orderBy(desc(users.createdAt));
+    const topicCounts = await db.execute(sql`
+      SELECT user_id, topic, COUNT(*)::int as cnt
+      FROM chat_history
+      GROUP BY user_id, topic
     `);
-    return results.rows as any;
+    const countMap: Record<string, Record<string, number>> = {};
+    for (const row of topicCounts.rows as any[]) {
+      if (!countMap[row.user_id]) countMap[row.user_id] = {};
+      countMap[row.user_id][row.topic] = row.cnt;
+    }
+    return allUsers.map(u => ({
+      id: u.id,
+      email: u.email,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      createdAt: u.createdAt,
+      questionCounts: countMap[u.id] || {},
+    }));
   }
 }
 

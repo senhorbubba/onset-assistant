@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import OpenAI from "openai";
-import { syncFromSheet } from "./google-sheets";
+import multer from "multer";
 import type { Content, UserProfile, TopicExperience } from "@shared/schema";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
@@ -12,6 +12,8 @@ const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 const profileLabels: Record<string, Record<string, string>> = {
   role: { manager: "Manager / Team Lead", executive: "Executive / Director", entrepreneur: "Entrepreneur / Founder", consultant: "Consultant / Advisor", specialist: "Specialist / Analyst", creative: "Creative Professional", educator: "Educator / Trainer", student: "Student / Learner", other: "Other" },
@@ -24,6 +26,18 @@ function getProfileLabel(field: string, key: string): string {
   return profileLabels[field]?.[key] || key || "Not specified";
 }
 
+const jsonItemSchema = z.object({
+  Unit_ID: z.string().optional(),
+  Topic: z.string(),
+  Subtopic: z.string(),
+  Search_Context: z.string().optional(),
+  Keywords: z.string().optional(),
+  Key_Takeaway: z.string().optional(),
+  Difficulty: z.string().optional(),
+  Use_Case: z.string().optional(),
+  Timestamp_Link: z.string().optional(),
+});
+
 async function findBestAnswer(topic: string, question: string, language: string = "en", profile?: UserProfile | null, topicExp?: TopicExperience | null): Promise<{ answer: string; found: boolean; link?: string }> {
   const contentItems = await storage.getContentByTopic(topic);
 
@@ -35,14 +49,21 @@ async function findBestAnswer(topic: string, question: string, language: string 
   }
 
   const contentContext = contentItems.map((item, i) => {
-    let entry = `[${i}] Subtopic: ${item.question}`;
-    if (item.keywords && item.keywords.length > 0) {
-      entry += `\nKeywords: ${item.keywords.join(', ')}`;
+    let entry = `[${i}] Subtopic: ${item.subtopic}`;
+    if (item.keywords) {
+      entry += `\nKeywords: ${item.keywords}`;
     }
-    const answerParts = item.answer.split('\n\nSource: ');
-    entry += `\nKey Takeaway: ${answerParts[0]}`;
-    if (answerParts[1]) {
-      entry += `\nExpert/Source: ${answerParts[1]}`;
+    if (item.searchContext) {
+      entry += `\nContext: ${item.searchContext}`;
+    }
+    if (item.keyTakeaway) {
+      entry += `\nKey Takeaway: ${item.keyTakeaway}`;
+    }
+    if (item.difficulty) {
+      entry += `\nDifficulty: ${item.difficulty}`;
+    }
+    if (item.useCase) {
+      entry += `\nUse Case: ${item.useCase}`;
     }
     return entry;
   }).join('\n\n');
@@ -57,27 +78,18 @@ async function findBestAnswer(topic: string, question: string, language: string 
 
 INSTRUCTIONS:
 1. Read the user's question carefully. The user may ask in English or Portuguese — understand the intent regardless of language.
-2. For each entry, check if the user's question is specifically asking about the SAME specific subtopic described in that entry. The entry's subtopic, keywords, and key takeaway must directly answer what the user is asking.
-3. A match is ONLY valid if the entry's key takeaway actually answers the user's question. Sharing a word (like "AI") is NOT enough — the specific subject must match.
+2. For each entry, check if the user's question is specifically asking about the SAME specific subtopic described in that entry. The entry's subtopic, keywords, context, and key takeaway must directly answer what the user is asking.
+3. A match is ONLY valid if the entry's key takeaway actually answers the user's question. Sharing a word is NOT enough — the specific subject must match.
 4. If you find a genuine match, respond EXACTLY like this:
    MATCH:[index_number]
-   [Rephrase the key takeaway as a natural answer. Use ONLY info from the entry. Then write: — [Expert/Source name]]
+   [Rephrase the key takeaway as a natural answer. Use ONLY info from the entry. Provide the key takeaways adjusted to the user's question.]
 5. If no entry genuinely answers the user's question, respond EXACTLY with: NOT_FOUND
-
-EXAMPLES OF WRONG MATCHES (do NOT do this):
-- User asks "How to use AI in the gym" → Entry about "How to start a prompt" → NOT a match (different subjects)
-- User asks "AI tools for cooking" → Entry about "prompt persona" → NOT a match
-- User asks about topic X → Entry mentions "AI" too → NOT a match unless the specific subject is the same
-
-EXAMPLES OF CORRECT MATCHES:
-- User asks "How should I write a prompt?" → Entry about "How to start a prompt" → MATCH (same specific subject)
-- User asks "What role should I give AI?" → Entry about "giving AI a persona/role" → MATCH (same specific subject)
 
 RULES:
 - NEVER invent answers. NEVER use your own knowledge.
 - When in doubt, respond NOT_FOUND. A human will review the question later.
 - The [index_number] must match the [N] prefix of the entry.
-${isPt ? '- IMPORTANT: Your answer MUST be written in Brazilian Portuguese (pt-BR). Translate the key takeaway into natural Portuguese. Keep expert/source names unchanged.' : ''}
+${isPt ? '- IMPORTANT: Your answer MUST be written in Brazilian Portuguese (pt-BR). Translate the key takeaway into natural Portuguese.' : ''}
 ${profile && profile.completedOnboarding ? `
 USER PROFILE (use this to tailor HOW you phrase your answer, but NEVER invent content):
 - Role: ${getProfileLabel('role', profile.role || '')}
@@ -120,22 +132,16 @@ ${contentContext}`
     if (matchIndexResult) {
       matchedIdx = parseInt(matchIndexResult[1], 10);
       if (matchedIdx >= 0 && matchedIdx < contentItems.length) {
-        if (contentItems[matchedIdx].link) {
-          link = contentItems[matchedIdx].link!;
+        if (contentItems[matchedIdx].timestampLink) {
+          link = contentItems[matchedIdx].timestampLink!;
         }
       }
       cleanAnswer = aiAnswer.replace(/MATCH:\[?\d+\]?\s*\n?/, '').trim();
     }
 
-    cleanAnswer = cleanAnswer.replace(/\n\nSource:\s*/g, '\n— ').replace(/\nSource:\s*/g, '\n— ').replace(/^Source:\s*/g, '— ');
-
     if (!cleanAnswer && matchedIdx >= 0 && matchedIdx < contentItems.length) {
       const matched = contentItems[matchedIdx];
-      const answerParts = matched.answer.split('\n\nSource: ');
-      cleanAnswer = answerParts[0];
-      if (answerParts[1]) {
-        cleanAnswer += `\n— ${answerParts[1]}`;
-      }
+      cleanAnswer = matched.keyTakeaway || matched.subtopic;
     }
 
     if (!cleanAnswer) {
@@ -151,18 +157,18 @@ ${contentContext}`
 
 function fallbackKeywordMatch(contentItems: Content[], query: string): { answer: string; found: boolean; link?: string } {
   const lowerQuery = query.toLowerCase().replace(/[?!.,]/g, '').trim();
-  const stopWords = new Set(['how', 'to', 'the', 'a', 'an', 'is', 'in', 'of', 'for', 'and', 'or', 'what', 'can', 'do', 'i', 'my', 'use', 'using', 'with', 'about', 'should']);
+  const stopWords = new Set(['how', 'to', 'the', 'a', 'an', 'is', 'in', 'of', 'for', 'and', 'or', 'what', 'can', 'do', 'i', 'my', 'use', 'using', 'with', 'about', 'should', 'como', 'que', 'para', 'um', 'uma', 'de', 'da', 'do', 'no', 'na', 'se', 'por', 'com', 'eu', 'meu', 'minha']);
   const queryWords = lowerQuery.split(/\s+/).filter(w => w.length > 1 && !stopWords.has(w));
   let bestMatch: Content | undefined;
   let maxScore = 0;
 
   for (const item of contentItems) {
     let score = 0;
-    const lowerQuestion = item.question.toLowerCase();
-    const questionWords = lowerQuestion.split(/\s+/).filter(w => w.length > 1 && !stopWords.has(w));
+    const lowerSubtopic = item.subtopic.toLowerCase();
+    const subtopicWords = lowerSubtopic.split(/\s+/).filter(w => w.length > 1 && !stopWords.has(w));
 
     const significantMatches = queryWords.filter(qw =>
-      questionWords.some(qwItem => qw === qwItem || (qw.length > 4 && (qwItem.includes(qw) || qw.includes(qwItem))))
+      subtopicWords.some(sw => qw === sw || (qw.length > 4 && (sw.includes(qw) || qw.includes(sw))))
     );
 
     if (significantMatches.length >= 2 || (significantMatches.length === 1 && significantMatches[0].length > 5)) {
@@ -170,10 +176,10 @@ function fallbackKeywordMatch(contentItems: Content[], query: string): { answer:
     }
 
     if (item.keywords) {
+      const keywordList = item.keywords.split(',').map(k => k.trim().toLowerCase());
       let keywordHits = 0;
-      for (const keyword of item.keywords) {
-        const lowerKeyword = keyword.toLowerCase();
-        if (lowerKeyword.length > 3 && lowerQuery.includes(lowerKeyword)) {
+      for (const keyword of keywordList) {
+        if (keyword.length > 3 && lowerQuery.includes(keyword)) {
           keywordHits++;
         }
       }
@@ -181,6 +187,13 @@ function fallbackKeywordMatch(contentItems: Content[], query: string): { answer:
         score += keywordHits * 5;
       }
     }
+
+    if (item.searchContext) {
+      const contextWords = item.searchContext.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+      const contextHits = queryWords.filter(qw => contextWords.some(cw => cw.includes(qw) || qw.includes(cw)));
+      score += contextHits.length * 2;
+    }
+
     if (score > maxScore) {
       maxScore = score;
       bestMatch = item;
@@ -188,8 +201,8 @@ function fallbackKeywordMatch(contentItems: Content[], query: string): { answer:
   }
 
   if (bestMatch && maxScore >= 5) {
-    const formattedAnswer = bestMatch.answer.replace(/\n\nSource:\s*/g, '\n— ').replace(/\nSource:\s*/g, '\n— ');
-    return { answer: formattedAnswer, found: true, link: bestMatch.link || undefined };
+    const answer = bestMatch.keyTakeaway || bestMatch.subtopic;
+    return { answer, found: true, link: bestMatch.timestampLink || undefined };
   }
   return { answer: "", found: false };
 }
@@ -202,7 +215,6 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
-  // Profile endpoints
   app.get("/api/profile", async (req: any, res) => {
     if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -240,7 +252,6 @@ export async function registerRoutes(
     }
   });
 
-  // Topic experience endpoints
   app.get("/api/topic-experience/:topic", async (req: any, res) => {
     if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -265,13 +276,82 @@ export async function registerRoutes(
     res.json(result);
   });
 
-  // Chat history endpoints
   app.get("/api/chat-history", async (req: any, res) => {
     if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     const history = await storage.getChatHistory(req.user.claims.sub);
     res.json(history);
+  });
+
+  app.get("/api/topics", async (_req, res) => {
+    const topics = await storage.getAvailableTopics();
+    res.json(topics);
+  });
+
+  app.post("/api/content/upload", async (req: any, res) => {
+    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    upload.single("file")(req, res, async (err: any) => {
+      if (err) {
+        return res.status(400).json({ message: "File upload error: " + err.message });
+      }
+      if (!req.file) {
+        return res.status(400).json({ message: "No file provided" });
+      }
+
+      try {
+        const fileContent = req.file.buffer.toString("utf-8");
+        const parsed = JSON.parse(fileContent);
+
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          return res.status(400).json({ message: "JSON must be a non-empty array" });
+        }
+
+        const validated = parsed.map((item: any, idx: number) => {
+          const result = jsonItemSchema.safeParse(item);
+          if (!result.success) {
+            throw new Error(`Invalid item at index ${idx}: ${result.error.issues.map(i => i.message).join(', ')}`);
+          }
+          return result.data;
+        });
+
+        const topic = validated[0].Topic;
+        const allSameTopic = validated.every((item: any) => item.Topic === topic);
+        if (!allSameTopic) {
+          return res.status(400).json({ message: "All items in the JSON file must have the same Topic" });
+        }
+
+        await storage.clearContentByTopic(topic);
+
+        const contentItems = validated.map((item: any) => ({
+          unitId: item.Unit_ID || null,
+          topic: item.Topic,
+          subtopic: item.Subtopic,
+          searchContext: item.Search_Context || null,
+          keywords: item.Keywords || null,
+          keyTakeaway: item.Key_Takeaway || null,
+          difficulty: item.Difficulty || null,
+          useCase: item.Use_Case || null,
+          timestampLink: item.Timestamp_Link || null,
+        }));
+
+        await storage.bulkCreateContent(contentItems);
+
+        res.json({
+          message: `Uploaded ${contentItems.length} items for topic "${topic}"`,
+          count: contentItems.length,
+          topic,
+        });
+      } catch (error: any) {
+        if (error instanceof SyntaxError) {
+          return res.status(400).json({ message: "Invalid JSON file" });
+        }
+        return res.status(400).json({ message: error.message || "Upload failed" });
+      }
+    });
   });
 
   app.get("/api/admin/users", async (req: any, res) => {
@@ -292,13 +372,16 @@ export async function registerRoutes(
     }
     try {
       const usersWithStats = await storage.getAllUsersWithStats();
+      const topics = await storage.getAvailableTopics();
       const BOM = "\uFEFF";
-      const header = "Name,Email,AI Skills Questions,Communication Questions,Registered";
+      const topicHeaders = topics.map(t => `${t} Qs`).join(",");
+      const header = `Name,Email,${topicHeaders || "Questions"},Registered`;
       const rows = usersWithStats.map((u) => {
         const name = `${u.firstName || ""} ${u.lastName || ""}`.trim() || "-";
         const email = u.email || "-";
         const registered = u.createdAt ? new Date(u.createdAt).toISOString().split("T")[0] : "-";
-        return `"${name.replace(/"/g, '""')}","${email.replace(/"/g, '""')}",${u.aiSkillsCount},${u.communicationCount},"${registered}"`;
+        const topicCounts = topics.map(t => u.questionCounts[t] || 0).join(",");
+        return `"${name.replace(/"/g, '""')}","${email.replace(/"/g, '""')}",${topicCounts || "0"},"${registered}"`;
       });
       const csv = BOM + header + "\n" + rows.join("\n");
       res.setHeader("Content-Type", "text/csv; charset=utf-8");
@@ -309,7 +392,6 @@ export async function registerRoutes(
     }
   });
 
-  // Chat endpoint - uses OpenAI for intelligent matching
   app.post(api.chat.ask.path, async (req: any, res) => {
     try {
       const { topic, question, language } = api.chat.ask.input.parse(req.body);
@@ -357,108 +439,24 @@ export async function registerRoutes(
     }
   });
 
-  // Content Management
   app.get(api.content.list.path, async (req, res) => {
     const contentItems = await storage.getAllContent();
     res.json(contentItems);
   });
 
-  app.post(api.content.create.path, async (req, res) => {
-    try {
-      const input = api.content.create.input.parse(req.body);
-      const item = await storage.createContent(input);
-      res.status(201).json(item);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        res.status(400).json({
-          message: err.errors[0].message,
-          field: err.errors[0].path.join('.'),
-        });
-      }
-    }
+  app.get("/api/content/:topic", async (req, res) => {
+    const topic = decodeURIComponent(req.params.topic);
+    const contentItems = await storage.getContentByTopic(topic);
+    res.json(contentItems);
   });
 
-  // Unanswered Questions
   app.get(api.unanswered.list.path, async (req, res) => {
     const questions = await storage.getUnansweredQuestions();
     res.json(questions);
-  });
-
-  // Sync from Google Sheets
-  app.post(api.sync.trigger.path, async (req, res) => {
-    try {
-      const sheetData = await syncFromSheet();
-
-      await storage.clearAllContent();
-      await storage.bulkCreateContent(sheetData.map(row => ({
-        topic: row.topic,
-        question: row.question,
-        answer: row.answer,
-        keywords: row.keywords.length > 0 ? row.keywords : null,
-        link: row.link || null,
-      })));
-
-      res.json({
-        message: `Synced ${sheetData.length} items from Google Sheets`,
-        count: sheetData.length
-      });
-    } catch (err: any) {
-      console.error("Sheet sync error:", err);
-      res.status(500).json({ message: err.message || "Failed to sync from Google Sheets" });
-    }
   });
 
   return httpServer;
 }
 
 export async function seedDatabase() {
-  const existingContent = await storage.getAllContent();
-  if (existingContent.length === 0) {
-    // Try syncing from Google Sheets first
-    try {
-      const sheetData = await syncFromSheet();
-      if (sheetData.length > 0) {
-        await storage.bulkCreateContent(sheetData.map(row => ({
-          topic: row.topic,
-          question: row.question,
-          answer: row.answer,
-          keywords: row.keywords.length > 0 ? row.keywords : null,
-          link: row.link || null,
-        })));
-        console.log(`Seeded ${sheetData.length} items from Google Sheets`);
-        return;
-      }
-    } catch (err) {
-      console.log("Could not sync from Google Sheets on startup, using default seed data:", (err as Error).message);
-    }
-
-    await storage.createContent({
-      topic: "AI Skills",
-      question: "What is machine learning?",
-      answer: "Machine learning is a subset of AI that enables systems to learn from data and improve without explicit programming.",
-      keywords: ["machine learning", "ml", "learn"],
-      link: null,
-    });
-    await storage.createContent({
-      topic: "AI Skills",
-      question: "How do I start with Python for AI?",
-      answer: "Start by learning basic Python syntax, then move to libraries like NumPy, Pandas, and Scikit-learn.",
-      keywords: ["python", "start", "libraries"],
-      link: null,
-    });
-    await storage.createContent({
-      topic: "Communication",
-      question: "How to give good feedback?",
-      answer: "Good feedback should be specific, actionable, and delivered with empathy. Focus on behavior, not personality.",
-      keywords: ["feedback", "give", "tips"],
-      link: null,
-    });
-    await storage.createContent({
-      topic: "Communication",
-      question: "What is active listening?",
-      answer: "Active listening involves fully concentrating, understanding, responding, and remembering what is being said.",
-      keywords: ["active listening", "listen"],
-      link: null,
-    });
-  }
 }

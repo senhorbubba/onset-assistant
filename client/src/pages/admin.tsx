@@ -1,44 +1,57 @@
-import { useContentList, useCreateContent, useUnansweredList, useSyncFromSheet } from "@/hooks/use-content";
+import { useContentByTopic, useUnansweredList, useUploadJSON, useTopics } from "@/hooks/use-content";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, ArrowLeft, CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Globe, Users, Download } from "lucide-react";
-import { useState } from "react";
+import { Loader2, ArrowLeft, CheckCircle2, AlertCircle, ExternalLink, Globe, Users, Download, Upload, Database, FileJson } from "lucide-react";
+import { useState, useRef } from "react";
 import { Link } from "wouter";
-import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { insertContentSchema, type InsertContent } from "@shared/schema";
-import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/language-context";
 import type { Language } from "@/lib/i18n";
 
-const formSchema = insertContentSchema.extend({
-  keywords: z.string().transform(str => str.split(',').map(s => s.trim()).filter(Boolean))
-});
-
-type FormData = z.input<typeof formSchema>;
-
 export default function Admin() {
-  const { data: content, isLoading: contentLoading } = useContentList();
+  const { data: topics, isLoading: topicsLoading } = useTopics();
+  const [selectedTopic, setSelectedTopic] = useState<string>("");
+  const { data: topicContent, isLoading: contentLoading } = useContentByTopic(selectedTopic);
   const { data: unanswered, isLoading: unansweredLoading } = useUnansweredList();
   const { data: usersList, isLoading: usersLoading } = useQuery<Array<{
     id: string; email: string | null; firstName: string | null; lastName: string | null;
-    createdAt: string | null; aiSkillsCount: number; communicationCount: number;
+    createdAt: string | null; questionCounts: Record<string, number>;
   }>>({ queryKey: ["/api/admin/users"] });
-  const createMutation = useCreateContent();
-  const syncMutation = useSyncFromSheet();
-  const [open, setOpen] = useState(false);
+  const uploadMutation = useUploadJSON();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [exporting, setExporting] = useState(false);
   const { toast } = useToast();
   const { language, setLanguage, t } = useLanguage();
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith('.json')) {
+      toast({ title: t.admin.error, description: t.admin.invalidFileType, variant: "destructive" });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    try {
+      const result = await uploadMutation.mutateAsync(file);
+      toast({
+        title: t.admin.success,
+        description: result.message,
+      });
+      setSelectedTopic(result.topic);
+    } catch (error: any) {
+      toast({
+        title: t.admin.uploadFailed,
+        description: error.message || t.admin.uploadError,
+        variant: "destructive",
+      });
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const handleExport = async () => {
     setExporting(true);
@@ -58,67 +71,18 @@ export default function Admin() {
     setExporting(false);
   };
 
-  const handleSync = async () => {
-    try {
-      const result = await syncMutation.mutateAsync();
-      toast({
-        title: t.admin.syncComplete,
-        description: result.message,
-      });
-    } catch (error: any) {
-      toast({
-        title: t.admin.syncFailed,
-        description: error.message || t.admin.syncError,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      topic: "AI Skills",
-      question: "",
-      answer: "",
-      keywords: "",
-    }
-  });
-
-  const onSubmit = async (data: FormData) => {
-    try {
-      const payload: InsertContent = {
-        ...data,
-        keywords: data.keywords as unknown as string[] 
-      };
-      
-      await createMutation.mutateAsync(payload);
-      toast({
-        title: t.admin.success,
-        description: t.admin.contentCreated,
-      });
-      setOpen(false);
-      form.reset();
-    } catch (error) {
-      toast({
-        title: t.admin.error,
-        description: t.admin.createFailed,
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-50/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div className="flex items-center gap-3 sm:gap-4">
             <Link href="/">
-              <Button variant="outline" size="icon" className="rounded-full shrink-0">
+              <Button variant="outline" size="icon" className="rounded-full shrink-0" data-testid="button-back">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             </Link>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold font-display text-slate-900">{t.admin.dashboard}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold font-display text-slate-900" data-testid="text-admin-title">{t.admin.dashboard}</h1>
               <p className="text-sm text-slate-500">{t.admin.manageKB}</p>
             </div>
           </div>
@@ -134,93 +98,39 @@ export default function Admin() {
                 <SelectItem value="pt-BR">PT</SelectItem>
               </SelectContent>
             </Select>
-            <Button 
-              variant="outline" 
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleFileUpload}
+              className="hidden"
+              data-testid="input-file-upload"
+            />
+            <Button
+              variant="default"
               size="sm"
-              className="gap-2 text-xs sm:text-sm"
-              onClick={handleSync}
-              disabled={syncMutation.isPending}
-              data-testid="button-sync-sheets"
+              className="gap-2 text-xs sm:text-sm shadow-lg shadow-primary/20"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadMutation.isPending}
+              data-testid="button-upload-json"
             >
-              {syncMutation.isPending ? (
+              {uploadMutation.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <RefreshCw className="w-4 h-4" />
+                <Upload className="w-4 h-4" />
               )}
-              {syncMutation.isPending ? t.admin.syncing : t.admin.syncSheets}
+              {uploadMutation.isPending ? t.admin.uploading : t.admin.uploadJSON}
             </Button>
-          
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-2 shadow-lg shadow-primary/20 text-xs sm:text-sm" data-testid="button-add-content">
-                <Plus className="w-4 h-4" />
-                {t.admin.addContent}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>{t.admin.addKBItem}</DialogTitle>
-              </DialogHeader>
-              
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">{t.admin.topic}</label>
-                  <Select 
-                    defaultValue="AI Skills" 
-                    onValueChange={(val) => form.setValue("topic", val)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t.admin.selectTopic} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="AI Skills">AI Skills</SelectItem>
-                      <SelectItem value="Communication">Communication</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">{t.admin.question}</label>
-                  <Input {...form.register("question")} placeholder={t.admin.questionPlaceholder} />
-                  {form.formState.errors.question && (
-                    <p className="text-xs text-red-500">{form.formState.errors.question.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">{t.admin.answerLabel}</label>
-                  <Textarea 
-                    {...form.register("answer")} 
-                    placeholder={t.admin.answerPlaceholder} 
-                    className="h-32 resize-none"
-                  />
-                  {form.formState.errors.answer && (
-                    <p className="text-xs text-red-500">{form.formState.errors.answer.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">{t.admin.keywordsLabel}</label>
-                  <Input {...form.register("keywords")} placeholder={t.admin.keywordsPlaceholder} />
-                  <p className="text-xs text-muted-foreground">{t.admin.keywordsHelp}</p>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t.admin.cancel}</Button>
-                  <Button type="submit" disabled={createMutation.isPending}>
-                    {createMutation.isPending ? t.admin.creating : t.admin.createContent}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
           </div>
         </div>
 
-        <Tabs defaultValue="content" className="w-full">
+        <Tabs defaultValue="knowledge" className="w-full">
           <TabsList className="grid w-full max-w-lg grid-cols-3 mb-6 sm:mb-8">
-            <TabsTrigger value="content" className="text-xs sm:text-sm">{t.admin.knowledgeBase}</TabsTrigger>
-            <TabsTrigger value="unanswered" className="relative text-xs sm:text-sm">
+            <TabsTrigger value="knowledge" className="text-xs sm:text-sm" data-testid="tab-knowledge">
+              <Database className="w-3.5 h-3.5 mr-1" />
+              {t.admin.knowledgeBase}
+            </TabsTrigger>
+            <TabsTrigger value="unanswered" className="relative text-xs sm:text-sm" data-testid="tab-unanswered">
               {t.admin.unanswered}
               {unanswered && unanswered.length > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
@@ -237,47 +147,99 @@ export default function Admin() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="content">
+          <TabsContent value="knowledge">
             <Card className="border-none shadow-md">
               <CardHeader className="px-4 sm:px-6">
-                <CardTitle className="text-lg sm:text-xl">{t.admin.contentLibrary}</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
-                  {t.admin.contentDesc}
-                </CardDescription>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-lg sm:text-xl">{t.admin.contentLibrary}</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">
+                      {t.admin.contentDesc}
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {topics && topics.length > 0 && (
+                      <Select value={selectedTopic} onValueChange={setSelectedTopic}>
+                        <SelectTrigger className="w-[200px]" data-testid="select-admin-topic">
+                          <SelectValue placeholder={t.admin.selectTopic} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {topics.map((topic) => (
+                            <SelectItem key={topic} value={topic} data-testid={`option-topic-${topic}`}>
+                              {topic}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="px-4 sm:px-6">
-                {contentLoading ? (
+                {topicsLoading ? (
+                  <div className="flex justify-center p-8">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : !topics || topics.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileJson className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                    <p className="text-muted-foreground text-sm mb-2" data-testid="text-no-topics">{t.admin.noTopics}</p>
+                    <p className="text-muted-foreground text-xs">{t.admin.uploadHint}</p>
+                  </div>
+                ) : !selectedTopic ? (
+                  <div className="text-center py-12">
+                    <Database className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                    <p className="text-muted-foreground text-sm">{t.admin.selectTopicHint}</p>
+                  </div>
+                ) : contentLoading ? (
                   <div className="flex justify-center p-8">
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
                   </div>
                 ) : (
                   <>
-                    <div className="hidden sm:block rounded-md border">
+                    <div className="mb-4 flex items-center gap-2">
+                      <Badge variant="secondary" data-testid="badge-topic-count">
+                        {selectedTopic}: {(topicContent as any[])?.length || 0} {t.admin.entries}
+                      </Badge>
+                    </div>
+                    <div className="rounded-md border overflow-x-auto">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>{t.admin.topic}</TableHead>
-                            <TableHead>{t.admin.question}</TableHead>
-                            <TableHead>{t.admin.keywords}</TableHead>
-                            <TableHead>{t.admin.link}</TableHead>
-                            <TableHead className="w-[100px]">{t.admin.status}</TableHead>
+                            <TableHead className="min-w-[80px]">Unit ID</TableHead>
+                            <TableHead className="min-w-[200px]">{t.admin.subtopic}</TableHead>
+                            <TableHead className="min-w-[150px]">{t.admin.keywords}</TableHead>
+                            <TableHead className="min-w-[250px]">{t.admin.keyTakeaway}</TableHead>
+                            <TableHead className="min-w-[100px]">{t.admin.difficulty}</TableHead>
+                            <TableHead className="min-w-[80px]">{t.admin.link}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {content?.map((item) => (
-                            <TableRow key={item.id}>
-                              <TableCell className="font-medium">
-                                <Badge variant="secondary" className="bg-slate-100 text-slate-700">
-                                  {item.topic}
-                                </Badge>
+                          {topicContent?.map((item) => (
+                            <TableRow key={item.id} data-testid={`row-content-${item.id}`}>
+                              <TableCell className="text-xs font-mono text-muted-foreground">{item.unitId || "-"}</TableCell>
+                              <TableCell className="text-sm font-medium max-w-[300px]">
+                                <div className="line-clamp-2">{item.subtopic}</div>
                               </TableCell>
-                              <TableCell>{item.question}</TableCell>
-                              <TableCell className="text-muted-foreground text-sm">
-                                {item.keywords?.join(", ")}
+                              <TableCell className="text-xs text-muted-foreground max-w-[200px]">
+                                <div className="line-clamp-2">{item.keywords || "-"}</div>
+                              </TableCell>
+                              <TableCell className="text-xs max-w-[300px]">
+                                <div className="line-clamp-3">{item.keyTakeaway || "-"}</div>
                               </TableCell>
                               <TableCell>
-                                {item.link ? (
-                                  <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 text-sm">
+                                {item.difficulty && (
+                                  <Badge variant={
+                                    item.difficulty === "Beginner" ? "secondary" :
+                                    item.difficulty === "Advanced" ? "destructive" : "outline"
+                                  } className="text-[10px]">
+                                    {item.difficulty}
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {item.timestampLink ? (
+                                  <a href={item.timestampLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 text-xs" data-testid={`link-content-${item.id}`}>
                                     <ExternalLink className="w-3 h-3" />
                                     {t.admin.view}
                                   </a>
@@ -285,51 +247,17 @@ export default function Admin() {
                                   <span className="text-muted-foreground text-xs">-</span>
                                 )}
                               </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  {t.admin.active}
-                                </div>
-                              </TableCell>
                             </TableRow>
                           ))}
-                          {content?.length === 0 && (
+                          {(!topicContent || topicContent.length === 0) && (
                             <TableRow>
-                              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                                 {t.admin.noContent}
                               </TableCell>
                             </TableRow>
                           )}
                         </TableBody>
                       </Table>
-                    </div>
-                    <div className="sm:hidden space-y-3">
-                      {content?.map((item) => (
-                        <div key={item.id} className="bg-white rounded-lg border p-3 space-y-2">
-                          <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <Badge variant="secondary" className="bg-slate-100 text-slate-700 text-xs">
-                              {item.topic}
-                            </Badge>
-                            <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
-                              <CheckCircle2 className="w-3 h-3" />
-                              {t.admin.active}
-                            </div>
-                          </div>
-                          <p className="text-sm font-medium">{item.question}</p>
-                          {item.keywords && item.keywords.length > 0 && (
-                            <p className="text-xs text-muted-foreground">{item.keywords.join(", ")}</p>
-                          )}
-                          {item.link && (
-                            <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 text-xs">
-                              <ExternalLink className="w-3 h-3" />
-                              {t.admin.viewLink}
-                            </a>
-                          )}
-                        </div>
-                      ))}
-                      {content?.length === 0 && (
-                        <p className="text-center py-8 text-muted-foreground text-sm">{t.admin.noContent}</p>
-                      )}
                     </div>
                   </>
                 )}
@@ -359,12 +287,11 @@ export default function Admin() {
                             <TableHead>{t.admin.topic}</TableHead>
                             <TableHead>{t.admin.questionAsked}</TableHead>
                             <TableHead>{t.admin.date}</TableHead>
-                            <TableHead className="text-right">{t.admin.action}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {unanswered?.map((item) => (
-                            <TableRow key={item.id}>
+                            <TableRow key={item.id} data-testid={`row-unanswered-${item.id}`}>
                               <TableCell>
                                 <Badge variant="outline">{item.topic}</Badge>
                               </TableCell>
@@ -372,24 +299,11 @@ export default function Admin() {
                               <TableCell className="text-muted-foreground text-sm">
                                 {new Date(item.createdAt || "").toLocaleDateString()}
                               </TableCell>
-                              <TableCell className="text-right">
-                                <Button 
-                                  size="sm" 
-                                  variant="secondary"
-                                  onClick={() => {
-                                    setOpen(true);
-                                    form.setValue("question", item.question);
-                                    form.setValue("topic", item.topic);
-                                  }}
-                                >
-                                  {t.admin.answer}
-                                </Button>
-                              </TableCell>
                             </TableRow>
                           ))}
-                          {unanswered?.length === 0 && (
+                          {(!unanswered || unanswered.length === 0) && (
                             <TableRow>
-                              <TableCell colSpan={4} className="text-center py-12">
+                              <TableCell colSpan={3} className="text-center py-12">
                                 <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                   <CheckCircle2 className="w-8 h-8 text-green-500" />
                                   <p>{t.admin.allCaughtUp}</p>
@@ -410,21 +324,9 @@ export default function Admin() {
                             </span>
                           </div>
                           <p className="text-sm font-medium">{item.question}</p>
-                          <Button 
-                            size="sm" 
-                            variant="secondary"
-                            className="w-full"
-                            onClick={() => {
-                              setOpen(true);
-                              form.setValue("question", item.question);
-                              form.setValue("topic", item.topic);
-                            }}
-                          >
-                            {t.admin.answer}
-                          </Button>
                         </div>
                       ))}
-                      {unanswered?.length === 0 && (
+                      {(!unanswered || unanswered.length === 0) && (
                         <div className="text-center py-12">
                           <div className="flex flex-col items-center gap-2 text-muted-foreground">
                             <CheckCircle2 className="w-8 h-8 text-green-500" />
@@ -484,8 +386,9 @@ export default function Admin() {
                           <TableRow>
                             <TableHead>{t.admin.userName}</TableHead>
                             <TableHead>{t.admin.userEmail}</TableHead>
-                            <TableHead className="text-center">{t.admin.aiSkillsQuestions}</TableHead>
-                            <TableHead className="text-center">{t.admin.communicationQuestions}</TableHead>
+                            {topics?.map((topic) => (
+                              <TableHead key={topic} className="text-center">{topic} Qs</TableHead>
+                            ))}
                             <TableHead>{t.admin.registered}</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -496,12 +399,13 @@ export default function Admin() {
                                 {`${user.firstName || ""} ${user.lastName || ""}`.trim() || "-"}
                               </TableCell>
                               <TableCell className="text-muted-foreground text-sm">{user.email || "-"}</TableCell>
-                              <TableCell className="text-center">
-                                <Badge variant="secondary">{user.aiSkillsCount}</Badge>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Badge variant="secondary">{user.communicationCount}</Badge>
-                              </TableCell>
+                              {topics?.map((topic) => (
+                                <TableCell key={topic} className="text-center">
+                                  <Badge variant="secondary" className="text-xs">
+                                    {user.questionCounts?.[topic] || 0}
+                                  </Badge>
+                                </TableCell>
+                              ))}
                               <TableCell className="text-muted-foreground text-sm">
                                 {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
                               </TableCell>
@@ -509,7 +413,7 @@ export default function Admin() {
                           ))}
                           {(!usersList || usersList.length === 0) && (
                             <TableRow>
-                              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                              <TableCell colSpan={(topics?.length || 0) + 3} className="text-center py-12 text-muted-foreground">
                                 {t.admin.noUsers}
                               </TableCell>
                             </TableRow>
@@ -519,18 +423,23 @@ export default function Admin() {
                     </div>
                     <div className="sm:hidden space-y-3">
                       {usersList?.map((user) => (
-                        <div key={user.id} className="bg-white rounded-lg border p-3 space-y-2" data-testid={`card-user-${user.id}`}>
-                          <p className="text-sm font-medium">
-                            {`${user.firstName || ""} ${user.lastName || ""}`.trim() || "-"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{user.email || "-"}</p>
-                          <div className="flex items-center gap-3 flex-wrap">
-                            <span className="text-xs text-muted-foreground">AI Skills: <Badge variant="secondary" className="ml-1">{user.aiSkillsCount}</Badge></span>
-                            <span className="text-xs text-muted-foreground">Communication: <Badge variant="secondary" className="ml-1">{user.communicationCount}</Badge></span>
+                        <div key={user.id} className="bg-white rounded-lg border p-3 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-sm">
+                              {`${user.firstName || ""} ${user.lastName || ""}`.trim() || "-"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
+                            </span>
                           </div>
-                          <p className="text-xs text-muted-foreground">
-                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
-                          </p>
+                          <p className="text-xs text-muted-foreground">{user.email || "-"}</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {topics?.map((topic) => (
+                              <Badge key={topic} variant="secondary" className="text-[10px]">
+                                {topic}: {user.questionCounts?.[topic] || 0}
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
                       ))}
                       {(!usersList || usersList.length === 0) && (
