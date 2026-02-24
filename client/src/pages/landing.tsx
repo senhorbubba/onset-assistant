@@ -282,12 +282,6 @@ export default function Landing() {
 
       <section className="py-12 sm:py-24 lg:py-32 bg-white">
         <div className="max-w-6xl mx-auto px-6 sm:px-8 text-center">
-          <div className="mb-5 sm:mb-6">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium" data-testid="badge-hero">
-              <Sparkles className="w-3.5 h-3.5" />
-              {t.hero.badge}
-            </span>
-          </div>
           <h1
             className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-display leading-tight mb-5 sm:mb-6"
             data-testid="text-hero-title"
