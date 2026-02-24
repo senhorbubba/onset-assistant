@@ -97,6 +97,10 @@ export default function Home() {
   }, [showNotifications, refetchNotifications]);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     if (isAuthenticated && profile !== undefined && (profile === null || !profile.completedOnboarding)) {
       navigate("/onboarding");
     }
