@@ -23,6 +23,10 @@ export const api = {
         topic: z.string(),
         question: z.string(),
         language: z.string().optional(),
+        history: z.array(z.object({
+          role: z.enum(["user", "bot"]),
+          content: z.string(),
+        })).optional(),
       }),
       responses: {
         200: z.object({

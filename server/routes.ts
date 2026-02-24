@@ -38,7 +38,19 @@ const jsonItemSchema = z.object({
   Timestamp_Link: z.string().optional(),
 });
 
-async function findBestAnswer(topic: string, question: string, language: string = "en", profile?: UserProfile | null, topicExp?: TopicExperience | null): Promise<{ answer: string; found: boolean; link?: string }> {
+interface ConversationMessage {
+  role: "user" | "bot";
+  content: string;
+}
+
+async function findBestAnswer(
+  topic: string,
+  question: string,
+  language: string = "en",
+  profile?: UserProfile | null,
+  topicExp?: TopicExperience | null,
+  history?: ConversationMessage[]
+): Promise<{ answer: string; found: boolean; link?: string }> {
   const contentItems = await storage.getContentByTopic(topic);
 
   const isPt = language === "pt-BR";
@@ -50,78 +62,133 @@ async function findBestAnswer(topic: string, question: string, language: string 
 
   const contentContext = contentItems.map((item, i) => {
     let entry = `[${i}] Subtopic: ${item.subtopic}`;
-    if (item.keywords) {
-      entry += `\nKeywords: ${item.keywords}`;
-    }
-    if (item.searchContext) {
-      entry += `\nContext: ${item.searchContext}`;
-    }
-    if (item.keyTakeaway) {
-      entry += `\nKey Takeaway: ${item.keyTakeaway}`;
-    }
-    if (item.difficulty) {
-      entry += `\nDifficulty: ${item.difficulty}`;
-    }
-    if (item.useCase) {
-      entry += `\nUse Case: ${item.useCase}`;
-    }
+    if (item.keywords) entry += `\nKeywords: ${item.keywords}`;
+    if (item.searchContext) entry += `\nContext: ${item.searchContext}`;
+    if (item.keyTakeaway) entry += `\nKey Takeaway: ${item.keyTakeaway}`;
+    if (item.difficulty) entry += `\nDifficulty: ${item.difficulty}`;
+    if (item.useCase) entry += `\nUse Case: ${item.useCase}`;
     return entry;
   }).join('\n\n');
 
+  const subtopicList = contentItems.map((item, i) =>
+    `- ${item.subtopic}${item.difficulty ? ` (${item.difficulty})` : ''}`
+  ).join('\n');
+
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-5-nano",
-      messages: [
-        {
-          role: "system",
-          content: `You are a strict knowledge base assistant. You can ONLY answer using the curated entries below.
-
-INSTRUCTIONS:
-1. Read the user's question carefully. The user may ask in English or Portuguese — understand the intent regardless of language.
-2. For each entry, check if the user's question is specifically asking about the SAME specific subtopic described in that entry. The entry's subtopic, keywords, context, and key takeaway must directly answer what the user is asking.
-3. A match is ONLY valid if the entry's key takeaway actually answers the user's question. Sharing a word is NOT enough — the specific subject must match.
-4. If you find a genuine match, respond EXACTLY like this:
-   MATCH:[index_number]
-   [Rephrase the key takeaway as a natural answer. Use ONLY info from the entry. Provide the key takeaways adjusted to the user's question.]
-5. If no entry genuinely answers the user's question, respond EXACTLY with: NOT_FOUND
-
-RULES:
-- NEVER invent answers. NEVER use your own knowledge.
-- When in doubt, respond NOT_FOUND. A human will review the question later.
-- The [index_number] must match the [N] prefix of the entry.
-${isPt ? '- IMPORTANT: Your answer MUST be written in Brazilian Portuguese (pt-BR). Translate the key takeaway into natural Portuguese.' : ''}
-${profile && profile.completedOnboarding ? `
+    const profileContext = profile && profile.completedOnboarding ? `
 USER PROFILE (use this to tailor HOW you phrase your answer, but NEVER invent content):
 - Role: ${getProfileLabel('role', profile.role || '')}
 - Industry: ${getProfileLabel('industry', profile.industry || '')}
 - Experience level for this topic: ${topicExp?.experience || 'Not specified'}
 - Learning goal: ${getProfileLabel('goal', profile.goal || '')}
 - Main challenge: ${getProfileLabel('challenge', profile.challenge || '')}
-- Learning preference: ${profile.learningPreference === 'quick_tips' ? 'Quick tips & key takeaways — keep it brief and actionable' : profile.learningPreference === 'step_by_step' ? 'Step-by-step explanations — break down the concept clearly' : profile.learningPreference === 'examples' ? 'Real-world examples & case studies — illustrate with practical scenarios' : 'Not specified'}
+- Learning preference: ${profile.learningPreference === 'quick_tips' ? 'Quick tips & key takeaways — keep it brief and actionable' : profile.learningPreference === 'step_by_step' ? 'Step-by-step explanations — break down the concept clearly' : profile.learningPreference === 'examples' ? 'Real-world examples & case studies — illustrate with practical scenarios' : 'Not specified'}` : '';
 
-MICROLEARNING FORMAT: Keep your answer concise and focused — one key insight at a time. Do NOT create a long study plan. Deliver a single, digestible piece of knowledge that matches the user's learning preference. Adjust complexity based on their experience level for this topic.
+    const systemPrompt = `You are "onset. Assistant", a friendly and conversational knowledge base assistant for the topic "${topic}". You help users learn from a curated knowledge base. You NEVER invent information — you ONLY use what's in the knowledge base below.
 
-When you find a match, tailor the explanation to this person's context. Use their learning preference to structure the response. But ONLY use information from the knowledge base entries — do NOT add facts or advice from your own knowledge.` : ''}
+YOUR BEHAVIOR — classify each user message into one of these categories and respond accordingly:
 
-Knowledge Base for topic "${topic}":
-${contentContext}`
-        },
-        {
-          role: "user",
-          content: question
-        }
-      ],
-      max_completion_tokens: 512,
+**CATEGORY 1: SPECIFIC QUESTION** — The user asks something specific that clearly matches one or more entries in the knowledge base.
+→ Find the best matching entry. Respond with:
+  MATCH:[index_number]
+  [Rephrase the key takeaway naturally, tailored to the user's question. Use ONLY info from the matched entry.]
+
+**CATEGORY 2: GENERAL / EXPLORATORY** — The user asks a broad or vague question, seems unsure what to learn, asks "what can I learn?", "tell me about...", "I want to improve...", or is exploring the topic.
+→ Do NOT just say NOT_FOUND. Instead, engage the user conversationally:
+  - Acknowledge their interest
+  - Ask 1-2 clarifying questions to understand what they're looking for
+  - Suggest relevant subtopics from the knowledge base that might interest them
+  - Offer to create a learning path based on available content
+→ Respond with:
+  EXPLORE
+  [Your conversational response — ask what aspect interests them, suggest subtopics, offer a learning plan. Be warm and helpful.]
+
+**CATEGORY 3: LEARNING PLAN REQUEST** — The user agrees to a learning plan, or says "yes" to your suggestion, or asks to see available topics/content.
+→ Present a structured learning path using the available subtopics from the knowledge base. Group by difficulty if possible. Be practical and brief.
+→ Respond with:
+  PLAN
+  [Your learning plan using ONLY subtopics from the knowledge base. Organize logically.]
+
+**CATEGORY 4: OFF-TOPIC** — The question has nothing to do with "${topic}" or any content in the knowledge base.
+→ Respond with:
+  OFF_TOPIC
+  [Politely explain that this question is outside the "${topic}" knowledge base. Suggest what topics are available.]
+
+**CATEGORY 5: NO MATCH** — The question IS about "${topic}" and is specific enough, but no entry in the knowledge base covers it.
+→ Respond with:
+  NOT_FOUND
+  [Explain that the knowledge base doesn't cover this specific aspect yet, and that a human will review the question.]
+
+RULES:
+- NEVER invent facts, data, or advice from your own knowledge. ONLY use the knowledge base.
+- When suggesting subtopics or creating plans, use the actual subtopics listed in the knowledge base.
+- Be conversational, warm, and helpful — not robotic.
+- Pay attention to conversation history to understand context (e.g., if user says "yes" after you offered a plan).
+- The [index_number] in MATCH must correspond to the [N] prefix of the entry.
+${isPt ? '- IMPORTANT: Your ENTIRE response MUST be written in Brazilian Portuguese (pt-BR).' : ''}
+${profileContext}
+${profileContext ? '\nMICROLEARNING FORMAT: When giving a direct answer (MATCH), keep it concise — one key insight. Tailor to the user\'s learning preference and experience level. But ONLY use information from the knowledge base.' : ''}
+
+AVAILABLE SUBTOPICS in "${topic}":
+${subtopicList}
+
+FULL KNOWLEDGE BASE for "${topic}":
+${contentContext}`;
+
+    const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+      { role: "system", content: systemPrompt }
+    ];
+
+    if (history && history.length > 0) {
+      const recentHistory = history.slice(-10);
+      for (const msg of recentHistory) {
+        messages.push({
+          role: msg.role === "user" ? "user" : "assistant",
+          content: msg.content,
+        });
+      }
+    }
+
+    messages.push({ role: "user", content: question });
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5-nano",
+      messages,
+      max_completion_tokens: 800,
     });
 
     const aiAnswer = response.choices[0]?.message?.content?.trim() || "";
 
-    if (aiAnswer === "NOT_FOUND" || aiAnswer.includes("NOT_FOUND")) {
+    if (!aiAnswer) {
+      return fallbackKeywordMatch(contentItems, question);
+    }
+
+    if (aiAnswer.startsWith("NOT_FOUND") || aiAnswer.includes("\nNOT_FOUND")) {
+      const cleanMsg = aiAnswer.replace(/^NOT_FOUND\s*\n?/, '').trim();
+      if (cleanMsg) {
+        return { answer: cleanMsg, found: false };
+      }
       return { answer: "", found: false };
     }
 
-    if (!aiAnswer) {
-      return fallbackKeywordMatch(contentItems, question);
+    if (aiAnswer.startsWith("OFF_TOPIC") || aiAnswer.includes("\nOFF_TOPIC")) {
+      const cleanMsg = aiAnswer.replace(/^OFF_TOPIC\s*\n?/, '').trim();
+      return {
+        answer: cleanMsg || (isPt
+          ? `Essa pergunta está fora do escopo da nossa base de conhecimento sobre "${topic}". Posso ajudar com os subtópicos disponíveis — gostaria de ver o que temos?`
+          : `That question is outside the scope of our "${topic}" knowledge base. I can help with the available subtopics — would you like to see what we have?`),
+        found: true,
+      };
+    }
+
+    if (aiAnswer.startsWith("EXPLORE") || aiAnswer.includes("\nEXPLORE")) {
+      const cleanMsg = aiAnswer.replace(/^EXPLORE\s*\n?/, '').trim();
+      return { answer: cleanMsg, found: true };
+    }
+
+    if (aiAnswer.startsWith("PLAN") || aiAnswer.includes("\nPLAN")) {
+      const cleanMsg = aiAnswer.replace(/^PLAN\s*\n?/, '').trim();
+      return { answer: cleanMsg, found: true };
     }
 
     const matchIndexResult = aiAnswer.match(/MATCH:\[?(\d+)\]?/);
@@ -394,7 +461,7 @@ export async function registerRoutes(
 
   app.post(api.chat.ask.path, async (req: any, res) => {
     try {
-      const { topic, question, language } = api.chat.ask.input.parse(req.body);
+      const { topic, question, language, history } = api.chat.ask.input.parse(req.body);
 
       let profile: UserProfile | null = null;
       let topicExp: TopicExperience | null = null;
@@ -405,7 +472,7 @@ export async function registerRoutes(
         topicExp = await storage.getTopicExperience(userId, topic) || null;
       }
 
-      const result = await findBestAnswer(topic, question, language || "en", profile, topicExp);
+      const result = await findBestAnswer(topic, question, language || "en", profile, topicExp, history);
 
       if (userId) {
         await storage.logChatHistory({
@@ -425,9 +492,9 @@ export async function registerRoutes(
         });
       } else {
         await storage.logUnansweredQuestion({ topic, question });
-        const notFoundMsg = language === "pt-BR"
+        const notFoundMsg = result.answer || (language === "pt-BR"
           ? "Desculpe, ainda não tenho uma resposta para essa pergunta em nossa base de conhecimento. Registrei para nossa equipe analisar e retornar."
-          : "I'm sorry, I don't have an answer for that question in our knowledge base yet. I've logged it for our team to review and they'll follow up with you.";
+          : "I'm sorry, I don't have an answer for that question in our knowledge base yet. I've logged it for our team to review and they'll follow up with you.");
         res.json({
           answer: notFoundMsg,
           found: false

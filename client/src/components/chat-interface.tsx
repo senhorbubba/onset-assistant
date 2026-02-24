@@ -96,14 +96,20 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput("");
+
+    const conversationHistory = updatedMessages
+      .filter(m => m.id !== "welcome")
+      .map(m => ({ role: m.role as "user" | "bot", content: m.content }));
     
     try {
       const response = await chatMutation.mutateAsync({
         topic,
         question: userMessage.content,
         language,
+        history: conversationHistory.slice(0, -1),
       });
 
       const botMessage: Message = {
