@@ -218,12 +218,16 @@ export default function Home() {
                 </Link>
               </>
             ) : (
-              <a href="/api/login" target="_top">
-                <Button variant="ghost" size="sm" className="text-muted-foreground text-xs sm:text-sm px-2" data-testid="button-login">
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span className="ml-1">{t.auth.signIn}</span>
-                </Button>
-              </a>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground text-xs sm:text-sm px-2"
+                data-testid="button-login"
+                onClick={() => { window.open("/api/login", "_blank"); }}
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span className="ml-1">{t.auth.signIn}</span>
+              </Button>
             )
           )}
         </div>
