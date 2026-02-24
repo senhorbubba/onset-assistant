@@ -5,6 +5,7 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import OpenAI from "openai";
 import multer from "multer";
+import nodemailer from "nodemailer";
 import type { Content, UserProfile, TopicExperience } from "@shared/schema";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
@@ -15,8 +16,42 @@ const openai = new OpenAI({
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
+const emailTransporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "onset.devs@gmail.com",
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
+
 async function sendEmailNotification(email: string, question: string, response: string, topic: string): Promise<void> {
-  console.log(`[Email Notification] To: ${email} | Topic: ${topic} | Question: "${question}" | Response: "${response.substring(0, 100)}..."`);
+  if (!process.env.GMAIL_APP_PASSWORD) {
+    console.log(`[Email Notification] Skipped (no GMAIL_APP_PASSWORD configured) | To: ${email}`);
+    return;
+  }
+
+  await emailTransporter.sendMail({
+    from: '"onset. Assistant" <onset.devs@gmail.com>',
+    to: email,
+    subject: `Your question about ${topic} has been answered`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #333;">onset. Assistant</h2>
+        <p style="color: #555;">Your question has been answered by our team:</p>
+        <div style="background: #f5f5f5; border-left: 4px solid #4f46e5; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+          <p style="margin: 0; font-weight: 600; color: #333;">Your question (${topic}):</p>
+          <p style="margin: 8px 0 0; color: #555;">${question}</p>
+        </div>
+        <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+          <p style="margin: 0; font-weight: 600; color: #333;">Response:</p>
+          <p style="margin: 8px 0 0; color: #555;">${response}</p>
+        </div>
+        <p style="color: #999; font-size: 12px; margin-top: 24px;">You received this email because you asked a question on onset. Assistant. You can disable email notifications in your profile settings.</p>
+      </div>
+    `,
+  });
+
+  console.log(`[Email Notification] Sent to: ${email} | Topic: ${topic}`);
 }
 
 const profileLabels: Record<string, Record<string, string>> = {

@@ -34,6 +34,7 @@ A chatbot web application branded "onset. Assistant" that answers user questions
 - Backend: Express.js + Drizzle ORM + PostgreSQL
 - Auth: Replit Auth (OpenID Connect with Google, GitHub, email/password)
 - AI: OpenAI gpt-4o-mini via Replit AI Integrations (no API key needed)
+- Email: Nodemailer with Gmail SMTP (onset.devs@gmail.com, App Password in GMAIL_APP_PASSWORD secret)
 - Data source: JSON file uploads (one file per topic, uploaded via admin panel)
 
 ## Key Files
