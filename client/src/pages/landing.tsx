@@ -280,23 +280,23 @@ export default function Landing() {
         )}
       </nav>
 
-      <section className="py-16 sm:py-24 lg:py-32 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
-          <div className="mb-6">
+      <section className="py-12 sm:py-24 lg:py-32 bg-white">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 text-center">
+          <div className="mb-5 sm:mb-6">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium" data-testid="badge-hero">
               <Sparkles className="w-3.5 h-3.5" />
               {t.hero.badge}
             </span>
           </div>
           <h1
-            className="text-4xl sm:text-5xl lg:text-6xl font-extrabold font-display leading-tight mb-6"
+            className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-display leading-tight mb-5 sm:mb-6"
             data-testid="text-hero-title"
           >
             {t.hero.title}{" "}
             <span className="text-primary">{t.hero.titleHighlight}</span>
           </h1>
           <p
-            className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed"
+            className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2 sm:px-0"
             data-testid="text-hero-subtitle"
           >
             {t.hero.subtitle}
@@ -313,11 +313,11 @@ export default function Landing() {
           </div>
         </div>
       </section>
-      <section id="features" className="py-16 sm:py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-3" data-testid="text-features-title">{t.trust.title}</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">{t.trust.subtitle}</p>
+      <section id="features" className="py-12 sm:py-24 bg-white">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-2xl sm:text-4xl font-bold font-display mb-3" data-testid="text-features-title">{t.trust.title}</h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">{t.trust.subtitle}</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {t.trust.items.map((item, i) => {
@@ -340,11 +340,11 @@ export default function Landing() {
         </div>
       </section>
 
-      <section id="use-cases" className="py-16 sm:py-24 bg-slate-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-3" data-testid="text-usecases-title">{t.useCases.title}</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">{t.useCases.subtitle}</p>
+      <section id="use-cases" className="py-12 sm:py-24 bg-slate-50">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-2xl sm:text-4xl font-bold font-display mb-3" data-testid="text-usecases-title">{t.useCases.title}</h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">{t.useCases.subtitle}</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {t.useCases.items.map((item, i) => {
@@ -369,11 +369,11 @@ export default function Landing() {
         </div>
       </section>
 
-      <section id="how-it-works" className="py-16 sm:py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-3" data-testid="text-howitworks-title">{t.howItWorks.title}</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">{t.howItWorks.subtitle}</p>
+      <section id="how-it-works" className="py-12 sm:py-24 bg-white">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-2xl sm:text-4xl font-bold font-display mb-3" data-testid="text-howitworks-title">{t.howItWorks.title}</h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">{t.howItWorks.subtitle}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {t.howItWorks.steps.map((step, i) => (
@@ -396,11 +396,11 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="py-16 sm:py-24 bg-slate-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-3" data-testid="text-deploy-title">{t.deploy.title}</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">{t.deploy.subtitle}</p>
+      <section className="py-12 sm:py-24 bg-slate-50">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-2xl sm:text-4xl font-bold font-display mb-3" data-testid="text-deploy-title">{t.deploy.title}</h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">{t.deploy.subtitle}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {t.deploy.items.map((item, i) => {
@@ -423,12 +423,12 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="py-16 sm:py-24 bg-gradient-to-br from-primary to-primary/80 text-white">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+      <section className="py-12 sm:py-24 bg-gradient-to-br from-primary to-primary/80 text-white">
+        <div className="max-w-3xl mx-auto px-6 sm:px-8 text-center">
           <div>
             <Target className="w-10 h-10 mx-auto mb-6 opacity-80" />
-            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-4" data-testid="text-cta-title">{t.cta.title}</h2>
-            <p className="text-lg opacity-90 mb-8">{t.cta.subtitle}</p>
+            <h2 className="text-2xl sm:text-4xl font-bold font-display mb-4" data-testid="text-cta-title">{t.cta.title}</h2>
+            <p className="text-base sm:text-lg opacity-90 mb-8">{t.cta.subtitle}</p>
             <Link href="/bot">
               <Button size="lg" variant="secondary" className="gap-2 text-base px-8 py-6 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all" data-testid="button-bottom-cta">
                 <MessageSquareText className="w-5 h-5" />
@@ -441,7 +441,7 @@ export default function Landing() {
       </section>
 
       <footer className="py-8 bg-slate-900 text-slate-400">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col items-center gap-3 text-center">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 flex flex-col items-center gap-3 text-center">
           <div className="flex items-center gap-2">
             <img src={onsetLogo} alt="onset." className="w-6 h-6 object-contain" />
             <span className="text-sm font-medium text-white">onset.</span>
