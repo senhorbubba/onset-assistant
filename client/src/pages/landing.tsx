@@ -258,8 +258,8 @@ export default function Landing() {
       </nav>
 
       <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
-        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl opacity-60 pointer-events-none" />
-        <div className="absolute bottom-[-10%] left-[-15%] w-[500px] h-[500px] bg-accent/5 rounded-full blur-3xl opacity-60 pointer-events-none" />
+        <div className="hidden sm:block absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl opacity-60 pointer-events-none" />
+        <div className="hidden sm:block absolute bottom-[-10%] left-[-15%] w-[500px] h-[500px] bg-accent/5 rounded-full blur-3xl opacity-60 pointer-events-none" />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center relative z-10">
           <motion.div
             initial="hidden"
