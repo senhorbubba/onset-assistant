@@ -142,10 +142,6 @@
   @apply bg-black/40 backdrop-blur-lg border border-white/10 shadow-xl;
 }
 
-body > *:not(#root):not(script) {
-  display: none !important;
-}
-
 /* Chat bubble animation */
 @keyframes slideIn {
   from { opacity: 0; transform: translateY(10px); }

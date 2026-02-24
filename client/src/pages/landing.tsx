@@ -270,7 +270,7 @@ export default function Landing() {
             data-testid="text-hero-title"
           >
             {t.hero.title}{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{t.hero.titleHighlight}</span>
+            <span className="text-primary">{t.hero.titleHighlight}</span>
           </h1>
           <p
             className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed"
