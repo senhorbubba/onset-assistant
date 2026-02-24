@@ -4,9 +4,9 @@
 A chatbot web application branded "onset. Assistant" that answers user questions based on curated JSON file uploads (one per topic). Users choose from dynamically available topics based on uploaded files, provide their experience level for that specific topic, and receive personalized microlearning responses. The bot uses OpenAI (gpt-4o-mini) with a two-phase conversational approach: Phase 1 classifies the user's intent (specific match, general/exploratory, learning plan, off-topic, not found), and Phase 2 generates a contextual response. For general questions the bot engages conversationally and suggests relevant subtopics; for specific questions it provides answers from the knowledge base with video links. Unanswered questions are logged for curator review. The bot never invents answers beyond the knowledge base.
 
 ## Current State
-- Dynamic topics based on uploaded JSON files (one file per topic)
-- Chat interface on the home page with dynamic topic selection
-- Admin panel at /admin to upload JSON files, visually inspect knowledge base per topic, and manage users
+- Landing page at `/` with product overview, features, use cases, and CTA to try the bot
+- Chat interface at `/bot` with dynamic topic selection
+- Admin panel at `/admin` to upload JSON files, visually inspect knowledge base per topic, and manage users
 - Two-phase conversational AI (gpt-4o-mini via Replit AI Integrations): Phase 1 classifies intent, Phase 2 generates response
 - Conversational flow: general questions get guided exploration, specific questions get knowledge base answers with video links
 - Conversation history support (last 6 messages) for multi-turn dialogues
@@ -44,7 +44,8 @@ A chatbot web application branded "onset. Assistant" that answers user questions
 - `server/routes.ts` - Backend API endpoints with OpenAI matching + auth + profile + topic experience + chat history + JSON upload
 - `server/storage.ts` - Database operations (CRUD, bulk create, clear by topic, available topics, user stats)
 - `server/replit_integrations/auth/` - Auth integration (login, session, user management)
-- `client/src/pages/home.tsx` - Main chat page with dynamic topic selection
+- `client/src/pages/landing.tsx` - Landing page with product overview, features, use cases, how it works, CTA
+- `client/src/pages/home.tsx` - Main chat page at /bot with dynamic topic selection
 - `client/src/pages/admin.tsx` - Admin dashboard with JSON upload, topic inspector, unanswered questions, users tab
 - `client/src/pages/onboarding.tsx` - Onboarding questionnaire with progress indicator (5 steps: role, industry, goal, challenge, learning preference)
 - `client/src/pages/profile.tsx` - User profile panel with editable fields, learning preference, and learning summary

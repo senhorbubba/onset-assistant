@@ -35,7 +35,7 @@ export default function Onboarding() {
     },
     onSuccess: async (savedProfile) => {
       queryClient.setQueryData(["/api/profile"], savedProfile);
-      navigate("/");
+      navigate("/bot");
     },
   });
 

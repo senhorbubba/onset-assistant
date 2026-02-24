@@ -88,16 +88,16 @@ export async function setupAuth(app: Express) {
   app.get(
     "/api/auth/google/callback",
     passport.authenticate("google", {
-      failureRedirect: "/?auth=failed",
+      failureRedirect: "/bot?auth=failed",
     }),
     (req, res) => {
-      res.redirect("/");
+      res.redirect("/bot");
     }
   );
 
   app.get("/api/logout", (req, res) => {
     req.logout(() => {
-      res.redirect("/");
+      res.redirect("/bot");
     });
   });
 }

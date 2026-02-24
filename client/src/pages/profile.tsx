@@ -93,7 +93,7 @@ export default function Profile() {
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      navigate("/");
+      navigate("/bot");
     }
   }, [authLoading, isAuthenticated, navigate]);
 
@@ -118,7 +118,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/")} data-testid="button-back-home">
+        <Button variant="ghost" size="sm" onClick={() => navigate("/bot")} data-testid="button-back-home">
           <ArrowLeft className="w-4 h-4 mr-1" />
           {t.profile.backToHome}
         </Button>
@@ -146,7 +146,7 @@ export default function Profile() {
             <Button
               variant="default"
               size="sm"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/bot")}
               data-testid="button-back-learning"
             >
               <ArrowLeft className="w-4 h-4 mr-1" />
