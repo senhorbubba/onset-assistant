@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useChat } from "@/hooks/use-chat";
 import { Send, User, Sparkles, Loader2, Play } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -215,12 +216,24 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
               )}
               
               <div className={cn(
-                "p-3 sm:p-4 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap",
+                "p-3 sm:p-4 rounded-2xl shadow-sm text-sm leading-relaxed",
                 msg.role === "user" 
-                  ? "bg-primary text-primary-foreground rounded-tr-none" 
-                  : "bg-white text-foreground border border-border/50 rounded-tl-none"
+                  ? "bg-primary text-primary-foreground rounded-tr-none whitespace-pre-wrap" 
+                  : "bg-white text-foreground border border-border/50 rounded-tl-none prose prose-sm max-w-none prose-a:text-primary prose-a:underline prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-strong:text-foreground"
               )}>
-                {msg.content}
+                {msg.role === "bot" ? (
+                  <ReactMarkdown
+                    components={{
+                      a: ({ href, children }) => (
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium" data-testid="link-markdown">
+                          {children}
+                        </a>
+                      ),
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+                ) : msg.content}
                 {msg.link && msg.link.includes('youtube.com') && (() => {
                   const url = new URL(msg.link!);
                   const videoId = url.searchParams.get('v');

@@ -166,12 +166,33 @@ Use Case: ${entry.useCase || ''}`;
 
     if (classification.startsWith("EXPLORE") || classification.startsWith("PLAN")) {
       const isplan = classification.startsWith("PLAN");
-      const guidePrompt = `You are "onset. Assistant", a warm learning coach for "${topic}".
-${isplan ? 'The user wants a learning plan.' : 'The user asked a general question. Engage them conversationally — acknowledge their interest, ask what aspect they want to focus on, and suggest 2-3 relevant subtopics from the list.'}
-You MUST respond in ${userLang}. If the subtopics below are in a different language, translate them naturally for the user.
+
+      const subtopicListWithLinks = contentItems.map((item) => {
+        const link = item.timestampLink ? ` | Link: ${item.timestampLink}` : '';
+        const takeaway = item.keyTakeaway ? ` | Takeaway: ${item.keyTakeaway.split('|')[0].trim()}` : '';
+        return `• ${item.subtopic} (${item.difficulty || 'General'})${takeaway}${link}`;
+      }).join('\n');
+
+      const entryLooksPortuguese = contentItems.length > 0 && /[àáâãéêíóôõúç]/i.test(contentItems[0].subtopic || '');
+      const contentLang = entryLooksPortuguese ? "Portuguese" : "English";
+      const langMismatch = (isPt && !entryLooksPortuguese) || (!isPt && entryLooksPortuguese);
+      const linkLangNote = langMismatch ? `\nThe linked videos are in ${contentLang}. Mention this once to the user.` : '';
+
+      const guidePrompt = isplan
+        ? `You are "onset. Assistant", a warm learning coach for "${topic}".
+The user wants a learning plan. Create a structured plan using ONLY the entries below. For EACH entry in the plan, you MUST include its link so the user can access the content directly. Format links as markdown: [title](url).
+You MUST respond in ${userLang}. If the subtopics are in a different language, translate them naturally.${linkLangNote}
+Organize by difficulty: Beginner → Intermediate → Advanced. Be practical and brief.
+${profileContext}
+
+KNOWLEDGE BASE ENTRIES (use these — include the links!):
+${subtopicListWithLinks}`
+        : `You are "onset. Assistant", a warm learning coach for "${topic}".
+The user asked a general question. Engage them conversationally — acknowledge their interest, ask what aspect they want to focus on, and suggest 2-3 relevant subtopics. Mention that each subtopic has video content they can watch.
+You MUST respond in ${userLang}. If the subtopics are in a different language, translate them naturally.
 Use ONLY these subtopics (do not invent others):
 ${subtopicList}
-${isplan ? 'Organize by difficulty: Beginner → Intermediate → Advanced. Be practical and brief.' : 'Be warm and encouraging. Ask 1-2 clarifying questions.'}
+Be warm and encouraging. Ask 1-2 clarifying questions.
 ${profileContext}`;
 
       const guideMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
@@ -187,7 +208,7 @@ ${profileContext}`;
       const guideResponse = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: guideMessages,
-        max_completion_tokens: 600,
+        max_completion_tokens: 1200,
       });
 
       const guideAnswer = guideResponse.choices[0]?.message?.content?.trim() || "";
