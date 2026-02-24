@@ -225,7 +225,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-foreground">
-      <nav className="sticky top-0 z-50 bg-white border-b border-slate-100" data-testid="nav-landing">
+      <nav className="sticky top-0 z-50 bg-white border-b border-slate-100" data-testid="nav-landing" style={{ border: '3px solid orange' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between md:grid md:grid-cols-3 md:justify-items-center">
           <div className="flex items-center gap-2 md:justify-self-start">
             <img src={onsetLogo} alt="onset." className="w-8 h-8 rounded-lg" />
@@ -257,9 +257,9 @@ export default function Landing() {
         </div>
       </nav>
 
-      <section className="py-16 sm:py-24 lg:py-32 bg-slate-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
-          <div className="mb-6">
+      <section className="py-16 sm:py-24 lg:py-32 bg-slate-50" style={{ border: '3px solid red' }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center" style={{ border: '3px solid green' }}>
+          <div className="mb-6" style={{ border: '3px solid blue' }}>
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium" data-testid="badge-hero">
               <Sparkles className="w-3.5 h-3.5" />
               {t.hero.badge}
