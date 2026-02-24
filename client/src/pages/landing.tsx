@@ -115,7 +115,7 @@ const landingText = {
       button: "Launch the Assistant",
     },
     footer: {
-      tagline: "AI-powered learning. Human-curated truth.",
+      tagline: "AI-Powered Knowledge. Human-Curated Truth.",
       rights: "All rights reserved.",
     },
   },
@@ -197,7 +197,7 @@ const landingText = {
       button: "Abrir o Assistente",
     },
     footer: {
-      tagline: "Aprendizado com IA. Verdade curada por humanos.",
+      tagline: "Conhecimento com IA. Verdade curada por humanos.",
       rights: "Todos os direitos reservados.",
     },
   },
