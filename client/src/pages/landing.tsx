@@ -224,7 +224,7 @@ export default function Landing() {
   const t = landingText[language] || landingText.en;
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-foreground overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 font-sans text-foreground">
       <nav className="sticky top-0 z-50 bg-white border-b border-slate-100" data-testid="nav-landing">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between md:grid md:grid-cols-3 md:justify-items-center">
           <div className="flex items-center gap-2 md:justify-self-start">
