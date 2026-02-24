@@ -225,7 +225,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-foreground overflow-x-hidden">
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100" data-testid="nav-landing">
+      <nav className="sticky top-0 z-50 bg-white border-b border-slate-100" data-testid="nav-landing">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between md:grid md:grid-cols-3 md:justify-items-center">
           <div className="flex items-center gap-2 md:justify-self-start">
             <img src={onsetLogo} alt="onset." className="w-8 h-8 rounded-lg" />
@@ -257,9 +257,7 @@ export default function Landing() {
         </div>
       </nav>
 
-      <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
-        <div className="hidden sm:block absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl opacity-60 pointer-events-none" />
-        <div className="hidden sm:block absolute bottom-[-10%] left-[-15%] w-[500px] h-[500px] bg-accent/5 rounded-full blur-3xl opacity-60 pointer-events-none" />
+      <section className="relative py-16 sm:py-24 lg:py-32 bg-slate-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center relative z-10">
           <motion.div
             initial="hidden"
