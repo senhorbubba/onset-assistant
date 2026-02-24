@@ -290,6 +290,143 @@ export default function Landing() {
           </div>
         </div>
       </section>
+      <section id="features" className="py-16 sm:py-24 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-3" data-testid="text-features-title">{t.trust.title}</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">{t.trust.subtitle}</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {t.trust.items.map((item, i) => {
+              const Icon = iconMap[item.icon] || ShieldCheck;
+              return (
+                <div
+                  key={i}
+                  className="group p-6 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-lg hover:border-primary/20 transition-all duration-300"
+                  data-testid={`card-feature-${i}`}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <Icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="font-bold font-display text-lg mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section id="use-cases" className="py-16 sm:py-24 bg-slate-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-3" data-testid="text-usecases-title">{t.useCases.title}</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">{t.useCases.subtitle}</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {t.useCases.items.map((item, i) => {
+              const Icon = iconMap[item.icon] || BookOpen;
+              return (
+                <div
+                  key={i}
+                  className="flex items-start gap-4 p-5 rounded-xl bg-white border border-slate-100 hover:shadow-md transition-all duration-300"
+                  data-testid={`card-usecase-${i}`}
+                >
+                  <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                    <Icon className="w-5 h-5 text-accent" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold font-display mb-1">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section id="how-it-works" className="py-16 sm:py-24 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-3" data-testid="text-howitworks-title">{t.howItWorks.title}</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">{t.howItWorks.subtitle}</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {t.howItWorks.steps.map((step, i) => (
+              <div
+                key={i}
+                className="relative text-center p-6"
+                data-testid={`step-${i}`}
+              >
+                <div className="text-6xl font-extrabold font-display text-primary/10 mb-4">{step.number}</div>
+                <h3 className="font-bold font-display text-xl mb-3">{step.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+                {i < 2 && (
+                  <div className="hidden md:block absolute top-12 -right-4 w-8">
+                    <ArrowRight className="w-6 h-6 text-primary/20" />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 sm:py-24 bg-slate-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-3" data-testid="text-deploy-title">{t.deploy.title}</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">{t.deploy.subtitle}</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {t.deploy.items.map((item, i) => {
+              const Icon = iconMap[item.icon] || Globe;
+              return (
+                <div
+                  key={i}
+                  className="text-center p-8 rounded-2xl bg-white border border-slate-100 hover:shadow-lg hover:border-primary/20 transition-all duration-300"
+                  data-testid={`card-deploy-${i}`}
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
+                    <Icon className="w-7 h-7 text-primary" />
+                  </div>
+                  <h3 className="font-bold font-display text-lg mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 sm:py-24 bg-gradient-to-br from-primary to-primary/80 text-white">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <div>
+            <Target className="w-10 h-10 mx-auto mb-6 opacity-80" />
+            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-4" data-testid="text-cta-title">{t.cta.title}</h2>
+            <p className="text-lg opacity-90 mb-8">{t.cta.subtitle}</p>
+            <Link href="/bot">
+              <Button size="lg" variant="secondary" className="gap-2 text-base px-8 py-6 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all" data-testid="button-bottom-cta">
+                <MessageSquareText className="w-5 h-5" />
+                {t.cta.button}
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <footer className="py-8 bg-slate-900 text-slate-400">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col items-center gap-3 text-center">
+          <div className="flex items-center gap-2">
+            <img src={onsetLogo} alt="onset." className="w-6 h-6 rounded" />
+            <span className="text-sm font-medium text-white">onset.</span>
+          </div>
+          <p className="text-xs">{t.footer.tagline}</p>
+          <p className="text-xs">&copy; {new Date().getFullYear()} onset. {t.footer.rights}</p>
+        </div>
+      </footer>
     </div>
   );
 
