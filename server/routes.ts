@@ -120,12 +120,21 @@ ${contentItems.map((item, i) => `[${i}] ${item.subtopic} | Keywords: ${item.keyw
     // PHASE 2: Generate response based on classification
     const matchResult = classification.match(/MATCH:\[?(\d+)\]?/);
 
+    const userLang = isPt ? "Brazilian Portuguese" : "English";
+
     if (matchResult) {
       const matchedIdx = parseInt(matchResult[1], 10);
       if (matchedIdx >= 0 && matchedIdx < contentItems.length) {
         const entry = contentItems[matchedIdx];
+        const entryLooksPortuguese = /[àáâãéêíóôõúç]/i.test(entry.subtopic || '') || /[àáâãéêíóôõúç]/i.test(entry.searchContext || '');
+        const entryLang = entryLooksPortuguese ? "Portuguese" : "English";
+        const langMismatch = (isPt && !entryLooksPortuguese) || (!isPt && entryLooksPortuguese);
+        const linkLangNote = langMismatch && entry.timestampLink
+          ? `\nIMPORTANT: The linked video/resource is in ${entryLang}. Mention this to the user naturally (e.g., "The video for this topic is in ${entryLang}").`
+          : '';
+
         const answerPrompt = `You are "onset. Assistant", a friendly learning coach. Answer the user's question using ONLY the information from this knowledge base entry. Be concise and natural. One key insight.
-${isPt ? 'Respond in Brazilian Portuguese.' : ''}
+You MUST respond in ${userLang}, even if the knowledge base entry below is in a different language. Translate the content naturally — do not copy it verbatim in the original language. Base your answer on the Key Takeaways.${linkLangNote}
 ${profileContext}
 
 Entry: ${entry.subtopic}
@@ -159,10 +168,10 @@ Use Case: ${entry.useCase || ''}`;
       const isplan = classification.startsWith("PLAN");
       const guidePrompt = `You are "onset. Assistant", a warm learning coach for "${topic}".
 ${isplan ? 'The user wants a learning plan.' : 'The user asked a general question. Engage them conversationally — acknowledge their interest, ask what aspect they want to focus on, and suggest 2-3 relevant subtopics from the list.'}
+You MUST respond in ${userLang}. If the subtopics below are in a different language, translate them naturally for the user.
 Use ONLY these subtopics (do not invent others):
 ${subtopicList}
 ${isplan ? 'Organize by difficulty: Beginner → Intermediate → Advanced. Be practical and brief.' : 'Be warm and encouraging. Ask 1-2 clarifying questions.'}
-${isPt ? 'Respond in Brazilian Portuguese.' : ''}
 ${profileContext}`;
 
       const guideMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
