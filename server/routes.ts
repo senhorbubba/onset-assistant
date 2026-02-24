@@ -83,8 +83,9 @@ User: ${getProfileLabel('role', profile.role || '')} in ${getProfileLabel('indus
 
 Given the user's message and conversation history, respond with ONE of these:
 - MATCH:[number] — if the question specifically relates to one of the entries below. Use the entry number.
-- EXPLORE — if the question is general, broad, or the user is exploring (e.g. "help me improve", "what can I learn", "I want to be better at...").
-- PLAN — if the user asks for a learning plan or says "yes" to a suggestion.
+- OVERVIEW — if the user asks what content is available, what you know, what's in the knowledge base, what topics/categories you cover, or wants to see everything (e.g. "what do you know?", "what do you have?", "show me what's available", "what can you teach me?", "what topics do you cover?").
+- EXPLORE — if the question is general, broad, or the user is exploring a direction (e.g. "help me improve", "I want to be better at...", "tell me about feedback").
+- PLAN — if the user asks for a learning plan, says "yes" to a suggestion, or wants a structured path.
 - OFF_TOPIC — if unrelated to "${topic}".
 - NOT_FOUND — if it's specifically about "${topic}" but no entry covers it.
 
@@ -161,6 +162,48 @@ Use Case: ${entry.useCase || ''}`;
 
         const answer = answerResponse.choices[0]?.message?.content?.trim() || entry.keyTakeaway || entry.subtopic;
         return { answer, found: true, link: entry.timestampLink || undefined };
+      }
+    }
+
+    if (classification.startsWith("OVERVIEW")) {
+      const subtopicListForOverview = contentItems.map((item) => {
+        return `• ${item.subtopic} (${item.difficulty || 'General'}) | Keywords: ${item.keywords || 'none'}`;
+      }).join('\n');
+
+      const entryLooksPortuguese = contentItems.length > 0 && /[àáâãéêíóôõúç]/i.test(contentItems[0].subtopic || '');
+      const contentLang = entryLooksPortuguese ? "Portuguese" : "English";
+      const langMismatch = (isPt && !entryLooksPortuguese) || (!isPt && entryLooksPortuguese);
+      const linkLangNote = langMismatch ? `\nNote: The content was originally created in ${contentLang}.` : '';
+
+      const overviewPrompt = `You are "onset. Assistant", a warm learning coach for "${topic}".
+The user wants to know what content is available. Present an organized overview of the knowledge base grouped into logical categories/themes (e.g., "Giving Feedback", "Listening Skills", "Conflict Resolution", etc.). Group related subtopics together under clear category headings.
+For each category, list the subtopics briefly. After the overview, invite the user to pick a category or ask about any specific subtopic.
+You MUST respond in ${userLang}. Translate subtopic names naturally if they are in a different language.${linkLangNote}
+Keep it concise and scannable — use short bullet points, not long descriptions.
+${profileContext}
+
+ALL ENTRIES IN THE KNOWLEDGE BASE (${contentItems.length} total):
+${subtopicListForOverview}`;
+
+      const overviewMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+        { role: "system", content: overviewPrompt }
+      ];
+      if (history && history.length > 0) {
+        for (const msg of history.slice(-4)) {
+          overviewMessages.push({ role: msg.role === "user" ? "user" : "assistant", content: msg.content });
+        }
+      }
+      overviewMessages.push({ role: "user", content: question });
+
+      const overviewResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: overviewMessages,
+        max_completion_tokens: 800,
+      });
+
+      const overviewAnswer = overviewResponse.choices[0]?.message?.content?.trim() || "";
+      if (overviewAnswer) {
+        return { answer: overviewAnswer, found: true };
       }
     }
 
