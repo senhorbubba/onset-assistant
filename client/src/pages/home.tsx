@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTopics } from "@/hooks/use-content";
-import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
+import onsetLogo from "@assets/onset_logo_transparent.png";
 
 export default function Home() {
   const [topic, setTopic] = useState<string>("");
@@ -117,7 +117,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex justify-between items-center gap-2">
         <Link href="/">
           <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" data-testid="link-back-landing">
-            <img src={onsetLogo} alt="onset." className="w-8 h-8 rounded-lg mix-blend-multiply" />
+            <img src={onsetLogo} alt="onset." className="w-8 h-8 rounded-lg" />
             <span className="text-lg font-bold font-display tracking-tight">onset. Assistant</span>
           </div>
         </Link>

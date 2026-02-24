@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Save, Loader2, MessageSquare, BookOpen, CheckCircle, Clock, LogOut, Settings, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
+import onsetLogo from "@assets/onset_logo_transparent.png";
 
 export default function Profile() {
   const { t } = useLanguage();
@@ -123,7 +123,7 @@ export default function Profile() {
           {t.profile.backToHome}
         </Button>
         <div className="flex items-center gap-2 ml-auto">
-          <img src={onsetLogo} alt="Onset" className="w-6 h-6 rounded-md mix-blend-multiply" />
+          <img src={onsetLogo} alt="Onset" className="w-6 h-6 rounded-md" />
           <span className="text-sm font-bold font-display tracking-tight">onset. Assistant</span>
         </div>
       </header>

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/lib/language-context";
 import { ArrowRight, ArrowLeft, Sparkles, User, Building2, Target, HelpCircle, GraduationCap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
+import onsetLogo from "@assets/onset_logo_transparent.png";
 
 const TOTAL_STEPS = 5;
 
@@ -151,7 +151,7 @@ export default function Onboarding() {
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
           <div className="flex items-center gap-2 mb-4">
-            <img src={onsetLogo} alt="Onset" className="w-8 h-8 rounded-lg mix-blend-multiply" />
+            <img src={onsetLogo} alt="Onset" className="w-8 h-8 rounded-lg" />
             <span className="text-lg font-bold font-display tracking-tight">onset. Assistant</span>
           </div>
           <div className="p-3 rounded-2xl bg-white shadow-lg border border-slate-100 mb-4">
