@@ -109,11 +109,14 @@ export default function Home() {
         <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-accent/5 rounded-full blur-3xl opacity-60" />
       </div>
 
-      <header className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex justify-between items-center gap-2">
-        <div className="flex items-center gap-2">
-          <img src={onsetLogo} alt="Onset" className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg" />
-          <h1 className="text-lg sm:text-xl font-bold font-display tracking-tight">onset. Assistant</h1>
-        </div>
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex justify-between items-center gap-2">
+        <Link href="/">
+          <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" data-testid="link-back-landing">
+            <img src={onsetLogo} alt="onset." className="w-8 h-8 rounded-lg" />
+            <span className="text-lg font-bold font-display tracking-tight">onset. Assistant</span>
+          </div>
+        </Link>
         
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
@@ -234,6 +237,7 @@ export default function Home() {
               </Button>
             )
           )}
+        </div>
         </div>
       </header>
 
