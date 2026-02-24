@@ -282,6 +282,7 @@ export default function Landing() {
 
       <section className="min-h-[calc(100dvh-57px)] sm:min-h-0 sm:py-24 lg:py-32 bg-white flex items-center">
         <div className="max-w-6xl mx-auto px-6 sm:px-8 text-center w-full">
+          <p className="text-xs sm:text-sm text-muted-foreground tracking-wide uppercase mb-4 sm:mb-5 max-w-[200px] sm:max-w-none mx-auto">{t.hero.badge}</p>
           <h1
             className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-display leading-tight mb-5 sm:mb-6"
             data-testid="text-hero-title"
