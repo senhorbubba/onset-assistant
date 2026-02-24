@@ -92,7 +92,7 @@ Respond with ONLY the classification tag, nothing else.
 ${isPt ? 'The user may write in Portuguese.' : ''}
 
 ENTRIES:
-${contentItems.map((item, i) => `[${i}] ${item.subtopic} — Keywords: ${item.keywords || 'none'}`).join('\n')}`;
+${contentItems.map((item, i) => `[${i}] ${item.subtopic} | Keywords: ${item.keywords || 'none'} | Context: ${item.searchContext || 'none'}`).join('\n')}`;
 
     const classifyMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
       { role: "system", content: classifyPrompt }

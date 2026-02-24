@@ -206,8 +206,8 @@ export default function Admin() {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="min-w-[80px]">Unit ID</TableHead>
                             <TableHead className="min-w-[200px]">{t.admin.subtopic}</TableHead>
+                            <TableHead className="min-w-[200px]">{t.admin.context}</TableHead>
                             <TableHead className="min-w-[150px]">{t.admin.keywords}</TableHead>
                             <TableHead className="min-w-[250px]">{t.admin.keyTakeaway}</TableHead>
                             <TableHead className="min-w-[100px]">{t.admin.difficulty}</TableHead>
@@ -217,9 +217,11 @@ export default function Admin() {
                         <TableBody>
                           {topicContent?.map((item) => (
                             <TableRow key={item.id} data-testid={`row-content-${item.id}`}>
-                              <TableCell className="text-xs font-mono text-muted-foreground">{item.unitId || "-"}</TableCell>
                               <TableCell className="text-sm font-medium max-w-[300px]">
                                 <div className="line-clamp-2">{item.subtopic}</div>
+                              </TableCell>
+                              <TableCell className="text-xs text-muted-foreground max-w-[250px]">
+                                <div className="line-clamp-3">{item.searchContext || "-"}</div>
                               </TableCell>
                               <TableCell className="text-xs text-muted-foreground max-w-[200px]">
                                 <div className="line-clamp-2">{item.keywords || "-"}</div>

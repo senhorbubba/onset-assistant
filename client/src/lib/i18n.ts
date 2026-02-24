@@ -48,6 +48,7 @@ export const translations = {
       unansweredDesc: "Questions the bot couldn't answer. Review and add to knowledge base.",
       topic: "Topic",
       subtopic: "Subtopic",
+      context: "Context",
       questionAsked: "Question Asked",
       keywords: "Keywords",
       keyTakeaway: "Key Takeaway",
@@ -237,6 +238,7 @@ export const translations = {
       unansweredDesc: "Perguntas que o bot não conseguiu responder. Revise e adicione à base.",
       topic: "Tópico",
       subtopic: "Subtópico",
+      context: "Contexto",
       questionAsked: "Pergunta Feita",
       keywords: "Palavras-chave",
       keyTakeaway: "Ponto-chave",
@@ -426,6 +428,7 @@ export interface Translations {
     unansweredDesc: string;
     topic: string;
     subtopic: string;
+    context: string;
     questionAsked: string;
     keywords: string;
     keyTakeaway: string;
