@@ -238,7 +238,7 @@ export default function Landing() {
           </div>
           <div className="flex items-center gap-2">
             <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
-              <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-xs px-2" data-testid="select-language-landing">
+              <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-xs sm:text-sm px-2" data-testid="select-language-landing">
                 <Globe className="w-3.5 h-3.5 shrink-0" />
                 <SelectValue />
               </SelectTrigger>
