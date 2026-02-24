@@ -84,10 +84,15 @@ User: ${getProfileLabel('role', profile.role || '')} in ${getProfileLabel('indus
 Given the user's message and conversation history, respond with ONE of these:
 - MATCH:[number] — if the question specifically relates to one of the entries below. Use the entry number.
 - OVERVIEW — if the user asks what content is available, what you know, what's in the knowledge base, what topics/categories you cover, or wants to see everything (e.g. "what do you know?", "what do you have?", "show me what's available", "what can you teach me?", "what topics do you cover?").
-- EXPLORE — if the question is general, broad, or the user is exploring a direction (e.g. "help me improve", "I want to be better at...", "tell me about feedback").
-- PLAN — if the user asks for a learning plan, says "yes" to a suggestion, or wants a structured path.
-- OFF_TOPIC — if unrelated to "${topic}".
-- NOT_FOUND — if it's specifically about "${topic}" but no entry covers it.
+- EXPLORE — if the question is general, broad, or the user is exploring a direction (e.g. "help me improve", "I want to be better at...", "tell me about feedback"). Also use EXPLORE for greetings ("hi", "hello", "hey"), social messages ("thank you", "thanks", "ok"), or short follow-ups ("yes", "tell me more", "go on", "sure") — these are conversational and should be handled warmly.
+- PLAN — if the user explicitly asks for a learning plan, a structured path, or a full overview of learning steps with links.
+- OFF_TOPIC — ONLY if the message is clearly about a completely different subject unrelated to "${topic}" (e.g. cooking, sports, math).
+- NOT_FOUND — if it's specifically about "${topic}" but no entry in the knowledge base covers it.
+
+IMPORTANT:
+- When in doubt between EXPLORE and OFF_TOPIC, choose EXPLORE. Greetings, thank-yous, and conversational follow-ups are NEVER off-topic.
+- The entries may be in a different language than the user's question. Match by MEANING, not literal text. For example, "active listening" matches "escuta ativa", "feedback" matches "feedback", "assertive communication" matches "comunicação assertiva".
+- If the user asks about a broad area that maps to MULTIPLE entries (e.g. "What is active listening?" maps to several listening entries), use EXPLORE rather than MATCH.
 
 Respond with ONLY the classification tag, nothing else.
 ${isPt ? 'The user may write in Portuguese.' : ''}
@@ -252,11 +257,15 @@ ${profileContext}
 KNOWLEDGE BASE ENTRIES (use these — include the links!):
 ${subtopicListWithLinks}`
         : `You are "onset. Assistant", a warm learning coach for "${topic}".
-The user asked a general question. Engage them conversationally — acknowledge their interest, ask what aspect they want to focus on, and suggest 2-3 relevant subtopics. Mention that each subtopic has video content they can watch.
+Engage conversationally based on what the user said:
+- If it's a greeting ("hi", "hello"): welcome them warmly and briefly mention 2-3 topics you can help with. Keep it short.
+- If it's a social message ("thank you", "thanks", "ok"): acknowledge warmly. If conversation history shows you were discussing something, ask if they'd like to continue or explore something else.
+- If it's a short follow-up ("yes", "sure", "tell me more"): look at the conversation history to understand what they want more of, and continue from there. Suggest the next relevant subtopic.
+- If it's a general question: acknowledge their interest, ask what aspect they want to focus on, and suggest 2-3 relevant subtopics.
 You MUST respond in ${userLang}. If the subtopics are in a different language, translate them naturally.
 Use ONLY these subtopics (do not invent others):
 ${subtopicList}
-Be warm and encouraging. Ask 1-2 clarifying questions.
+Be warm, encouraging, and concise. Don't list everything — suggest 2-3 relevant options.
 ${profileContext}`;
 
       const guideMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
