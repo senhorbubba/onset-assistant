@@ -30,10 +30,12 @@ async function sendEmailNotification(email: string, question: string, response: 
     return;
   }
 
-  const appUrl = process.env.REPLIT_DOMAINS
-    ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
-    : process.env.REPLIT_DEV_DOMAIN
-      ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+  const domains = process.env.REPLIT_DOMAINS?.split(",") || [];
+  const productionDomain = domains.find(d => d.endsWith(".replit.app") || !d.includes(".replit.dev"));
+  const appUrl = productionDomain
+    ? `https://${productionDomain}`
+    : domains[0]
+      ? `https://${domains[0]}`
       : "https://onset-assistant.replit.app";
 
   await emailTransporter.sendMail({

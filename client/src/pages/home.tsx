@@ -181,7 +181,11 @@ export default function Home() {
                               <div
                                 key={notif.id}
                                 className={`p-3 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors ${!notif.read ? "bg-primary/5" : ""}`}
-                                onClick={() => { if (!notif.read) markOneRead.mutate(notif.id); }}
+                                onClick={() => {
+                                  if (!notif.read) markOneRead.mutate(notif.id);
+                                  setTopic(notif.topic);
+                                  setShowNotifications(false);
+                                }}
                                 data-testid={`notification-${notif.id}`}
                               >
                                 <div className="flex items-start gap-2">
