@@ -14,7 +14,7 @@ A chatbot web application branded "onset. Assistant" that answers user questions
 - Multi-language support: English (en) and Brazilian Portuguese (pt-BR)
 - Auto-detects user region (browser locale) — defaults to Portuguese for pt* locales
 - Language choice persisted in localStorage across page navigation
-- Mobile-first responsive design
+- Mobile-first responsive design (no framer-motion on landing page — causes dark block artifacts on iOS Safari)
 - Google authentication via Replit Auth (OpenID Connect)
 - User profile/onboarding system with personalized AI responses
 - Onboarding questionnaire at /onboarding (role, industry, learning preference, goal, challenge)
