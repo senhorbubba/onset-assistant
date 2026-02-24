@@ -282,17 +282,8 @@ export default function Landing() {
         )}
       </nav>
 
-      <section className="min-h-[calc(100dvh-57px)] sm:min-h-0 sm:py-24 lg:py-32 bg-white flex items-center">
+      <section className="min-h-[calc(85dvh-57px)] sm:min-h-0 sm:py-24 lg:py-32 bg-white flex items-center">
         <div className="max-w-6xl mx-auto px-6 sm:px-8 text-center w-full">
-          <div className="mb-6 sm:mb-8 flex justify-center">
-            <span className="inline-flex flex-col items-center gap-0.5 px-4 py-2 rounded-2xl border border-primary/20 bg-primary/5 text-primary text-[11px] sm:text-xs font-medium tracking-wide">
-              <span className="inline-flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3" />
-                {t.hero.badgeLine1}
-              </span>
-              <span>{t.hero.badgeLine2}</span>
-            </span>
-          </div>
           <h1
             className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-display leading-tight mb-5 sm:mb-6"
             data-testid="text-hero-title"
@@ -301,12 +292,12 @@ export default function Landing() {
             <span className="text-primary">{t.hero.titleHighlight}</span>
           </h1>
           <p
-            className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2 sm:px-0"
+            className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-10 sm:mb-10 leading-relaxed px-2 sm:px-0"
             data-testid="text-hero-subtitle"
           >
             {t.hero.subtitle}
           </p>
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-3 mb-6 sm:mb-0">
             <Link href="/bot">
               <Button size="lg" className="gap-2 text-base px-8 py-6 rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all" data-testid="button-hero-cta">
                 <MessageSquareText className="w-5 h-5" />
