@@ -123,7 +123,7 @@ export default function Profile() {
           {t.profile.backToHome}
         </Button>
         <div className="flex items-center gap-2 ml-auto">
-          <img src={onsetLogo} alt="Onset" className="w-6 h-6 rounded-md" />
+          <img src={onsetLogo} alt="Onset" className="w-6 h-6 rounded-md mix-blend-multiply" />
           <span className="text-sm font-bold font-display tracking-tight">onset. Assistant</span>
         </div>
       </header>

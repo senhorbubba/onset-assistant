@@ -151,7 +151,7 @@ export default function Onboarding() {
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
           <div className="flex items-center gap-2 mb-4">
-            <img src={onsetLogo} alt="Onset" className="w-8 h-8 rounded-lg" />
+            <img src={onsetLogo} alt="Onset" className="w-8 h-8 rounded-lg mix-blend-multiply" />
             <span className="text-lg font-bold font-display tracking-tight">onset. Assistant</span>
           </div>
           <div className="p-3 rounded-2xl bg-white shadow-lg border border-slate-100 mb-4">

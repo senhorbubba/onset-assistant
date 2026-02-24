@@ -117,7 +117,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex justify-between items-center gap-2">
         <Link href="/">
           <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" data-testid="link-back-landing">
-            <img src={onsetLogo} alt="onset." className="w-8 h-8 rounded-lg" />
+            <img src={onsetLogo} alt="onset." className="w-8 h-8 rounded-lg mix-blend-multiply" />
             <span className="text-lg font-bold font-display tracking-tight">onset. Assistant</span>
           </div>
         </Link>
