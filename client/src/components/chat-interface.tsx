@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import onsetLogo from "@assets/onset_logo_transparent.png";
+import onsetLogo from "@assets/onset_logo_final.png";
 
 interface Message {
   id: string;
@@ -145,7 +145,7 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
       <div className="flex flex-col items-center justify-center w-full max-w-4xl mx-auto py-12 px-4">
         <div className="bg-white rounded-2xl border border-slate-100 shadow-lg p-6 sm:p-8 max-w-md w-full text-center">
           <div className="mb-4 p-3 bg-primary/10 rounded-xl w-fit mx-auto">
-            <img src={onsetLogo} alt="Onset" className="w-10 h-10 rounded-lg" />
+            <img src={onsetLogo} alt="Onset" className="w-10 h-10 object-contain" />
           </div>
           <h3 className="text-lg font-bold text-slate-900 mb-2" data-testid="text-experience-question">
             {t.topicExperience.question(topic)}
@@ -177,7 +177,7 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
     <div className="flex flex-col h-[calc(100dvh-140px)] sm:h-[600px] w-full max-w-4xl mx-auto glass rounded-none sm:rounded-2xl overflow-hidden shadow-none sm:shadow-2xl border-0 sm:border sm:border-white/20">
       <div className="p-3 sm:p-4 bg-white/50 border-b border-border/50 flex items-center justify-between backdrop-blur-sm">
         <div className="flex items-center gap-2 sm:gap-3">
-          <img src={onsetLogo} alt="Onset" className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl" />
+          <img src={onsetLogo} alt="Onset" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
           <div>
             <h3 className="font-bold text-base sm:text-lg text-foreground">onset. Assistant</h3>
             <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider">
@@ -212,7 +212,7 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
                   <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
               ) : (
-                <img src={onsetLogo} alt="Onset" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full shrink-0 shadow-sm border border-border" />
+                <img src={onsetLogo} alt="Onset" className="w-7 h-7 sm:w-8 sm:h-8 object-contain shrink-0" />
               )}
               
               <div className={cn(
@@ -274,7 +274,7 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
               animate={{ opacity: 1, y: 0 }}
               className="flex gap-2 sm:gap-4 mr-auto max-w-[90%] sm:max-w-[85%]"
             >
-              <img src={onsetLogo} alt="Onset" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full shrink-0 border border-border" />
+              <img src={onsetLogo} alt="Onset" className="w-7 h-7 sm:w-8 sm:h-8 object-contain shrink-0" />
               <div className="p-3 sm:p-4 bg-white border border-border/50 rounded-2xl rounded-tl-none flex items-center gap-2 shadow-sm">
                 <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce [animation-delay:-0.3s]" />
                 <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce [animation-delay:-0.15s]" />

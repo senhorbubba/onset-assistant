@@ -25,7 +25,7 @@ import {
   Code2,
   MessageCircle,
 } from "lucide-react";
-import onsetLogo from "@assets/onset_logo_transparent.png";
+import onsetLogo from "@assets/onset_logo_final.png";
 
 
 const landingText = {
@@ -220,7 +220,7 @@ export default function Landing() {
       <nav className="sticky top-0 z-50 bg-white border-b border-slate-100" data-testid="nav-landing">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between md:grid md:grid-cols-3 md:justify-items-center">
           <div className="flex items-center gap-2 md:justify-self-start">
-            <img src={onsetLogo} alt="onset." className="w-8 h-8 rounded-lg" />
+            <img src={onsetLogo} alt="onset." className="w-8 h-8 object-contain" />
             <span className="text-lg font-bold font-display tracking-tight">onset.</span>
           </div>
           <div className="hidden md:flex items-center justify-center gap-6 text-sm text-muted-foreground">
@@ -412,7 +412,7 @@ export default function Landing() {
       <footer className="py-8 bg-slate-900 text-slate-400">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col items-center gap-3 text-center">
           <div className="flex items-center gap-2">
-            <img src={onsetLogo} alt="onset." className="w-6 h-6 rounded" />
+            <img src={onsetLogo} alt="onset." className="w-6 h-6 object-contain" />
             <span className="text-sm font-medium text-white">onset.</span>
           </div>
           <p className="text-xs">{t.footer.tagline}</p>
