@@ -223,6 +223,16 @@ export default function Landing() {
   const { language, setLanguage } = useLanguage();
   const t = landingText[language] || landingText.en;
 
+  /* TEMPORARY TEST: minimal page to isolate dark block bug */
+  return (
+    <div style={{ minHeight: '100vh', backgroundColor: '#ffffff', padding: '20px' }}>
+      <h1 style={{ color: '#000', fontSize: '24px' }}>MINIMAL TEST PAGE</h1>
+      <p style={{ color: '#666' }}>If you see a dark block here, the issue is NOT in landing.tsx code.</p>
+      <p style={{ color: '#666' }}>If NO dark block, the issue is in the landing page components.</p>
+    </div>
+  );
+
+  /* ORIGINAL CODE BELOW - will restore after test */
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-foreground">
       <nav className="sticky top-0 z-50 bg-white border-b border-slate-100" data-testid="nav-landing">
