@@ -258,7 +258,7 @@ export default function Home() {
             
             <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold font-display text-slate-900 mb-4 sm:mb-6 tracking-tight leading-tight">
               {t.home.heroTitle1}<br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 {t.home.heroTitle2}
               </span>
             </h2>
