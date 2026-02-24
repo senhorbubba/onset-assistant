@@ -282,7 +282,7 @@ export default function Landing() {
         )}
       </nav>
 
-      <section className="min-h-[calc(85dvh-57px)] sm:min-h-0 sm:py-24 lg:py-32 bg-white flex items-center">
+      <section className="min-h-[calc(85dvh-57px)] sm:min-h-0 sm:py-24 lg:py-32 bg-white flex items-end pb-16 sm:items-center sm:pb-0">
         <div className="max-w-6xl mx-auto px-6 sm:px-8 text-center w-full">
           <h1
             className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-display leading-tight mb-5 sm:mb-6"
