@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ChatInterface } from "@/components/chat-interface";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquareText, ShieldQuestion, BookOpen, Zap, BrainCircuit, Globe, LogIn, Loader2, Bell, X, CheckCheck } from "lucide-react";
+import { MessageSquareText, ShieldQuestion, Globe, LogIn, Loader2, Bell, X, CheckCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -250,24 +250,16 @@ export default function Home() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center text-center max-w-2xl"
+            className="flex flex-col items-center text-center max-w-md mt-8 sm:mt-16"
           >
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-2xl bg-white shadow-xl shadow-slate-200/50 border border-slate-100 rotate-3">
-              <MessageSquareText className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
-            </div>
+            <MessageSquareText className="w-10 h-10 sm:w-12 sm:h-12 text-primary mb-4" />
             
-            <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold font-display text-slate-900 mb-4 sm:mb-6 tracking-tight leading-tight">
-              {t.home.heroTitle1}<br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
-                {t.home.heroTitle2}
-              </span>
+            <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900 mb-2 tracking-tight">
+              {t.home.selectTopic}
             </h2>
             
-            <p className="text-base sm:text-lg md:text-xl text-slate-500 mb-3 sm:mb-4 max-w-lg leading-relaxed px-2">
-              {t.home.heroSubtitle}
-            </p>
-            <p className="text-sm sm:text-base text-slate-400 mb-6 sm:mb-10 max-w-lg leading-relaxed px-2">
-              {t.home.heroTagline}
+            <p className="text-sm text-slate-400 mb-6">
+              {t.home.verifiedByExperts}
             </p>
 
             <div className="w-full max-w-xs space-y-4 px-2">
@@ -293,11 +285,6 @@ export default function Home() {
                   </div>
                 )}
               </div>
-              
-              <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-400">
-                <ShieldQuestion className="w-4 h-4 shrink-0" />
-                <span>{t.home.verifiedByExperts}</span>
-              </div>
             </div>
           </motion.div>
         ) : (
@@ -322,44 +309,6 @@ export default function Home() {
         )}
       </main>
 
-      {!topic && (
-        <section className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
-            {[
-              { 
-                title: t.home.featureCurated, 
-                desc: t.home.featureCuratedDesc,
-                icon: BookOpen 
-              },
-              { 
-                title: t.home.featureSmart, 
-                desc: t.home.featureSmartDesc,
-                icon: Zap 
-              },
-              { 
-                title: t.home.featureLearning, 
-                desc: t.home.featureLearningDesc,
-                icon: BrainCircuit 
-              }
-            ].map((feature, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                viewport={{ once: true }}
-                className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-sm"
-              >
-                <div className="mb-3 sm:mb-4 p-2 bg-primary/10 rounded-lg w-fit">
-                  <feature.icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                </div>
-                <h3 className="font-bold text-base sm:text-lg mb-1 sm:mb-2 text-slate-900">{feature.title}</h3>
-                <p className="text-slate-500 leading-relaxed text-sm sm:text-base">{feature.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 }
