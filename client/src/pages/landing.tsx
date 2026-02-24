@@ -232,16 +232,18 @@ export default function Landing() {
             <a href="#how-it-works" className="hover:text-foreground transition-colors" data-testid="link-how-it-works">{t.nav.howItWorks}</a>
           </div>
           <div className="flex items-center justify-end gap-2 md:justify-self-end">
-            <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
-              <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-xs sm:text-sm px-2" data-testid="select-language-landing">
-                <Globe className="w-3.5 h-3.5 shrink-0" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">EN</SelectItem>
-                <SelectItem value="pt-BR">PT</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="hidden md:block">
+              <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
+                <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-xs sm:text-sm px-2" data-testid="select-language-landing">
+                  <Globe className="w-3.5 h-3.5 shrink-0" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">EN</SelectItem>
+                  <SelectItem value="pt-BR">PT</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <Link href="/bot">
               <Button size="sm" className="gap-1.5 text-xs sm:text-sm" data-testid="button-nav-cta">
                 <MessageSquareText className="w-3.5 h-3.5" />
@@ -262,6 +264,18 @@ export default function Landing() {
             <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1" data-testid="link-features-mobile">{t.nav.features}</a>
             <a href="#use-cases" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1" data-testid="link-use-cases-mobile">{t.nav.useCases}</a>
             <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1" data-testid="link-how-it-works-mobile">{t.nav.howItWorks}</a>
+            <div className="flex items-center gap-2 py-1 border-t border-slate-100 pt-3">
+              <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+              <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
+                <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-sm px-0 h-auto" data-testid="select-language-mobile">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="pt-BR">Português</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         )}
       </nav>
