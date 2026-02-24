@@ -257,47 +257,28 @@ export default function Landing() {
         </div>
       </nav>
 
-      <section className="relative py-16 sm:py-24 lg:py-32 bg-slate-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center relative z-10">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeUp}
-            custom={0}
-          >
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-6" data-testid="badge-hero">
+      <section className="py-16 sm:py-24 lg:py-32 bg-slate-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
+          <div className="mb-6">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium" data-testid="badge-hero">
               <Sparkles className="w-3.5 h-3.5" />
               {t.hero.badge}
             </span>
-          </motion.div>
-          <motion.h1
+          </div>
+          <h1
             className="text-4xl sm:text-5xl lg:text-6xl font-extrabold font-display leading-tight mb-6"
-            initial="hidden"
-            animate="visible"
-            variants={fadeUp}
-            custom={1}
             data-testid="text-hero-title"
           >
             {t.hero.title}{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{t.hero.titleHighlight}</span>
-          </motion.h1>
-          <motion.p
+          </h1>
+          <p
             className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed"
-            initial="hidden"
-            animate="visible"
-            variants={fadeUp}
-            custom={2}
             data-testid="text-hero-subtitle"
           >
             {t.hero.subtitle}
-          </motion.p>
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeUp}
-            custom={3}
-            className="flex flex-col items-center gap-2"
-          >
+          </p>
+          <div className="flex flex-col items-center gap-2">
             <Link href="/bot">
               <Button size="lg" className="gap-2 text-base px-8 py-6 rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all" data-testid="button-hero-cta">
                 <MessageSquareText className="w-5 h-5" />
@@ -306,7 +287,7 @@ export default function Landing() {
               </Button>
             </Link>
             <span className="text-xs text-muted-foreground">{t.hero.ctaSub}</span>
-          </motion.div>
+          </div>
         </div>
       </section>
 
