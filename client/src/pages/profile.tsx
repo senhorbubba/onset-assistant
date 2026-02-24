@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/hooks/use-auth";
-import { ArrowLeft, Save, Loader2, MessageSquare, BookOpen, CheckCircle, Clock, LogOut, Settings } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { ArrowLeft, Save, Loader2, MessageSquare, BookOpen, CheckCircle, Clock, LogOut, Settings, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
@@ -71,6 +72,22 @@ export default function Profile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
       toast({ title: t.profile.saved, description: t.profile.savedDesc });
+    },
+  });
+
+  const toggleEmailNotifications = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const res = await fetch("/api/profile/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ emailNotifications: enabled }),
+      });
+      if (!res.ok) throw new Error("Failed to update");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
     },
   });
 
@@ -278,6 +295,27 @@ export default function Profile() {
                     <p className="text-xs text-slate-500">{t.profile.answersReceived}</p>
                   </div>
                 </div>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-slate-100 rounded-lg">
+                  <Mail className="w-5 h-5 text-slate-600" />
+                </div>
+                <h2 className="text-lg font-bold text-slate-900">{t.profile.emailNotifications}</h2>
+              </div>
+              <p className="text-sm text-slate-500 mb-4">{t.profile.emailNotificationsDesc}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-700">
+                  {profile?.emailNotifications !== false ? t.profile.emailNotificationsOn : t.profile.emailNotificationsOff}
+                </span>
+                <Switch
+                  checked={profile?.emailNotifications !== false}
+                  onCheckedChange={(checked) => toggleEmailNotifications.mutate(checked)}
+                  disabled={toggleEmailNotifications.isPending}
+                  data-testid="switch-email-notifications"
+                />
               </div>
             </Card>
 

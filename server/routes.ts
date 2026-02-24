@@ -15,6 +15,10 @@ const openai = new OpenAI({
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
+async function sendEmailNotification(email: string, question: string, response: string, topic: string): Promise<void> {
+  console.log(`[Email Notification] To: ${email} | Topic: ${topic} | Question: "${question}" | Response: "${response.substring(0, 100)}..."`);
+}
+
 const profileLabels: Record<string, Record<string, string>> = {
   role: { manager: "Manager / Team Lead", executive: "Executive / Director", entrepreneur: "Entrepreneur / Founder", consultant: "Consultant / Advisor", specialist: "Specialist / Analyst", creative: "Creative Professional", educator: "Educator / Trainer", student: "Student / Learner", other: "Other" },
   industry: { technology: "Technology / IT", healthcare: "Healthcare / Pharma", finance: "Finance / Banking", education: "Education / Training", marketing: "Marketing / Advertising", retail: "Retail / E-commerce", manufacturing: "Manufacturing / Engineering", media: "Media / Entertainment", consulting: "Consulting / Professional Services", nonprofit: "Non-profit / Government", other: "Other" },
@@ -578,7 +582,8 @@ export async function registerRoutes(
           link: result.link || null,
         });
       } else {
-        await storage.logUnansweredQuestion({ topic, question });
+        const userEmail = req.isAuthenticated?.() ? req.user?.claims?.email : null;
+        await storage.logUnansweredQuestion({ topic, question, userId: userId || null, userEmail: userEmail || null });
         const notFoundMsg = result.answer || (language === "pt-BR"
           ? "Desculpe, ainda não tenho uma resposta para essa pergunta em nossa base de conhecimento. Registrei para nossa equipe analisar e retornar."
           : "I'm sorry, I don't have an answer for that question in our knowledge base yet. I've logged it for our team to review and they'll follow up with you.");
@@ -607,6 +612,105 @@ export async function registerRoutes(
   app.get(api.unanswered.list.path, async (req, res) => {
     const questions = await storage.getUnansweredQuestions();
     res.json(questions);
+  });
+
+  app.post("/api/admin/respond", async (req: any, res) => {
+    try {
+      if (!req.isAuthenticated?.()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      const adminId = req.user.claims.sub;
+      const { questionId, response } = req.body;
+      if (!questionId || !response) {
+        return res.status(400).json({ message: "questionId and response are required" });
+      }
+
+      const question = await storage.getUnansweredQuestionById(questionId);
+      if (!question) {
+        return res.status(404).json({ message: "Question not found" });
+      }
+
+      if (question.userId) {
+        await storage.respondToQuestion({
+          questionId,
+          userId: question.userId,
+          topic: question.topic,
+          question: question.question,
+          response,
+          adminId,
+        });
+
+        if (question.userEmail) {
+          const userProfile = await storage.getUserProfile(question.userId);
+          if (!userProfile || userProfile.emailNotifications !== false) {
+            try {
+              await sendEmailNotification(question.userEmail, question.question, response, question.topic);
+            } catch (emailErr) {
+              console.error("Email notification failed:", emailErr);
+            }
+          }
+        }
+      }
+
+      await storage.markQuestionReviewed(questionId);
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Respond error:", err);
+      res.status(500).json({ message: "Failed to respond" });
+    }
+  });
+
+  app.get("/api/notifications", async (req: any, res) => {
+    if (!req.isAuthenticated?.()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    const userId = req.user.claims.sub;
+    const notifications = await storage.getNotifications(userId);
+    res.json(notifications);
+  });
+
+  app.get("/api/notifications/count", async (req: any, res) => {
+    if (!req.isAuthenticated?.()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    const userId = req.user.claims.sub;
+    const count = await storage.getUnreadNotificationCount(userId);
+    res.json({ count });
+  });
+
+  app.patch("/api/notifications/read-all", async (req: any, res) => {
+    if (!req.isAuthenticated?.()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    const userId = req.user.claims.sub;
+    await storage.markAllNotificationsRead(userId);
+    res.json({ success: true });
+  });
+
+  app.patch("/api/notifications/:id/read", async (req: any, res) => {
+    if (!req.isAuthenticated?.()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    const userId = req.user.claims.sub;
+    const notificationId = parseInt(req.params.id);
+    await storage.markNotificationRead(notificationId, userId);
+    res.json({ success: true });
+  });
+
+  app.patch("/api/profile/notifications", async (req: any, res) => {
+    if (!req.isAuthenticated?.()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    const userId = req.user.claims.sub;
+    const { emailNotifications } = req.body;
+    const profile = await storage.getUserProfile(userId);
+    if (profile) {
+      await storage.upsertUserProfile({
+        ...profile,
+        emailNotifications: emailNotifications ?? true,
+      });
+    }
+    res.json({ success: true });
   });
 
   return httpServer;

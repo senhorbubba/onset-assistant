@@ -63,6 +63,15 @@ export const translations = {
       selectTopic: "Select topic",
       selectTopicHint: "Select a topic to inspect its knowledge base.",
       allCaughtUp: "All caught up! No unanswered questions.",
+      respond: "Respond",
+      respondTitle: "Respond to Question",
+      respondPlaceholder: "Type your response...",
+      respondSend: "Send Response",
+      respondSending: "Sending...",
+      respondSuccess: "Response sent successfully",
+      respondError: "Failed to send response",
+      askedBy: "Asked by",
+      anonymous: "Anonymous",
       success: "Success",
       error: "Error",
       users: "Users",
@@ -186,6 +195,18 @@ export const translations = {
       adminModeDesc: "Access the admin panel to manage knowledge base and review questions.",
       openAdminPanel: "Open Admin Panel",
       signOut: "Sign Out",
+      emailNotifications: "Email Notifications",
+      emailNotificationsDesc: "Receive email when an admin responds to your question.",
+      emailNotificationsOn: "Enabled",
+      emailNotificationsOff: "Disabled",
+    },
+    notifications: {
+      title: "Notifications",
+      noNotifications: "No notifications yet.",
+      adminResponse: "Admin response",
+      yourQuestion: "Your question",
+      markAllRead: "Mark all as read",
+      new: "New",
     },
     langPicker: {
       language: "Language",
@@ -253,6 +274,15 @@ export const translations = {
       selectTopic: "Selecione o tópico",
       selectTopicHint: "Selecione um tópico para inspecionar sua base de conhecimento.",
       allCaughtUp: "Tudo em dia! Nenhuma pergunta sem resposta.",
+      respond: "Responder",
+      respondTitle: "Responder Pergunta",
+      respondPlaceholder: "Digite sua resposta...",
+      respondSend: "Enviar Resposta",
+      respondSending: "Enviando...",
+      respondSuccess: "Resposta enviada com sucesso",
+      respondError: "Falha ao enviar resposta",
+      askedBy: "Perguntado por",
+      anonymous: "Anônimo",
       success: "Sucesso",
       error: "Erro",
       users: "Usuários",
@@ -376,6 +406,18 @@ export const translations = {
       adminModeDesc: "Acesse o painel administrativo para gerenciar a base de conhecimento e revisar perguntas.",
       openAdminPanel: "Abrir Painel Admin",
       signOut: "Sair",
+      emailNotifications: "Notificações por E-mail",
+      emailNotificationsDesc: "Receba e-mail quando um administrador responder sua pergunta.",
+      emailNotificationsOn: "Ativado",
+      emailNotificationsOff: "Desativado",
+    },
+    notifications: {
+      title: "Notificações",
+      noNotifications: "Nenhuma notificação ainda.",
+      adminResponse: "Resposta do admin",
+      yourQuestion: "Sua pergunta",
+      markAllRead: "Marcar todas como lidas",
+      new: "Nova",
     },
     langPicker: {
       language: "Idioma",
@@ -443,6 +485,15 @@ export interface Translations {
     selectTopic: string;
     selectTopicHint: string;
     allCaughtUp: string;
+    respond: string;
+    respondTitle: string;
+    respondPlaceholder: string;
+    respondSend: string;
+    respondSending: string;
+    respondSuccess: string;
+    respondError: string;
+    askedBy: string;
+    anonymous: string;
     success: string;
     error: string;
     users: string;
@@ -526,6 +577,18 @@ export interface Translations {
     adminModeDesc: string;
     openAdminPanel: string;
     signOut: string;
+    emailNotifications: string;
+    emailNotificationsDesc: string;
+    emailNotificationsOn: string;
+    emailNotificationsOff: string;
+  };
+  notifications: {
+    title: string;
+    noNotifications: string;
+    adminResponse: string;
+    yourQuestion: string;
+    markAllRead: string;
+    new: string;
   };
   langPicker: { language: string };
 }

@@ -24,6 +24,10 @@ A chatbot web application branded "onset. Assistant" that answers user questions
 - Chat history tracking: all Q&A logged for authenticated users in `chat_history` table
 - User profile panel at /profile: editable profile, learning preference, and learning summary dashboard
 - Admin Users tab with dynamic question counts per topic and Excel/CSV export
+- Admin response system: admins can respond to unanswered questions from admin panel
+- Notification bell in user header: shows admin responses with unread count badge
+- Email notification toggle in user profile settings (opt-out)
+- Unanswered questions track userId and email for notification routing
 
 ## Architecture
 - Frontend: React + Vite + Tailwind CSS + shadcn/ui
@@ -33,7 +37,7 @@ A chatbot web application branded "onset. Assistant" that answers user questions
 - Data source: JSON file uploads (one file per topic, uploaded via admin panel)
 
 ## Key Files
-- `shared/schema.ts` - Database models (content with JSON fields, unanswered_questions, user_profiles, topic_experience, chat_history + auth tables)
+- `shared/schema.ts` - Database models (content with JSON fields, unanswered_questions, user_profiles, topic_experience, chat_history, admin_responses + auth tables)
 - `shared/models/auth.ts` - Auth tables (users, sessions)
 - `shared/routes.ts` - API contract definitions (chat, topics, content, upload, unanswered)
 - `server/routes.ts` - Backend API endpoints with OpenAI matching + auth + profile + topic experience + chat history + JSON upload
@@ -67,6 +71,11 @@ A chatbot web application branded "onset. Assistant" that answers user questions
 - `GET /api/topic-experience/:topic` - Get user's experience level for a topic (requires auth)
 - `POST /api/topic-experience` - Set experience level for a topic (requires auth)
 - `GET /api/chat-history` - Get user's chat history (requires auth)
+- `POST /api/admin/respond` - Admin responds to unanswered question (requires auth)
+- `GET /api/notifications` - Get user's notifications (requires auth)
+- `GET /api/notifications/count` - Get unread notification count (requires auth)
+- `PATCH /api/notifications/:id/read` - Mark notification as read (requires auth)
+- `PATCH /api/profile/notifications` - Toggle email notifications preference (requires auth)
 
 ## JSON File Structure
 Each JSON file should be an array of objects with these fields:

@@ -2,6 +2,7 @@ import { db } from "./db";
 import {
   content,
   unansweredQuestions,
+  adminResponses,
   userProfiles,
   topicExperience,
   chatHistory,
@@ -10,6 +11,8 @@ import {
   type InsertContent,
   type UnansweredQuestion,
   type InsertUnansweredQuestion,
+  type AdminResponse,
+  type InsertAdminResponse,
   type UserProfile,
   type InsertUserProfile,
   type TopicExperience,
@@ -44,6 +47,13 @@ export interface IStorage {
     createdAt: Date | null;
     questionCounts: Record<string, number>;
   }>>;
+  respondToQuestion(data: InsertAdminResponse): Promise<AdminResponse>;
+  markQuestionReviewed(questionId: number): Promise<void>;
+  getNotifications(userId: string): Promise<AdminResponse[]>;
+  getUnreadNotificationCount(userId: string): Promise<number>;
+  markNotificationRead(notificationId: number, userId: string): Promise<void>;
+  markAllNotificationsRead(userId: string): Promise<void>;
+  getUnansweredQuestionById(id: number): Promise<UnansweredQuestion | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -87,7 +97,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUnansweredQuestions(): Promise<UnansweredQuestion[]> {
-    return await db.select().from(unansweredQuestions);
+    return await db.select().from(unansweredQuestions).where(eq(unansweredQuestions.reviewed, false)).orderBy(desc(unansweredQuestions.createdAt));
   }
 
   async getUserProfile(userId: string): Promise<UserProfile | undefined> {
@@ -180,6 +190,50 @@ export class DatabaseStorage implements IStorage {
       createdAt: u.createdAt,
       questionCounts: countMap[u.id] || {},
     }));
+  }
+
+  async respondToQuestion(data: InsertAdminResponse): Promise<AdminResponse> {
+    const [result] = await db.insert(adminResponses).values(data).returning();
+    return result;
+  }
+
+  async markQuestionReviewed(questionId: number): Promise<void> {
+    await db.update(unansweredQuestions).set({ reviewed: true }).where(eq(unansweredQuestions.id, questionId));
+  }
+
+  async getNotifications(userId: string): Promise<AdminResponse[]> {
+    return await db
+      .select()
+      .from(adminResponses)
+      .where(eq(adminResponses.userId, userId))
+      .orderBy(desc(adminResponses.createdAt));
+  }
+
+  async getUnreadNotificationCount(userId: string): Promise<number> {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(adminResponses)
+      .where(and(eq(adminResponses.userId, userId), eq(adminResponses.read, false)));
+    return result?.count || 0;
+  }
+
+  async markNotificationRead(notificationId: number, userId: string): Promise<void> {
+    await db
+      .update(adminResponses)
+      .set({ read: true })
+      .where(and(eq(adminResponses.id, notificationId), eq(adminResponses.userId, userId)));
+  }
+
+  async markAllNotificationsRead(userId: string): Promise<void> {
+    await db
+      .update(adminResponses)
+      .set({ read: true })
+      .where(eq(adminResponses.userId, userId));
+  }
+
+  async getUnansweredQuestionById(id: number): Promise<UnansweredQuestion | undefined> {
+    const [result] = await db.select().from(unansweredQuestions).where(eq(unansweredQuestions.id, id));
+    return result;
   }
 }
 

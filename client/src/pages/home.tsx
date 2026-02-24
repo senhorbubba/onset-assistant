@@ -1,14 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChatInterface } from "@/components/chat-interface";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquareText, ShieldQuestion, BookOpen, Zap, BrainCircuit, Globe, LogIn, Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { MessageSquareText, ShieldQuestion, BookOpen, Zap, BrainCircuit, Globe, LogIn, Loader2, Bell, X, CheckCheck } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
 import { useLanguage } from "@/lib/language-context";
 import type { Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTopics } from "@/hooks/use-content";
 import onsetLogo from "@assets/ONSET_ELEMENTOS_Prancheta_1_1770928342014.png";
@@ -20,6 +21,10 @@ export default function Home() {
   const [, navigate] = useLocation();
   const { data: topics, isLoading: topicsLoading } = useTopics();
 
+  const queryClient = useQueryClient();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
   const { data: profile } = useQuery({
     queryKey: ["/api/profile"],
     queryFn: async () => {
@@ -30,6 +35,66 @@ export default function Home() {
     },
     enabled: isAuthenticated,
   });
+
+  const { data: notifCount = 0 } = useQuery<number>({
+    queryKey: ["/api/notifications/count"],
+    queryFn: async () => {
+      const res = await fetch("/api/notifications/count", { credentials: "include" });
+      if (!res.ok) return 0;
+      const data = await res.json();
+      return data.count;
+    },
+    enabled: isAuthenticated,
+    refetchInterval: 30000,
+  });
+
+  const { data: notifications = [], refetch: refetchNotifications } = useQuery<any[]>({
+    queryKey: ["/api/notifications"],
+    queryFn: async () => {
+      const res = await fetch("/api/notifications", { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: isAuthenticated && showNotifications,
+  });
+
+  const markAllRead = useMutation({
+    mutationFn: async () => {
+      await fetch("/api/notifications/read-all", { method: "PATCH", credentials: "include" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications/count"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+
+  const markOneRead = useMutation({
+    mutationFn: async (id: number) => {
+      await fetch(`/api/notifications/${id}/read`, { method: "PATCH", credentials: "include" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications/count"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    if (showNotifications) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showNotifications]);
+
+  useEffect(() => {
+    if (showNotifications) {
+      refetchNotifications();
+    }
+  }, [showNotifications, refetchNotifications]);
 
   useEffect(() => {
     if (isAuthenticated && profile !== undefined && (profile === null || !profile.completedOnboarding)) {
@@ -63,14 +128,95 @@ export default function Home() {
           </Select>
           {!authLoading && (
             isAuthenticated ? (
-              <Link href="/profile">
-                <Avatar className="w-8 h-8 sm:w-9 sm:h-9 cursor-pointer ring-2 ring-primary/20 ring-offset-1" data-testid="link-profile">
-                  <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || ""} />
-                  <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
-                    {(user?.firstName?.[0] || "").toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </Link>
+              <>
+                <div className="relative" ref={notifRef}>
+                  <button
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="relative p-1.5 rounded-full hover:bg-slate-100 transition-colors"
+                    data-testid="button-notifications"
+                  >
+                    <Bell className="w-5 h-5 text-slate-500" />
+                    {notifCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white" data-testid="badge-notif-count">
+                        {notifCount > 9 ? "9+" : notifCount}
+                      </span>
+                    )}
+                  </button>
+
+                  <AnimatePresence>
+                    {showNotifications && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -5, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden"
+                      >
+                        <div className="p-3 border-b border-slate-100 flex items-center justify-between">
+                          <h3 className="font-bold text-sm text-slate-900">{t.notifications.title}</h3>
+                          <div className="flex items-center gap-1">
+                            {notifications.length > 0 && (
+                              <button
+                                onClick={() => markAllRead.mutate()}
+                                className="text-xs text-primary hover:underline flex items-center gap-1"
+                                data-testid="button-mark-all-read"
+                              >
+                                <CheckCheck className="w-3.5 h-3.5" />
+                                {t.notifications.markAllRead}
+                              </button>
+                            )}
+                            <button onClick={() => setShowNotifications(false)} className="p-1 hover:bg-slate-100 rounded">
+                              <X className="w-4 h-4 text-slate-400" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="max-h-80 overflow-y-auto">
+                          {notifications.length === 0 ? (
+                            <div className="p-6 text-center text-sm text-muted-foreground">
+                              <Bell className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+                              {t.notifications.noNotifications}
+                            </div>
+                          ) : (
+                            notifications.map((notif: any) => (
+                              <div
+                                key={notif.id}
+                                className={`p-3 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors ${!notif.read ? "bg-primary/5" : ""}`}
+                                onClick={() => { if (!notif.read) markOneRead.mutate(notif.id); }}
+                                data-testid={`notification-${notif.id}`}
+                              >
+                                <div className="flex items-start gap-2">
+                                  <div className="shrink-0 mt-0.5">
+                                    <div className={`w-2 h-2 rounded-full ${!notif.read ? "bg-primary" : "bg-transparent"}`} />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <Badge variant="outline" className="text-[10px] shrink-0">{notif.topic}</Badge>
+                                      {!notif.read && (
+                                        <Badge variant="default" className="text-[10px] px-1.5 py-0">{t.notifications.new}</Badge>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mb-1">{t.notifications.yourQuestion}: "{notif.question}"</p>
+                                    <p className="text-sm text-slate-800 leading-snug">{notif.response}</p>
+                                    <p className="text-[10px] text-slate-400 mt-1">{new Date(notif.createdAt).toLocaleDateString()}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                <Link href="/profile">
+                  <Avatar className="w-8 h-8 sm:w-9 sm:h-9 cursor-pointer ring-2 ring-primary/20 ring-offset-1" data-testid="link-profile">
+                    <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || ""} />
+                    <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
+                      {(user?.firstName?.[0] || "").toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Link>
+              </>
             ) : (
               <a href="/api/login">
                 <Button variant="ghost" size="sm" className="text-muted-foreground text-xs sm:text-sm px-2" data-testid="button-login">

@@ -5,10 +5,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, ArrowLeft, CheckCircle2, AlertCircle, ExternalLink, Globe, Users, Download, Upload, Database, FileJson } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, ArrowLeft, CheckCircle2, AlertCircle, ExternalLink, Globe, Users, Download, Upload, Database, FileJson, MessageSquare, Send } from "lucide-react";
 import { useState, useRef } from "react";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/language-context";
 import type { Language } from "@/lib/i18n";
@@ -25,8 +27,33 @@ export default function Admin() {
   const uploadMutation = useUploadJSON();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [exporting, setExporting] = useState(false);
+  const [respondDialog, setRespondDialog] = useState<{ id: number; topic: string; question: string; userEmail: string | null } | null>(null);
+  const [responseText, setResponseText] = useState("");
   const { toast } = useToast();
   const { language, setLanguage, t } = useLanguage();
+  const queryClient = useQueryClient();
+
+  const respondMutation = useMutation({
+    mutationFn: async ({ questionId, response }: { questionId: number; response: string }) => {
+      const res = await fetch("/api/admin/respond", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ questionId, response }),
+      });
+      if (!res.ok) throw new Error("Failed to respond");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/unanswered"] });
+      setRespondDialog(null);
+      setResponseText("");
+      toast({ title: t.admin.success, description: t.admin.respondSuccess });
+    },
+    onError: () => {
+      toast({ title: t.admin.error, description: t.admin.respondError, variant: "destructive" });
+    },
+  });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -288,24 +315,41 @@ export default function Admin() {
                           <TableRow>
                             <TableHead>{t.admin.topic}</TableHead>
                             <TableHead>{t.admin.questionAsked}</TableHead>
+                            <TableHead>{t.admin.askedBy}</TableHead>
                             <TableHead>{t.admin.date}</TableHead>
+                            <TableHead className="w-[100px]"></TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {unanswered?.map((item) => (
+                          {unanswered?.map((item: any) => (
                             <TableRow key={item.id} data-testid={`row-unanswered-${item.id}`}>
                               <TableCell>
                                 <Badge variant="outline">{item.topic}</Badge>
                               </TableCell>
                               <TableCell className="font-medium">{item.question}</TableCell>
                               <TableCell className="text-muted-foreground text-sm">
+                                {item.userEmail || t.admin.anonymous}
+                              </TableCell>
+                              <TableCell className="text-muted-foreground text-sm">
                                 {new Date(item.createdAt || "").toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-1.5"
+                                  onClick={() => setRespondDialog({ id: item.id, topic: item.topic, question: item.question, userEmail: item.userEmail })}
+                                  data-testid={`button-respond-${item.id}`}
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5" />
+                                  {t.admin.respond}
+                                </Button>
                               </TableCell>
                             </TableRow>
                           ))}
                           {(!unanswered || unanswered.length === 0) && (
                             <TableRow>
-                              <TableCell colSpan={3} className="text-center py-12">
+                              <TableCell colSpan={5} className="text-center py-12">
                                 <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                   <CheckCircle2 className="w-8 h-8 text-green-500" />
                                   <p>{t.admin.allCaughtUp}</p>
@@ -317,7 +361,7 @@ export default function Admin() {
                       </Table>
                     </div>
                     <div className="sm:hidden space-y-3">
-                      {unanswered?.map((item) => (
+                      {unanswered?.map((item: any) => (
                         <div key={item.id} className="bg-white rounded-lg border p-3 space-y-2">
                           <div className="flex items-center justify-between gap-2 flex-wrap">
                             <Badge variant="outline" className="text-xs">{item.topic}</Badge>
@@ -326,6 +370,17 @@ export default function Admin() {
                             </span>
                           </div>
                           <p className="text-sm font-medium">{item.question}</p>
+                          <p className="text-xs text-muted-foreground">{t.admin.askedBy}: {item.userEmail || t.admin.anonymous}</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full gap-1.5"
+                            onClick={() => setRespondDialog({ id: item.id, topic: item.topic, question: item.question, userEmail: item.userEmail })}
+                            data-testid={`button-respond-mobile-${item.id}`}
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            {t.admin.respond}
+                          </Button>
                         </div>
                       ))}
                       {(!unanswered || unanswered.length === 0) && (
@@ -455,6 +510,44 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={!!respondDialog} onOpenChange={(open) => { if (!open) { setRespondDialog(null); setResponseText(""); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t.admin.respondTitle}</DialogTitle>
+            <DialogDescription>{respondDialog?.topic}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-slate-50 rounded-lg p-3 border">
+              <p className="text-xs font-medium text-muted-foreground mb-1">{t.admin.questionAsked}:</p>
+              <p className="text-sm font-medium" data-testid="text-respond-question">{respondDialog?.question}</p>
+              {respondDialog?.userEmail && (
+                <p className="text-xs text-muted-foreground mt-1">{t.admin.askedBy}: {respondDialog.userEmail}</p>
+              )}
+            </div>
+            <Textarea
+              value={responseText}
+              onChange={(e) => setResponseText(e.target.value)}
+              placeholder={t.admin.respondPlaceholder}
+              className="min-h-[120px]"
+              data-testid="textarea-respond"
+            />
+            <Button
+              className="w-full gap-2"
+              onClick={() => respondDialog && respondMutation.mutate({ questionId: respondDialog.id, response: responseText })}
+              disabled={!responseText.trim() || respondMutation.isPending}
+              data-testid="button-send-response"
+            >
+              {respondMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+              {respondMutation.isPending ? t.admin.respondSending : t.admin.respondSend}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

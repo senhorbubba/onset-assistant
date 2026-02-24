@@ -13,6 +13,7 @@ export const userProfiles = pgTable("user_profiles", {
   challenge: text("challenge"),
   learningPreference: text("learning_preference"),
   completedOnboarding: boolean("completed_onboarding").default(false),
+  emailNotifications: boolean("email_notifications").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -78,8 +79,22 @@ export const unansweredQuestions = pgTable("unanswered_questions", {
   id: serial("id").primaryKey(),
   topic: text("topic").notNull(),
   question: text("question").notNull(),
+  userId: varchar("user_id"),
+  userEmail: varchar("user_email"),
   createdAt: timestamp("created_at").defaultNow(),
   reviewed: boolean("reviewed").default(false),
+});
+
+export const adminResponses = pgTable("admin_responses", {
+  id: serial("id").primaryKey(),
+  questionId: integer("question_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  topic: text("topic").notNull(),
+  question: text("question").notNull(),
+  response: text("response").notNull(),
+  adminId: varchar("admin_id").notNull(),
+  read: boolean("read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertContentSchema = createInsertSchema(content).omit({ 
@@ -93,7 +108,15 @@ export const insertUnansweredQuestionSchema = createInsertSchema(unansweredQuest
   reviewed: true
 });
 
+export const insertAdminResponseSchema = createInsertSchema(adminResponses).omit({
+  id: true,
+  read: true,
+  createdAt: true,
+});
+
 export type Content = typeof content.$inferSelect;
 export type InsertContent = z.infer<typeof insertContentSchema>;
 export type UnansweredQuestion = typeof unansweredQuestions.$inferSelect;
 export type InsertUnansweredQuestion = z.infer<typeof insertUnansweredQuestionSchema>;
+export type AdminResponse = typeof adminResponses.$inferSelect;
+export type InsertAdminResponse = z.infer<typeof insertAdminResponseSchema>;
