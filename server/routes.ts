@@ -134,15 +134,36 @@ ${contentItems.map((item, i) => `[${i}] ${item.subtopic} | Keywords: ${item.keyw
           ? `\nIMPORTANT: The linked video/resource is in ${entryLang}. Mention this to the user naturally (e.g., "The video for this topic is in ${entryLang}").`
           : '';
 
+        const relatedSubtopics = contentItems
+          .filter((_, i) => i !== matchedIdx)
+          .filter(item => {
+            const entryKeywords = (entry.keywords || '').toLowerCase().split(',').map(k => k.trim());
+            const itemKeywords = (item.keywords || '').toLowerCase().split(',').map(k => k.trim());
+            return entryKeywords.some(k => k && itemKeywords.includes(k));
+          })
+          .slice(0, 5)
+          .map(item => `• ${item.subtopic} (${item.difficulty || 'General'})`)
+          .join('\n');
+
+        const fallbackRelated = relatedSubtopics || contentItems
+          .filter((_, i) => i !== matchedIdx)
+          .slice(0, 3)
+          .map(item => `• ${item.subtopic} (${item.difficulty || 'General'})`)
+          .join('\n');
+
         const answerPrompt = `You are "onset. Assistant", a friendly learning coach. Answer the user's question using ONLY the information from this knowledge base entry. Be concise and natural. One key insight.
 You MUST respond in ${userLang}, even if the knowledge base entry below is in a different language. Translate the content naturally — do not copy it verbatim in the original language. Base your answer on the Key Takeaways.${linkLangNote}
+After your answer, add a brief "Want to keep learning?" section suggesting 2-3 related topics from the list below. Translate the topic names to ${userLang} if needed. Keep suggestions short — just the topic names, not full explanations.
 ${profileContext}
 
 Entry: ${entry.subtopic}
 Context: ${entry.searchContext || ''}
 Key Takeaway: ${entry.keyTakeaway || ''}
 Difficulty: ${entry.difficulty || ''}
-Use Case: ${entry.useCase || ''}`;
+Use Case: ${entry.useCase || ''}
+
+Related topics to suggest:
+${fallbackRelated}`;
 
         const answerMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
           { role: "system", content: answerPrompt }
@@ -157,7 +178,7 @@ Use Case: ${entry.useCase || ''}`;
         const answerResponse = await openai.chat.completions.create({
           model: "gpt-4o-mini",
           messages: answerMessages,
-          max_completion_tokens: 500,
+          max_completion_tokens: 600,
         });
 
         const answer = answerResponse.choices[0]?.message?.content?.trim() || entry.keyTakeaway || entry.subtopic;
