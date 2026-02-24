@@ -163,15 +163,15 @@ ${contentContext}`;
       return fallbackKeywordMatch(contentItems, question);
     }
 
-    if (aiAnswer.startsWith("NOT_FOUND") || aiAnswer.includes("\nNOT_FOUND")) {
+    const categoryMatch = aiAnswer.match(/^(MATCH|EXPLORE|PLAN|OFF_TOPIC|NOT_FOUND)\b/);
+    const category = categoryMatch ? categoryMatch[1] : null;
+
+    if (category === "NOT_FOUND") {
       const cleanMsg = aiAnswer.replace(/^NOT_FOUND\s*\n?/, '').trim();
-      if (cleanMsg) {
-        return { answer: cleanMsg, found: false };
-      }
-      return { answer: "", found: false };
+      return { answer: cleanMsg || "", found: false };
     }
 
-    if (aiAnswer.startsWith("OFF_TOPIC") || aiAnswer.includes("\nOFF_TOPIC")) {
+    if (category === "OFF_TOPIC") {
       const cleanMsg = aiAnswer.replace(/^OFF_TOPIC\s*\n?/, '').trim();
       return {
         answer: cleanMsg || (isPt
@@ -181,41 +181,45 @@ ${contentContext}`;
       };
     }
 
-    if (aiAnswer.startsWith("EXPLORE") || aiAnswer.includes("\nEXPLORE")) {
+    if (category === "EXPLORE") {
       const cleanMsg = aiAnswer.replace(/^EXPLORE\s*\n?/, '').trim();
       return { answer: cleanMsg, found: true };
     }
 
-    if (aiAnswer.startsWith("PLAN") || aiAnswer.includes("\nPLAN")) {
+    if (category === "PLAN") {
       const cleanMsg = aiAnswer.replace(/^PLAN\s*\n?/, '').trim();
       return { answer: cleanMsg, found: true };
     }
 
-    const matchIndexResult = aiAnswer.match(/MATCH:\[?(\d+)\]?/);
-    let link: string | undefined;
-    let cleanAnswer = aiAnswer;
-    let matchedIdx = -1;
+    if (category === "MATCH") {
+      const matchIndexResult = aiAnswer.match(/MATCH:\[?(\d+)\]?/);
+      let link: string | undefined;
+      let cleanAnswer = aiAnswer;
+      let matchedIdx = -1;
 
-    if (matchIndexResult) {
-      matchedIdx = parseInt(matchIndexResult[1], 10);
-      if (matchedIdx >= 0 && matchedIdx < contentItems.length) {
-        if (contentItems[matchedIdx].timestampLink) {
-          link = contentItems[matchedIdx].timestampLink!;
+      if (matchIndexResult) {
+        matchedIdx = parseInt(matchIndexResult[1], 10);
+        if (matchedIdx >= 0 && matchedIdx < contentItems.length) {
+          if (contentItems[matchedIdx].timestampLink) {
+            link = contentItems[matchedIdx].timestampLink!;
+          }
         }
+        cleanAnswer = aiAnswer.replace(/MATCH:\[?\d+\]?\s*\n?/, '').trim();
       }
-      cleanAnswer = aiAnswer.replace(/MATCH:\[?\d+\]?\s*\n?/, '').trim();
+
+      if (!cleanAnswer && matchedIdx >= 0 && matchedIdx < contentItems.length) {
+        const matched = contentItems[matchedIdx];
+        cleanAnswer = matched.keyTakeaway || matched.subtopic;
+      }
+
+      if (!cleanAnswer) {
+        return { answer: "", found: false };
+      }
+
+      return { answer: cleanAnswer, found: true, link };
     }
 
-    if (!cleanAnswer && matchedIdx >= 0 && matchedIdx < contentItems.length) {
-      const matched = contentItems[matchedIdx];
-      cleanAnswer = matched.keyTakeaway || matched.subtopic;
-    }
-
-    if (!cleanAnswer) {
-      return { answer: "", found: false };
-    }
-
-    return { answer: cleanAnswer, found: true, link };
+    return { answer: "", found: false };
   } catch (error) {
     console.error("OpenAI error, falling back to keyword matching:", error);
     return fallbackKeywordMatch(contentItems, question);
