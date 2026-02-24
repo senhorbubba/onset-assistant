@@ -30,6 +30,12 @@ async function sendEmailNotification(email: string, question: string, response: 
     return;
   }
 
+  const appUrl = process.env.REPLIT_DOMAINS
+    ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
+    : process.env.REPLIT_DEV_DOMAIN
+      ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+      : "https://onset-assistant.replit.app";
+
   await emailTransporter.sendMail({
     from: '"onset. Assistant" <onset.devs@gmail.com>',
     to: email,
@@ -45,6 +51,9 @@ async function sendEmailNotification(email: string, question: string, response: 
         <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
           <p style="margin: 0; font-weight: 600; color: #333;">Response:</p>
           <p style="margin: 8px 0 0; color: #555;">${response}</p>
+        </div>
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="${appUrl}" style="display: inline-block; background: #4f46e5; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600;">Open onset. Assistant</a>
         </div>
         <p style="color: #999; font-size: 12px; margin-top: 24px;">You received this email because you asked a question on onset. Assistant. You can disable email notifications in your profile settings.</p>
       </div>
