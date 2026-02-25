@@ -82,7 +82,9 @@ export default function Login() {
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
-          <img src={onsetLogo} alt="onset." className="w-12 h-12 object-contain mb-3" />
+          <a href="/" className="hover:opacity-80 transition-opacity" data-testid="link-back-home">
+            <img src={onsetLogo} alt="onset." className="w-12 h-12 object-contain mb-3" />
+          </a>
           <h1 className="text-2xl font-bold font-display" data-testid="text-login-title">
             {mode === "login" ? t.auth.welcomeBack : t.auth.getStarted}
           </h1>
