@@ -46,7 +46,7 @@ const landingText = {
       subtitle:
         "onset. delivers personalized microlearning through AI, powered by expert-curated content. No hallucinated answers, no assumptions. Your team learns faster, retains more, and trusts every response.",
       cta: "Try the Assistant",
-      ctaSub: "Free to use",
+      ctaSub: "Sign up for free",
     },
     trust: {
       title: "Why onset.?",
@@ -129,7 +129,7 @@ const landingText = {
       subtitle:
         "onset. entrega microlearning personalizado com IA, baseado em conteúdo curado por especialistas. Sem respostas inventadas, sem suposições. Sua equipe aprende mais rápido, retém mais e confia em cada resposta.",
       cta: "Testar o Assistente",
-      ctaSub: "Gratuito para usar",
+      ctaSub: "Cadastre-se gratuitamente",
     },
     trust: {
       title: "Por que onset.?",
