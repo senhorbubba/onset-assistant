@@ -136,7 +136,7 @@ Given the user's message and conversation history, respond with ONE of these:
 - OVERVIEW — if the user asks what content is available, what you know, what's in the knowledge base, what topics/categories you cover, or wants to see everything (e.g. "what do you know?", "what do you have?", "show me what's available", "what can you teach me?", "what topics do you cover?").
 - EXPLORE — if the question is general, broad, or the user is exploring a direction (e.g. "help me improve", "I want to be better at...", "tell me about feedback"). Also use EXPLORE for greetings ("hi", "hello", "hey"), social messages ("thank you", "thanks", "ok"), or short follow-ups ("yes", "tell me more", "go on", "sure") — these are conversational and should be handled warmly.
 - PLAN — if the user explicitly asks for a learning plan, a structured path, or a full overview of learning steps with links.
-- OFF_TOPIC — ONLY if the message is clearly about a completely different subject unrelated to "${topic}" (e.g. cooking, sports, math).
+- OFF_TOPIC — if the message is about a completely different subject unrelated to "${topic}" (e.g. cooking, sports, math), OR if it's a navigation command (e.g. "exit", "quit", "stop", "close", "leave"), OR if it's nonsense, jokes, random words, insults, or inappropriate language.
 - NOT_FOUND — if it's specifically about "${topic}" but no entry in the knowledge base covers it.
 
 IMPORTANT:
@@ -341,9 +341,39 @@ ${profileContext}`;
     }
 
     if (classification.startsWith("OFF_TOPIC")) {
-      const offTopicMsg = isPt
-        ? `Essa pergunta está fora do escopo da nossa base sobre "${topic}". Posso te ajudar com temas como feedback, empatia, comunicação assertiva e mais. O que te interessa?`
-        : `That question is outside our "${topic}" knowledge base. I can help with topics like feedback, empathy, assertive communication, and more. What interests you?`;
+      const subtopicList = contentItems
+        .slice(0, 5)
+        .map(item => item.subtopic)
+        .join(', ');
+
+      const offTopicPrompt = `You are "onset. Assistant", a friendly and professional learning coach focused exclusively on "${topic}".
+
+The user just sent a message that is off-topic. It could be:
+- A navigation command like "exit", "quit", "stop"
+- An unrelated subject (cooking, sports, etc.)
+- Nonsense, random words, or jokes
+- Inappropriate language or insults
+
+Respond warmly but clearly. Show that you understand what they said, then gently redirect them. Let them know this chat is specifically designed to help them learn about "${topic}". Mention 2-3 specific subtopics you can help with from this list: ${subtopicList}.
+
+Keep it brief (2-3 sentences). Be understanding, not robotic. If they said "exit" or similar, let them know they can simply close the chat or pick a different topic, and offer to help with something before they go.
+${profileContext}
+Respond in ${userLang}.`;
+
+      const offTopicResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: offTopicPrompt },
+          { role: "user", content: question },
+        ],
+        max_completion_tokens: 200,
+      });
+
+      const offTopicMsg = offTopicResponse.choices[0]?.message?.content?.trim() ||
+        (isPt
+          ? `Essa pergunta está fora do escopo da nossa base sobre "${topic}". Posso te ajudar com algo sobre ${subtopicList}?`
+          : `That's outside our "${topic}" knowledge base. I can help with topics like ${subtopicList}. What interests you?`);
+
       return { answer: offTopicMsg, found: true };
     }
 
