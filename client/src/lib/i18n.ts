@@ -89,6 +89,23 @@ export const translations = {
       signIn: "Sign in",
       signOut: "Sign out",
       signInWith: "Sign in with Google",
+      signInWithEmail: "Sign in with email",
+      createAccount: "Create account",
+      alreadyHaveAccount: "Already have an account?",
+      dontHaveAccount: "Don't have an account?",
+      email: "Email",
+      password: "Password",
+      firstName: "First name",
+      lastName: "Last name",
+      orContinueWith: "or continue with",
+      welcomeBack: "Welcome back",
+      welcomeBackSub: "Sign in to continue your learning journey.",
+      getStarted: "Get started",
+      getStartedSub: "Create a free account to begin learning.",
+      passwordMin: "Password must be at least 6 characters",
+      emailRequired: "Email is required",
+      accountExists: "An account with this email already exists",
+      invalidCredentials: "Invalid email or password",
     },
     onboarding: {
       title: "Let's personalize your experience",
@@ -300,6 +317,23 @@ export const translations = {
       signIn: "Entrar",
       signOut: "Sair",
       signInWith: "Entrar com Google",
+      signInWithEmail: "Entrar com email",
+      createAccount: "Criar conta",
+      alreadyHaveAccount: "Já tem uma conta?",
+      dontHaveAccount: "Não tem uma conta?",
+      email: "Email",
+      password: "Senha",
+      firstName: "Nome",
+      lastName: "Sobrenome",
+      orContinueWith: "ou continue com",
+      welcomeBack: "Bem-vindo de volta",
+      welcomeBackSub: "Entre para continuar sua jornada de aprendizado.",
+      getStarted: "Comece agora",
+      getStartedSub: "Crie uma conta gratuita para começar a aprender.",
+      passwordMin: "A senha deve ter pelo menos 6 caracteres",
+      emailRequired: "Email é obrigatório",
+      accountExists: "Uma conta com este email já existe",
+      invalidCredentials: "Email ou senha inválidos",
     },
     onboarding: {
       title: "Vamos personalizar sua experiência",
@@ -511,6 +545,23 @@ export interface Translations {
     signIn: string;
     signOut: string;
     signInWith: string;
+    signInWithEmail: string;
+    createAccount: string;
+    alreadyHaveAccount: string;
+    dontHaveAccount: string;
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    orContinueWith: string;
+    welcomeBack: string;
+    welcomeBackSub: string;
+    getStarted: string;
+    getStartedSub: string;
+    passwordMin: string;
+    emailRequired: string;
+    accountExists: string;
+    invalidCredentials: string;
   };
   onboarding: {
     title: string;

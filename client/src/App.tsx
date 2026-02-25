@@ -10,6 +10,7 @@ import Home from "@/pages/home";
 import Admin from "@/pages/admin";
 import Onboarding from "@/pages/onboarding";
 import Profile from "@/pages/profile";
+import Login from "@/pages/login";
 
 function Router() {
   return (
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/admin" component={Admin} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/profile" component={Profile} />
+      <Route path="/login" component={Login} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -15,7 +15,8 @@ A chatbot web application branded "onset. Assistant" that answers user questions
 - Auto-detects user region (browser locale) — defaults to Portuguese for pt* locales
 - Language choice persisted in localStorage across page navigation
 - Mobile-first responsive design (no framer-motion on landing page — causes dark block artifacts on iOS Safari)
-- Google authentication via Replit Auth (OpenID Connect)
+- Authentication: Google OAuth + email/password registration/login
+- Login page at `/login` with both options; `/bot` requires authentication
 - User profile/onboarding system with personalized AI responses
 - Onboarding questionnaire at /onboarding (role, industry, learning preference, goal, challenge)
 - Per-topic experience level: asked once per topic on first visit, stored in `topic_experience` table
@@ -32,7 +33,7 @@ A chatbot web application branded "onset. Assistant" that answers user questions
 ## Architecture
 - Frontend: React + Vite + Tailwind CSS + shadcn/ui
 - Backend: Express.js + Drizzle ORM + PostgreSQL
-- Auth: Replit Auth (OpenID Connect with Google, GitHub, email/password)
+- Auth: Google OAuth (passport-google-oauth20) + Local email/password (passport-local + bcryptjs)
 - AI: OpenAI gpt-4o-mini via Replit AI Integrations (no API key needed)
 - Email: Nodemailer with Gmail SMTP (onset.devs@gmail.com, App Password in GMAIL_APP_PASSWORD secret)
 - Data source: JSON file uploads (one file per topic, uploaded via admin panel)
@@ -47,6 +48,7 @@ A chatbot web application branded "onset. Assistant" that answers user questions
 - `client/src/pages/landing.tsx` - Landing page with product overview, features, use cases, how it works, CTA
 - `client/src/pages/home.tsx` - Main chat page at /bot with dynamic topic selection
 - `client/src/pages/admin.tsx` - Admin dashboard with JSON upload, topic inspector, unanswered questions, users tab
+- `client/src/pages/login.tsx` - Login/register page with Google OAuth and email/password
 - `client/src/pages/onboarding.tsx` - Onboarding questionnaire with progress indicator (5 steps: role, industry, goal, challenge, learning preference)
 - `client/src/pages/profile.tsx` - User profile panel with editable fields, learning preference, and learning summary
 - `client/src/components/chat-interface.tsx` - Chat widget with per-topic experience prompt

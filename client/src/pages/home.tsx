@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ChatInterface } from "@/components/chat-interface";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquareText, ShieldQuestion, Globe, LogIn, Loader2, Bell, X, CheckCheck } from "lucide-react";
+import { MessageSquareText, ShieldQuestion, Globe, Loader2, Bell, X, CheckCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -101,6 +101,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      navigate("/login");
+    }
+  }, [authLoading, isAuthenticated, navigate]);
+
+  useEffect(() => {
     if (isAuthenticated && profile !== undefined && (profile === null || !profile.completedOnboarding)) {
       navigate("/onboarding");
     }
@@ -133,113 +139,100 @@ export default function Home() {
               <SelectItem value="pt-BR">PT</SelectItem>
             </SelectContent>
           </Select>
-          {!authLoading && (
-            isAuthenticated ? (
-              <>
-                <div className="relative" ref={notifRef}>
-                  <button
-                    onClick={() => setShowNotifications(!showNotifications)}
-                    className="relative p-1.5 rounded-full hover:bg-slate-100 transition-colors"
-                    data-testid="button-notifications"
-                  >
-                    <Bell className="w-5 h-5 text-slate-500" />
-                    {notifCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white" data-testid="badge-notif-count">
-                        {notifCount > 9 ? "9+" : notifCount}
-                      </span>
-                    )}
-                  </button>
+          {!authLoading && isAuthenticated && (
+            <>
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative p-1.5 rounded-full hover:bg-slate-100 transition-colors"
+                  data-testid="button-notifications"
+                >
+                  <Bell className="w-5 h-5 text-slate-500" />
+                  {notifCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white" data-testid="badge-notif-count">
+                      {notifCount > 9 ? "9+" : notifCount}
+                    </span>
+                  )}
+                </button>
 
-                  <AnimatePresence>
-                    {showNotifications && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -5, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -5, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden"
-                      >
-                        <div className="p-3 border-b border-slate-100 flex items-center justify-between">
-                          <h3 className="font-bold text-sm text-slate-900">{t.notifications.title}</h3>
-                          <div className="flex items-center gap-1">
-                            {notifications.length > 0 && (
-                              <button
-                                onClick={() => markAllRead.mutate()}
-                                className="text-xs text-primary hover:underline flex items-center gap-1"
-                                data-testid="button-mark-all-read"
-                              >
-                                <CheckCheck className="w-3.5 h-3.5" />
-                                {t.notifications.markAllRead}
-                              </button>
-                            )}
-                            <button onClick={() => setShowNotifications(false)} className="p-1 hover:bg-slate-100 rounded">
-                              <X className="w-4 h-4 text-slate-400" />
+                <AnimatePresence>
+                  {showNotifications && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -5, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden"
+                    >
+                      <div className="p-3 border-b border-slate-100 flex items-center justify-between">
+                        <h3 className="font-bold text-sm text-slate-900">{t.notifications.title}</h3>
+                        <div className="flex items-center gap-1">
+                          {notifications.length > 0 && (
+                            <button
+                              onClick={() => markAllRead.mutate()}
+                              className="text-xs text-primary hover:underline flex items-center gap-1"
+                              data-testid="button-mark-all-read"
+                            >
+                              <CheckCheck className="w-3.5 h-3.5" />
+                              {t.notifications.markAllRead}
                             </button>
-                          </div>
+                          )}
+                          <button onClick={() => setShowNotifications(false)} className="p-1 hover:bg-slate-100 rounded">
+                            <X className="w-4 h-4 text-slate-400" />
+                          </button>
                         </div>
-                        <div className="max-h-80 overflow-y-auto">
-                          {notifications.length === 0 ? (
-                            <div className="p-6 text-center text-sm text-muted-foreground">
-                              <Bell className="w-8 h-8 text-slate-200 mx-auto mb-2" />
-                              {t.notifications.noNotifications}
-                            </div>
-                          ) : (
-                            notifications.map((notif: any) => (
-                              <div
-                                key={notif.id}
-                                className={`p-3 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors ${!notif.read ? "bg-primary/5" : ""}`}
-                                onClick={() => {
-                                  if (!notif.read) markOneRead.mutate(notif.id);
-                                  setTopic(notif.topic);
-                                  setShowNotifications(false);
-                                }}
-                                data-testid={`notification-${notif.id}`}
-                              >
-                                <div className="flex items-start gap-2">
-                                  <div className="shrink-0 mt-0.5">
-                                    <div className={`w-2 h-2 rounded-full ${!notif.read ? "bg-primary" : "bg-transparent"}`} />
+                      </div>
+                      <div className="max-h-80 overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <div className="p-6 text-center text-sm text-muted-foreground">
+                            <Bell className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+                            {t.notifications.noNotifications}
+                          </div>
+                        ) : (
+                          notifications.map((notif: any) => (
+                            <div
+                              key={notif.id}
+                              className={`p-3 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors ${!notif.read ? "bg-primary/5" : ""}`}
+                              onClick={() => {
+                                if (!notif.read) markOneRead.mutate(notif.id);
+                                setTopic(notif.topic);
+                                setShowNotifications(false);
+                              }}
+                              data-testid={`notification-${notif.id}`}
+                            >
+                              <div className="flex items-start gap-2">
+                                <div className="shrink-0 mt-0.5">
+                                  <div className={`w-2 h-2 rounded-full ${!notif.read ? "bg-primary" : "bg-transparent"}`} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <Badge variant="outline" className="text-[10px] shrink-0">{notif.topic}</Badge>
+                                    {!notif.read && (
+                                      <Badge variant="default" className="text-[10px] px-1.5 py-0">{t.notifications.new}</Badge>
+                                    )}
                                   </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <Badge variant="outline" className="text-[10px] shrink-0">{notif.topic}</Badge>
-                                      {!notif.read && (
-                                        <Badge variant="default" className="text-[10px] px-1.5 py-0">{t.notifications.new}</Badge>
-                                      )}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground mb-1">{t.notifications.yourQuestion}: "{notif.question}"</p>
-                                    <p className="text-sm text-slate-800 leading-snug">{notif.response}</p>
-                                    <p className="text-[10px] text-slate-400 mt-1">{new Date(notif.createdAt).toLocaleDateString()}</p>
-                                  </div>
+                                  <p className="text-xs text-muted-foreground mb-1">{t.notifications.yourQuestion}: "{notif.question}"</p>
+                                  <p className="text-sm text-slate-800 leading-snug">{notif.response}</p>
+                                  <p className="text-[10px] text-slate-400 mt-1">{new Date(notif.createdAt).toLocaleDateString()}</p>
                                 </div>
                               </div>
-                            ))
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-                <Link href="/profile">
-                  <Avatar className="w-8 h-8 sm:w-9 sm:h-9 cursor-pointer ring-2 ring-primary/20 ring-offset-1" data-testid="link-profile">
-                    <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || ""} />
-                    <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
-                      {(user?.firstName?.[0] || "").toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Link>
-              </>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground text-xs sm:text-sm px-2"
-                data-testid="button-login"
-                onClick={() => { window.open("/api/login", "_blank"); }}
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span className="ml-1">{t.auth.signIn}</span>
-              </Button>
-            )
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              <Link href="/profile">
+                <Avatar className="w-8 h-8 sm:w-9 sm:h-9 cursor-pointer ring-2 ring-primary/20 ring-offset-1" data-testid="link-profile">
+                  <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || ""} />
+                  <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
+                    {(user?.firstName?.[0] || "").toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+            </>
           )}
         </div>
         </div>
