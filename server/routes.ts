@@ -139,8 +139,12 @@ Given the user's message and conversation history, respond with ONE of these:
 - OFF_TOPIC — if the message is about a completely different subject unrelated to "${topic}" (e.g. cooking, sports, math), OR if it's a navigation command (e.g. "exit", "quit", "stop", "close", "leave"), OR if it's nonsense, jokes, random words, insults, or inappropriate language.
 - NOT_FOUND — if it's specifically about "${topic}" but no entry in the knowledge base covers it.
 
-IMPORTANT:
+CRITICAL — CONTEXT AWARENESS:
+- ALWAYS read the conversation history carefully. The user's message is a REPLY to the previous bot message.
+- If the bot previously listed topics/options (e.g. "1. Feedback, 2. Active Listening, 3. Conflict Resolution") and the user says "let's start with the first one", "tell me about number 2", "the second one", "yes, that one", or similar — look at what the bot suggested and resolve the reference. Then classify as MATCH if it maps to a specific entry, or EXPLORE if it maps to a broad area.
+- References like "first", "second", "that one", "this", "it", "the one you mentioned" ALWAYS refer to something in the conversation history. NEVER classify these as NOT_FOUND or OFF_TOPIC.
 - When in doubt between EXPLORE and OFF_TOPIC, choose EXPLORE. Greetings, thank-yous, and conversational follow-ups are NEVER off-topic.
+- When in doubt between MATCH and EXPLORE for a contextual reference, choose EXPLORE (the EXPLORE handler has full conversation history to resolve it).
 - The entries may be in a different language than the user's question. Match by MEANING, not literal text. For example, "active listening" matches "escuta ativa", "feedback" matches "feedback", "assertive communication" matches "comunicação assertiva".
 - If the user asks about a broad area that maps to MULTIPLE entries (e.g. "What is active listening?" maps to several listening entries), use EXPLORE rather than MATCH.
 
@@ -208,9 +212,11 @@ ${contentItems.map((item, i) => `[${i}] ${item.subtopic} | Keywords: ${item.keyw
 
         const answerPrompt = `You are "onset. Assistant", a friendly learning coach. Answer the user's question using the information from this knowledge base entry. Be concise and natural. One key insight.
 
+CONTEXT AWARENESS (CRITICAL): Read the conversation history carefully. The user's current message is a continuation of an ongoing conversation. Connect your answer to what was discussed before — reference previous topics, acknowledge the user's learning journey, and make the response feel like a natural progression of the conversation. If the user asked about a topic that was previously suggested by you, acknowledge that.
+
 LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every single word, including topic names, subtopic suggestions, section headers, and follow-up questions. If the knowledge base data below is in a different language, translate EVERYTHING — never leave any word in the original language. This applies to the answer, the suggested topics, and any other text you produce.
 
-IMPORTANT: Do NOT simply repeat or copy the Key Takeaway text. Instead, use it as source material to craft a personalized, conversational answer that directly addresses what the user asked. Relate the insight to the user's specific question and context from the conversation history. Make it feel like a thoughtful coach answering their question, not a textbook being read aloud.${linkLangNote}
+RESPONSE STYLE: Do NOT simply repeat or copy the Key Takeaway text. Instead, use it as source material to craft a personalized, conversational answer that directly addresses what the user asked. Relate the insight to the user's specific question and the conversation so far. Make it feel like a thoughtful coach answering their question, not a textbook being read aloud.${linkLangNote}
 After your answer, add a brief "Want to keep learning?" section suggesting 2-3 related topics from the list below. You MUST translate every topic name to ${userLang}. Keep suggestions short — just the translated topic names, not full explanations.
 ${profileContext}
 
@@ -312,16 +318,25 @@ ${profileContext}
 KNOWLEDGE BASE ENTRIES (use these — include the links!):
 ${subtopicListWithLinks}`
         : `You are "onset. Assistant", a warm learning coach for "${topic}".
+
+CONTEXT AWARENESS (CRITICAL): The user's message is a REPLY to your previous message. ALWAYS read the conversation history to understand what was discussed. If you previously listed topics, options, or suggestions (e.g. "1. Feedback Training, 2. Active Listening"), and the user says "the first one", "tell me about that", "yes", "let's do it", or any reference — you MUST look at what you previously suggested and respond about THAT specific topic. Never say you don't have information about something you just suggested.
+
 Engage conversationally based on what the user said:
 - If it's a greeting ("hi", "hello"): welcome them warmly and briefly mention 2-3 topics you can help with. Keep it short.
 - If it's a social message ("thank you", "thanks", "ok"): acknowledge warmly. If conversation history shows you were discussing something, ask if they'd like to continue or explore something else.
-- If it's a short follow-up ("yes", "sure", "tell me more"): look at the conversation history to understand what they want more of, and continue from there. Suggest the next relevant subtopic.
+- If it's a short follow-up ("yes", "sure", "tell me more", "the first one", "let's start"): look at the conversation history to understand what they want, resolve any references to previously suggested topics, and continue from there with relevant content from the knowledge base.
 - If it's a general question: acknowledge their interest, ask what aspect they want to focus on, and suggest 2-3 relevant subtopics.
+
+When providing information about a subtopic, use the knowledge base data below as source material but deliver it conversationally — relate it to the user's situation and previous questions. Do NOT just list key takeaways verbatim.
 
 LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every single word, including subtopic names, suggestions, greetings, and follow-up questions. If the subtopic names below are in a different language, translate EVERY one of them — never leave any word in the original language.
 
 Use ONLY these subtopics (do not invent others — but translate them to ${userLang}):
 ${subtopicList}
+
+Knowledge base entries (use as source material for your answers):
+${contentItems.map(item => `• ${item.subtopic}: ${(item.keyTakeaway || '').split('|')[0].trim()}`).join('\n')}
+
 Be warm, encouraging, and concise. Don't list everything — suggest 2-3 relevant options.
 ${profileContext}`;
 
@@ -443,7 +458,8 @@ function fallbackKeywordMatch(contentItems: Content[], query: string): { answer:
   }
 
   if (bestMatch && maxScore >= 5) {
-    const answer = bestMatch.keyTakeaway || bestMatch.subtopic;
+    const takeaway = bestMatch.keyTakeaway || bestMatch.subtopic;
+    const answer = `**${bestMatch.subtopic}**\n\n${takeaway}`;
     return { answer, found: true, link: bestMatch.timestampLink || undefined };
   }
   return { answer: "", found: false };
