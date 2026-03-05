@@ -206,8 +206,9 @@ ${contentItems.map((item, i) => `[${i}] ${item.subtopic} | Keywords: ${item.keyw
           .map(item => `• ${item.subtopic} (${item.difficulty || 'General'})`)
           .join('\n');
 
-        const answerPrompt = `You are "onset. Assistant", a friendly learning coach. Answer the user's question using ONLY the information from this knowledge base entry. Be concise and natural. One key insight.
-You MUST respond in ${userLang}, even if the knowledge base entry below is in a different language. Translate the content naturally — do not copy it verbatim in the original language. Base your answer on the Key Takeaways.${linkLangNote}
+        const answerPrompt = `You are "onset. Assistant", a friendly learning coach. Answer the user's question using the information from this knowledge base entry. Be concise and natural. One key insight.
+You MUST respond in ${userLang}, even if the knowledge base entry below is in a different language. Translate the content naturally.
+IMPORTANT: Do NOT simply repeat or copy the Key Takeaway text. Instead, use it as source material to craft a personalized, conversational answer that directly addresses what the user asked. Relate the insight to the user's specific question and context from the conversation history. Make it feel like a thoughtful coach answering their question, not a textbook being read aloud.${linkLangNote}
 After your answer, add a brief "Want to keep learning?" section suggesting 2-3 related topics from the list below. Translate the topic names to ${userLang} if needed. Keep suggestions short — just the topic names, not full explanations.
 ${profileContext}
 
@@ -836,7 +837,10 @@ export async function registerRoutes(
               continue;
             }
 
-            const result = await findBestAnswer(defaultTopic, text, "en", null, null);
+            const looksPortuguese = /[àáâãéêíóôõúç]|como|você|quero|obrigad|aprender|sobre|pode|ajud/i.test(text);
+            const detectedLang = looksPortuguese ? "pt-BR" : "en";
+
+            const result = await findBestAnswer(defaultTopic, text, detectedLang, null, null);
 
             if (result.found && result.answer) {
               let reply = result.answer;
