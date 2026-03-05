@@ -789,7 +789,117 @@ export async function registerRoutes(
     res.json({ success: true });
   });
 
+  // ==================== WhatsApp Webhook ====================
+
+  app.get("/api/whatsapp/webhook", (req, res) => {
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
+
+    if (mode === "subscribe" && token === process.env.WHATSAPP_VERIFY_TOKEN) {
+      console.log("[WhatsApp] Webhook verified successfully");
+      return res.status(200).send(challenge);
+    }
+    console.log("[WhatsApp] Webhook verification failed", { mode, token: token ? "provided" : "missing" });
+    return res.sendStatus(403);
+  });
+
+  app.post("/api/whatsapp/webhook", async (req, res) => {
+    res.sendStatus(200);
+
+    try {
+      const body = req.body;
+      if (body.object !== "whatsapp_business_account") return;
+
+      for (const entry of body.entry || []) {
+        for (const change of entry.changes || []) {
+          if (change.field !== "messages") continue;
+          const messages = change.value?.messages || [];
+          const contacts = change.value?.contacts || [];
+
+          for (const message of messages) {
+            if (message.type !== "text") continue;
+
+            const from = message.from;
+            const text = message.text?.body?.trim();
+            const contactName = contacts.find((c: any) => c.wa_id === from)?.profile?.name || "User";
+
+            if (!text) continue;
+
+            console.log(`[WhatsApp] Message from ${contactName} (${from}): ${text}`);
+
+            const allTopics = await storage.getAvailableTopics();
+            const defaultTopic = allTopics.length > 0 ? allTopics[0] : null;
+
+            if (!defaultTopic) {
+              await sendWhatsAppMessage(from, "No topics available yet. Please try again later.");
+              continue;
+            }
+
+            const result = await findBestAnswer(defaultTopic, text, "en", null, null);
+
+            if (result.found && result.answer) {
+              let reply = result.answer;
+              if (result.link) {
+                reply += `\n\n🎥 ${result.link}`;
+              }
+              await sendWhatsAppMessage(from, reply);
+            } else {
+              await sendWhatsAppMessage(from, `I don't have information about that in our "${defaultTopic}" knowledge base yet. Try asking something else!`);
+              await storage.createUnansweredQuestion({
+                topic: defaultTopic,
+                question: text,
+                userId: null,
+                userEmail: `whatsapp:${from}`,
+              });
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("[WhatsApp] Error processing message:", error);
+    }
+  });
+
   return httpServer;
+}
+
+async function sendWhatsAppMessage(to: string, text: string): Promise<void> {
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+  if (!token || !phoneNumberId) {
+    console.log("[WhatsApp] Skipped sending (missing WHATSAPP_ACCESS_TOKEN or WHATSAPP_PHONE_NUMBER_ID)");
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          to,
+          type: "text",
+          text: { body: text },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const err = await response.text();
+      console.error("[WhatsApp] Send failed:", err);
+    } else {
+      console.log(`[WhatsApp] Message sent to ${to}`);
+    }
+  } catch (error) {
+    console.error("[WhatsApp] Send error:", error);
+  }
 }
 
 export async function seedDatabase() {
