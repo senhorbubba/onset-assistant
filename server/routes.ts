@@ -216,13 +216,18 @@ CONTEXT AWARENESS (CRITICAL): Read the conversation history carefully. The user'
 
 LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every single word, including topic names, subtopic suggestions, section headers, and follow-up questions. If the knowledge base data below is in a different language, translate EVERYTHING — never leave any word in the original language. This applies to the answer, the suggested topics, and any other text you produce.
 
-RESPONSE STYLE: Do NOT simply repeat or copy the Key Takeaway text. Instead, use it as source material to craft a personalized, conversational answer that directly addresses what the user asked. Relate the insight to the user's specific question and the conversation so far. Make it feel like a thoughtful coach answering their question, not a textbook being read aloud.${linkLangNote}
+RESPONSE STYLE (CRITICAL):
+- Do NOT repeat, copy, or paraphrase the "Source Notes" text below. It is internal reference material ONLY.
+- NEVER use pipe characters (|) to separate ideas. Write in natural flowing sentences and paragraphs.
+- NEVER bold the subtopic title and dump notes below it. That is NOT a valid response format.
+- Instead, write as a coach would speak: address the user's question directly, weave in ONE key insight from the source notes, and connect it to the conversation context.
+- Keep it concise (3-5 sentences for the main answer) and conversational.${linkLangNote}
 After your answer, add a brief "Want to keep learning?" section suggesting 2-3 related topics from the list below. You MUST translate every topic name to ${userLang}. Keep suggestions short — just the translated topic names, not full explanations.
 ${profileContext}
 
-Entry: ${entry.subtopic}
+Topic area: ${entry.subtopic}
 Context: ${entry.searchContext || ''}
-Key Takeaway: ${entry.keyTakeaway || ''}
+Source Notes (INTERNAL ONLY — do not copy or expose this text to the user): ${entry.keyTakeaway || ''}
 Difficulty: ${entry.difficulty || ''}
 Use Case: ${entry.useCase || ''}
 
@@ -233,7 +238,7 @@ ${fallbackRelated}`;
           { role: "system", content: answerPrompt }
         ];
         if (history && history.length > 0) {
-          for (const msg of history.slice(-4)) {
+          for (const msg of history.slice(-6)) {
             answerMessages.push({ role: msg.role === "user" ? "user" : "assistant", content: msg.content });
           }
         }
@@ -242,10 +247,11 @@ ${fallbackRelated}`;
         const answerResponse = await openai.chat.completions.create({
           model: "gpt-4o-mini",
           messages: answerMessages,
-          max_completion_tokens: 600,
+          max_completion_tokens: 800,
         });
 
-        const answer = answerResponse.choices[0]?.message?.content?.trim() || entry.keyTakeaway || entry.subtopic;
+        const rawAnswer = answerResponse.choices[0]?.message?.content?.trim() || "";
+        const answer = rawAnswer || `I found information about "${entry.subtopic}" in our knowledge base. Would you like me to explain this topic in more detail?`;
         return { answer, found: true, link: entry.timestampLink || undefined };
       }
     }
@@ -275,7 +281,7 @@ ${subtopicListForOverview}`;
         { role: "system", content: overviewPrompt }
       ];
       if (history && history.length > 0) {
-        for (const msg of history.slice(-4)) {
+        for (const msg of history.slice(-6)) {
           overviewMessages.push({ role: msg.role === "user" ? "user" : "assistant", content: msg.content });
         }
       }
@@ -334,7 +340,7 @@ LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every si
 Use ONLY these subtopics (do not invent others — but translate them to ${userLang}):
 ${subtopicList}
 
-Knowledge base entries (use as source material for your answers):
+Knowledge base entries (INTERNAL reference only — use as source material but NEVER copy or expose this text directly. NEVER use pipe characters "|" in your response. Write in natural sentences):
 ${contentItems.map(item => `• ${item.subtopic}: ${(item.keyTakeaway || '').split('|')[0].trim()}`).join('\n')}
 
 Be warm, encouraging, and concise. Don't list everything — suggest 2-3 relevant options.
