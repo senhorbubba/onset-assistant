@@ -23,7 +23,7 @@ async function callClaude(
     content: string;
   }>;
   const response = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
+    model: "claude-sonnet-4-6",
     system: systemMsg,
     messages: chatMsgs,
     max_tokens: maxTokens,
@@ -397,7 +397,7 @@ ${profileContext}`;
     // Fallback: if classification didn't match any pattern, try keyword match
     return fallbackKeywordMatch(contentItems, question);
   } catch (error) {
-    console.error("OpenAI error, falling back to keyword matching:", error);
+    console.error("Claude API error, falling back to keyword matching:", error);
     return fallbackKeywordMatch(contentItems, question);
   }
 }
