@@ -96,5 +96,6 @@ export async function syncFromSheet(): Promise<SheetRow[]> {
   if (!spreadsheetId) {
     throw new Error('GOOGLE_SHEET_ID environment variable is not set');
   }
-  return fetchSheetData(spreadsheetId);
+  const sheetName = process.env.GOOGLE_SHEET_NAME || 'Learning_units';
+  return fetchSheetData(spreadsheetId, sheetName);
 }
