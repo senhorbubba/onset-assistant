@@ -957,4 +957,11 @@ async function sendWhatsAppMessage(to: string, text: string): Promise<void> {
 }
 
 export async function seedDatabase() {
+  try {
+    const { pool } = await import("./db");
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false`);
+    await pool.query(`UPDATE users SET is_admin = true WHERE email = 'dczarcin@gmail.com' AND (is_admin IS NULL OR is_admin = false)`);
+  } catch (error) {
+    console.error("Seed database error:", error);
+  }
 }
