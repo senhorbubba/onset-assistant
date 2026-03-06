@@ -44,9 +44,12 @@ export interface IStorage {
     email: string | null;
     firstName: string | null;
     lastName: string | null;
+    isAdmin: boolean | null;
     createdAt: Date | null;
     questionCounts: Record<string, number>;
   }>>;
+  isUserAdmin(userId: string): Promise<boolean>;
+  setUserAdmin(userId: string, isAdmin: boolean): Promise<void>;
   respondToQuestion(data: InsertAdminResponse): Promise<AdminResponse>;
   markQuestionReviewed(questionId: number): Promise<void>;
   getNotifications(userId: string): Promise<AdminResponse[]>;
@@ -168,6 +171,7 @@ export class DatabaseStorage implements IStorage {
     email: string | null;
     firstName: string | null;
     lastName: string | null;
+    isAdmin: boolean | null;
     createdAt: Date | null;
     questionCounts: Record<string, number>;
   }>> {
@@ -187,9 +191,19 @@ export class DatabaseStorage implements IStorage {
       email: u.email,
       firstName: u.firstName,
       lastName: u.lastName,
+      isAdmin: u.isAdmin,
       createdAt: u.createdAt,
       questionCounts: countMap[u.id] || {},
     }));
+  }
+
+  async isUserAdmin(userId: string): Promise<boolean> {
+    const [user] = await db.select({ isAdmin: users.isAdmin }).from(users).where(eq(users.id, userId));
+    return user?.isAdmin === true;
+  }
+
+  async setUserAdmin(userId: string, isAdmin: boolean): Promise<void> {
+    await db.update(users).set({ isAdmin }).where(eq(users.id, userId));
   }
 
   async respondToQuestion(data: InsertAdminResponse): Promise<AdminResponse> {

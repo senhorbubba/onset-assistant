@@ -480,6 +480,25 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
+  async function requireAdmin(req: any, res: any, next: any) {
+    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const isAdmin = await storage.isUserAdmin(req.user.claims.sub);
+    if (!isAdmin) {
+      return res.status(403).json({ message: "Forbidden: Admin access required" });
+    }
+    next();
+  }
+
+  app.get("/api/auth/admin-check", async (req: any, res) => {
+    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
+      return res.json({ isAdmin: false });
+    }
+    const isAdmin = await storage.isUserAdmin(req.user.claims.sub);
+    res.json({ isAdmin });
+  });
+
   app.get("/api/profile", async (req: any, res) => {
     if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -554,11 +573,7 @@ export async function registerRoutes(
     res.json(topics);
   });
 
-  app.post("/api/content/upload", async (req: any, res) => {
-    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
+  app.post("/api/content/upload", requireAdmin, async (req: any, res) => {
     upload.single("file")(req, res, async (err: any) => {
       if (err) {
         return res.status(400).json({ message: "File upload error: " + err.message });
@@ -619,10 +634,7 @@ export async function registerRoutes(
     });
   });
 
-  app.get("/api/admin/users", async (req: any, res) => {
-    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+  app.get("/api/admin/users", requireAdmin, async (req: any, res) => {
     try {
       const usersWithStats = await storage.getAllUsersWithStats();
       res.json(usersWithStats);
@@ -631,10 +643,21 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/admin/users/export", async (req: any, res) => {
-    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
-      return res.status(401).json({ message: "Unauthorized" });
+  app.patch("/api/admin/users/:userId/admin", requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { isAdmin } = req.body;
+      if (userId === req.user.claims.sub) {
+        return res.status(400).json({ message: "You cannot change your own admin status" });
+      }
+      await storage.setUserAdmin(userId, isAdmin === true);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to update admin status" });
     }
+  });
+
+  app.get("/api/admin/users/export", requireAdmin, async (req: any, res) => {
     try {
       const usersWithStats = await storage.getAllUsersWithStats();
       const topics = await storage.getAvailableTopics();
@@ -721,11 +744,8 @@ export async function registerRoutes(
     res.json(questions);
   });
 
-  app.post("/api/admin/respond", async (req: any, res) => {
+  app.post("/api/admin/respond", requireAdmin, async (req: any, res) => {
     try {
-      if (!req.isAuthenticated?.()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
       const adminId = req.user.claims.sub;
       const { questionId, response } = req.body;
       if (!questionId || !response) {

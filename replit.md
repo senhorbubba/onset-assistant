@@ -6,7 +6,7 @@ A chatbot web application branded "onset. Assistant" that answers user questions
 ## Current State
 - Landing page at `/` with product overview, features, use cases, and CTA to try the bot
 - Chat interface at `/bot` with dynamic topic selection
-- Admin panel at `/admin` to upload JSON files, visually inspect knowledge base per topic, and manage users
+- Admin panel at `/admin` (admin-only access) to upload JSON files, visually inspect knowledge base per topic, manage users, and toggle admin roles
 - Two-phase conversational AI (gpt-4o-mini via Replit AI Integrations): Phase 1 classifies intent, Phase 2 generates response
 - Conversational flow: general questions get guided exploration, specific questions get knowledge base answers with video links
 - Conversation history support (last 6 messages) for multi-turn dialogues
@@ -66,7 +66,9 @@ A chatbot web application branded "onset. Assistant" that answers user questions
 - `POST /api/content/upload` - Upload JSON file for a topic (requires auth, replaces existing content for that topic)
 - `GET /api/unanswered` - List unanswered questions
 - `GET /api/admin/users` - List all registered users with question counts per topic (requires auth)
-- `GET /api/admin/users/export` - Export all users as CSV file (requires auth)
+- `GET /api/admin/users/export` - Export all users as CSV file (requires admin)
+- `PATCH /api/admin/users/:userId/admin` - Toggle admin status for a user (requires admin)
+- `GET /api/auth/admin-check` - Check if current user is admin
 - `GET /api/auth/user` - Get current authenticated user
 - `GET /api/login` - Initiate login flow
 - `GET /api/logout` - Logout

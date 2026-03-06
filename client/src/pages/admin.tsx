@@ -7,22 +7,50 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, ArrowLeft, CheckCircle2, AlertCircle, ExternalLink, Globe, Users, Download, Upload, Database, FileJson, MessageSquare, Send } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, AlertCircle, ExternalLink, Globe, Users, Download, Upload, Database, FileJson, MessageSquare, Send, Shield, ShieldOff } from "lucide-react";
 import { useState, useRef } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/language-context";
 import type { Language } from "@/lib/i18n";
 
 export default function Admin() {
+  const [, setLocation] = useLocation();
+  const { data: adminCheck, isLoading: adminCheckLoading } = useQuery<{ isAdmin: boolean }>({
+    queryKey: ["/api/auth/admin-check"],
+  });
+
+  if (adminCheckLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!adminCheck?.isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4 px-4">
+        <ShieldOff className="w-16 h-16 text-muted-foreground" />
+        <h1 className="text-2xl font-bold text-slate-900" data-testid="text-access-denied">Access Denied</h1>
+        <p className="text-muted-foreground text-center">You don't have admin privileges to access this page.</p>
+        <Button onClick={() => setLocation("/bot")} data-testid="button-go-back">Go to Chat</Button>
+      </div>
+    );
+  }
+
+  return <AdminPanel />;
+}
+
+function AdminPanel() {
   const { data: topics, isLoading: topicsLoading } = useTopics();
   const [selectedTopic, setSelectedTopic] = useState<string>("");
   const { data: topicContent, isLoading: contentLoading } = useContentByTopic(selectedTopic);
   const { data: unanswered, isLoading: unansweredLoading } = useUnansweredList();
   const { data: usersList, isLoading: usersLoading } = useQuery<Array<{
     id: string; email: string | null; firstName: string | null; lastName: string | null;
-    createdAt: string | null; questionCounts: Record<string, number>;
+    isAdmin: boolean | null; createdAt: string | null; questionCounts: Record<string, number>;
   }>>({ queryKey: ["/api/admin/users"] });
   const uploadMutation = useUploadJSON();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,6 +80,29 @@ export default function Admin() {
     },
     onError: () => {
       toast({ title: t.admin.error, description: t.admin.respondError, variant: "destructive" });
+    },
+  });
+
+  const toggleAdminMutation = useMutation({
+    mutationFn: async ({ userId, isAdmin }: { userId: string; isAdmin: boolean }) => {
+      const res = await fetch(`/api/admin/users/${userId}/admin`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ isAdmin }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to update");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Success", description: "Admin status updated" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
@@ -443,6 +494,7 @@ export default function Admin() {
                           <TableRow>
                             <TableHead>{t.admin.userName}</TableHead>
                             <TableHead>{t.admin.userEmail}</TableHead>
+                            <TableHead className="text-center">Admin</TableHead>
                             {topics?.map((topic) => (
                               <TableHead key={topic} className="text-center">{topic} Qs</TableHead>
                             ))}
@@ -456,6 +508,19 @@ export default function Admin() {
                                 {`${user.firstName || ""} ${user.lastName || ""}`.trim() || "-"}
                               </TableCell>
                               <TableCell className="text-muted-foreground text-sm">{user.email || "-"}</TableCell>
+                              <TableCell className="text-center">
+                                <Button
+                                  variant={user.isAdmin ? "default" : "outline"}
+                                  size="sm"
+                                  className="h-7 text-xs gap-1"
+                                  onClick={() => toggleAdminMutation.mutate({ userId: user.id, isAdmin: !user.isAdmin })}
+                                  disabled={toggleAdminMutation.isPending}
+                                  data-testid={`button-toggle-admin-${user.id}`}
+                                >
+                                  <Shield className="w-3 h-3" />
+                                  {user.isAdmin ? "Admin" : "User"}
+                                </Button>
+                              </TableCell>
                               {topics?.map((topic) => (
                                 <TableCell key={topic} className="text-center">
                                   <Badge variant="secondary" className="text-xs">
@@ -470,7 +535,7 @@ export default function Admin() {
                           ))}
                           {(!usersList || usersList.length === 0) && (
                             <TableRow>
-                              <TableCell colSpan={(topics?.length || 0) + 3} className="text-center py-12 text-muted-foreground">
+                              <TableCell colSpan={(topics?.length || 0) + 4} className="text-center py-12 text-muted-foreground">
                                 {t.admin.noUsers}
                               </TableCell>
                             </TableRow>
@@ -489,7 +554,20 @@ export default function Admin() {
                               {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
                             </span>
                           </div>
-                          <p className="text-xs text-muted-foreground">{user.email || "-"}</p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-muted-foreground">{user.email || "-"}</p>
+                            <Button
+                              variant={user.isAdmin ? "default" : "outline"}
+                              size="sm"
+                              className="h-6 text-[10px] gap-1"
+                              onClick={() => toggleAdminMutation.mutate({ userId: user.id, isAdmin: !user.isAdmin })}
+                              disabled={toggleAdminMutation.isPending}
+                              data-testid={`button-toggle-admin-mobile-${user.id}`}
+                            >
+                              <Shield className="w-3 h-3" />
+                              {user.isAdmin ? "Admin" : "User"}
+                            </Button>
+                          </div>
                           <div className="flex gap-2 flex-wrap">
                             {topics?.map((topic) => (
                               <Badge key={topic} variant="secondary" className="text-[10px]">
