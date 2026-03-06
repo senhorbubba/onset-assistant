@@ -10,8 +10,7 @@ import type { Content, UserProfile, TopicExperience } from "@shared/schema";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -30,13 +29,7 @@ async function sendEmailNotification(email: string, question: string, response: 
     return;
   }
 
-  const domains = process.env.REPLIT_DOMAINS?.split(",") || [];
-  const productionDomain = domains.find(d => d.endsWith(".replit.app") || !d.includes(".replit.dev"));
-  const appUrl = productionDomain
-    ? `https://${productionDomain}`
-    : domains[0]
-      ? `https://${domains[0]}`
-      : "https://onset-assistant.replit.app";
+  const appUrl = process.env.APP_URL || "https://onset-assistant.up.railway.app";
 
   await emailTransporter.sendMail({
     from: '"onset. Assistant" <onset.devs@gmail.com>',
@@ -900,7 +893,7 @@ export async function registerRoutes(
               await sendWhatsAppMessage(from, reply);
             } else {
               await sendWhatsAppMessage(from, `I don't have information about that in our "${defaultTopic}" knowledge base yet. Try asking something else!`);
-              await storage.createUnansweredQuestion({
+              await storage.logUnansweredQuestion({
                 topic: defaultTopic,
                 question: text,
                 userId: null,
