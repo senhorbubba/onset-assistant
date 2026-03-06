@@ -30,6 +30,7 @@ export interface IStorage {
   clearContentByTopic(topic: string): Promise<void>;
   clearAllContent(): Promise<void>;
   bulkCreateContent(items: InsertContent[]): Promise<void>;
+  upsertContentBatch(items: InsertContent[]): Promise<{ added: number; updated: number }>;
   logUnansweredQuestion(item: InsertUnansweredQuestion): Promise<UnansweredQuestion>;
   getUnansweredQuestions(): Promise<UnansweredQuestion[]>;
   getUserProfile(userId: string): Promise<UserProfile | undefined>;
@@ -92,6 +93,25 @@ export class DatabaseStorage implements IStorage {
   async bulkCreateContent(items: InsertContent[]): Promise<void> {
     if (items.length === 0) return;
     await db.insert(content).values(items);
+  }
+
+  async upsertContentBatch(items: InsertContent[]): Promise<{ added: number; updated: number }> {
+    let added = 0;
+    let updated = 0;
+    for (const item of items) {
+      const [existing] = await db
+        .select()
+        .from(content)
+        .where(and(eq(content.topic, item.topic), eq(content.subtopic, item.subtopic)));
+      if (existing) {
+        await db.update(content).set(item).where(eq(content.id, existing.id));
+        updated++;
+      } else {
+        await db.insert(content).values(item);
+        added++;
+      }
+    }
+    return { added, updated };
   }
 
   async logUnansweredQuestion(item: InsertUnansweredQuestion): Promise<UnansweredQuestion> {

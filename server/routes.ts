@@ -617,6 +617,34 @@ export async function registerRoutes(
     });
   });
 
+  app.post("/api/admin/sync-sheets", requireAdmin, async (_req, res) => {
+    try {
+      const { syncFromSheet } = await import("./google-sheets");
+      const rows = await syncFromSheet();
+      if (rows.length === 0) {
+        return res.status(400).json({ message: "No data found in Google Sheet. Check column headers." });
+      }
+      const items = rows.map((row) => ({
+        topic: row.topic,
+        subtopic: row.question,
+        searchContext: null,
+        keywords: row.keywords.join(", ") || null,
+        keyTakeaway: row.answer || null,
+        difficulty: null,
+        useCase: null,
+        timestampLink: row.link || null,
+      }));
+      const result = await storage.upsertContentBatch(items);
+      res.json({
+        message: `Sync complete: ${result.added} added, ${result.updated} updated`,
+        added: result.added,
+        updated: result.updated,
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Sheets sync failed" });
+    }
+  });
+
   app.get("/api/admin/users", requireAdmin, async (req: any, res) => {
     try {
       const usersWithStats = await storage.getAllUsersWithStats();

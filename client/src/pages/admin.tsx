@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, ArrowLeft, CheckCircle2, AlertCircle, ExternalLink, Globe, Users, Download, Upload, Database, FileJson, MessageSquare, Send, Shield, ShieldOff } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, AlertCircle, ExternalLink, Globe, Users, Download, Upload, Database, FileJson, MessageSquare, Send, Shield, ShieldOff, RefreshCw } from "lucide-react";
 import { useState, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -54,6 +54,28 @@ function AdminPanel() {
   }>>({ queryKey: ["/api/admin/users"] });
   const uploadMutation = useUploadJSON();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const syncSheetsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/admin/sync-sheets", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Sync failed");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/topics"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/content"] });
+      toast({ title: "Sync complete", description: data.message });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Sync failed", description: error.message, variant: "destructive" });
+    },
+  });
   const [exporting, setExporting] = useState(false);
   const [respondDialog, setRespondDialog] = useState<{ id: number; topic: string; question: string; userEmail: string | null } | null>(null);
   const [responseText, setResponseText] = useState("");
@@ -198,6 +220,21 @@ function AdminPanel() {
                 <Upload className="w-4 h-4" />
               )}
               {uploadMutation.isPending ? t.admin.uploading : t.admin.uploadJSON}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 text-xs sm:text-sm"
+              onClick={() => syncSheetsMutation.mutate()}
+              disabled={syncSheetsMutation.isPending}
+              title="Sync from Google Sheets (safe — never deletes existing content)"
+            >
+              {syncSheetsMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+              {syncSheetsMutation.isPending ? "Syncing…" : "Sync Sheets"}
             </Button>
           </div>
         </div>
