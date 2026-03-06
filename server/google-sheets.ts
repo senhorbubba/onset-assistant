@@ -48,6 +48,7 @@ export async function fetchSheetData(spreadsheetId: string, sheetName?: string):
   const keywordsIdx = headers.findIndex((h: string) => h.includes('keyword') || h.includes('tag'));
   const linkIdx = headers.findIndex((h: string) => h.includes('final timestamp link') || h.includes('link') || h.includes('url'));
   const expertIdx = headers.findIndex((h: string) => h.includes('expert') || h.includes('source'));
+  const statusIdx = headers.findIndex((h: string) => h.includes('status'));
 
   if (topicIdx === -1) {
     console.error('Sheet headers found:', headers);
@@ -63,8 +64,10 @@ export async function fetchSheetData(spreadsheetId: string, sheetName?: string):
     const row = rows[i];
     const topic = row[topicIdx]?.trim();
     const question = row[questionIdx]?.trim();
+    const status = statusIdx !== -1 ? row[statusIdx]?.trim().toLowerCase() : null;
 
     if (!topic || !question) continue;
+    if (status !== null && status !== 'approved') continue;
 
     let answer = '';
     if (answerIdx !== -1 && row[answerIdx]?.trim()) {
