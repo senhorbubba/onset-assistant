@@ -3,15 +3,35 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import multer from "multer";
 import nodemailer from "nodemailer";
 import type { Content, UserProfile, TopicExperience } from "@shared/schema";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+async function callClaude(
+  messages: Array<{ role: string; content: string }>,
+  maxTokens: number
+): Promise<string> {
+  const systemMsg = messages.find((m) => m.role === "system")?.content || "";
+  const chatMsgs = messages.filter((m) => m.role !== "system") as Array<{
+    role: "user" | "assistant";
+    content: string;
+  }>;
+  const response = await anthropic.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    system: systemMsg,
+    messages: chatMsgs,
+    max_tokens: maxTokens,
+  });
+  return response.content[0]?.type === "text"
+    ? response.content[0].text.trim()
+    : "";
+}
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -162,13 +182,7 @@ ${contentItems.map((item, i) => `[${i}] ${item.subtopic} | Keywords: ${item.keyw
     }
     classifyMessages.push({ role: "user", content: question });
 
-    const classifyResponse = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: classifyMessages,
-      max_completion_tokens: 50,
-    });
-
-    const classification = classifyResponse.choices[0]?.message?.content?.trim() || "";
+    const classification = await callClaude(classifyMessages, 50);
 
     // PHASE 2: Generate response based on classification
     const matchResult = classification.match(/MATCH:\[?(\d+)\]?/);
@@ -237,13 +251,7 @@ ${fallbackRelated}`;
         }
         answerMessages.push({ role: "user", content: question });
 
-        const answerResponse = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: answerMessages,
-          max_completion_tokens: 800,
-        });
-
-        const rawAnswer = answerResponse.choices[0]?.message?.content?.trim() || "";
+        const rawAnswer = await callClaude(answerMessages, 800);
         const answer = rawAnswer || `I found information about "${entry.subtopic}" in our knowledge base. Would you like me to explain this topic in more detail?`;
         return { answer, found: true, link: entry.timestampLink || undefined };
       }
@@ -280,13 +288,7 @@ ${subtopicListForOverview}`;
       }
       overviewMessages.push({ role: "user", content: question });
 
-      const overviewResponse = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: overviewMessages,
-        max_completion_tokens: 800,
-      });
-
-      const overviewAnswer = overviewResponse.choices[0]?.message?.content?.trim() || "";
+      const overviewAnswer = await callClaude(overviewMessages, 800);
       if (overviewAnswer) {
         return { answer: overviewAnswer, found: true };
       }
@@ -350,13 +352,7 @@ ${profileContext}`;
       }
       guideMessages.push({ role: "user", content: question });
 
-      const guideResponse = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: guideMessages,
-        max_completion_tokens: 1200,
-      });
-
-      const guideAnswer = guideResponse.choices[0]?.message?.content?.trim() || "";
+      const guideAnswer = await callClaude(guideMessages, 1200);
       if (guideAnswer) {
         return { answer: guideAnswer, found: true };
       }
@@ -383,16 +379,10 @@ LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every si
 Keep it brief (2-3 sentences). Be understanding, not robotic. If they said "exit" or similar, let them know they can simply close the chat or pick a different topic, and offer to help with something before they go.
 ${profileContext}`;
 
-      const offTopicResponse = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: offTopicPrompt },
-          { role: "user", content: question },
-        ],
-        max_completion_tokens: 200,
-      });
-
-      const offTopicMsg = offTopicResponse.choices[0]?.message?.content?.trim() ||
+      const offTopicMsg = (await callClaude([
+        { role: "system", content: offTopicPrompt },
+        { role: "user", content: question },
+      ], 200)) ||
         (isPt
           ? `Essa pergunta está fora do escopo da nossa base sobre "${topic}". Posso te ajudar com algo sobre ${subtopicList}?`
           : `That's outside our "${topic}" knowledge base. I can help with topics like ${subtopicList}. What interests you?`);
