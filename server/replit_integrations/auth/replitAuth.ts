@@ -125,7 +125,9 @@ export async function setupAuth(app: Express) {
       failureRedirect: "/login?error=google_failed",
     }),
     (req, res) => {
-      res.redirect("/bot");
+      req.session.save(() => {
+        res.redirect("/bot");
+      });
     }
   );
 
