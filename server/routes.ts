@@ -627,11 +627,11 @@ export async function registerRoutes(
       const items = rows.map((row) => ({
         topic: row.topic,
         subtopic: row.question,
-        searchContext: null,
+        searchContext: row.searchContext || null,
         keywords: row.keywords.join(", ") || null,
         keyTakeaway: row.answer || null,
-        difficulty: null,
-        useCase: null,
+        difficulty: row.difficulty || null,
+        useCase: row.useCase || null,
         timestampLink: row.link || null,
       }));
       const result = await storage.upsertContentBatch(items);

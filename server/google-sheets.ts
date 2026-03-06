@@ -21,6 +21,9 @@ export interface SheetRow {
   answer: string;
   keywords: string[];
   link?: string;
+  difficulty?: string;
+  useCase?: string;
+  searchContext?: string;
 }
 
 export async function fetchSheetData(spreadsheetId: string, sheetName?: string): Promise<SheetRow[]> {
@@ -39,16 +42,19 @@ export async function fetchSheetData(spreadsheetId: string, sheetName?: string):
     return [];
   }
 
-  const headers = rows[0].map((h: string) => h.toLowerCase().trim());
+  // normalize: lowercase + replace underscores with spaces so both styles match
+  const headers = rows[0].map((h: string) => h.toLowerCase().trim().replace(/_/g, ' '));
 
-  const topicIdx = headers.findIndex((h: string) => h.includes('topic'));
-  const questionIdx = headers.findIndex((h: string) => h.includes('subtopic') || h.includes('question'));
-  const answerIdx = headers.findIndex((h: string) => h.includes('key takeaway') || h.includes('answer'));
-  const contextIdx = headers.findIndex((h: string) => h.includes('search context') || h.includes('transcription'));
-  const keywordsIdx = headers.findIndex((h: string) => h.includes('keyword') || h.includes('tag'));
-  const linkIdx = headers.findIndex((h: string) => h.includes('final timestamp link') || h.includes('link') || h.includes('url'));
-  const expertIdx = headers.findIndex((h: string) => h.includes('expert') || h.includes('source'));
-  const statusIdx = headers.findIndex((h: string) => h.includes('status'));
+  const topicIdx = headers.findIndex((h: string) => h === 'topic');
+  const questionIdx = headers.findIndex((h: string) => h === 'subtopic' || h === 'question');
+  const answerIdx = headers.findIndex((h: string) => h === 'key takeaway' || h === 'answer');
+  const contextIdx = headers.findIndex((h: string) => h === 'search context' || h === 'transcription');
+  const keywordsIdx = headers.findIndex((h: string) => h === 'keywords' || h === 'keyword' || h === 'tags');
+  const linkIdx = headers.findIndex((h: string) => h === 'timestamp link' || h === 'final timestamp link' || h === 'link' || h === 'url');
+  const difficultyIdx = headers.findIndex((h: string) => h === 'difficulty');
+  const useCaseIdx = headers.findIndex((h: string) => h === 'use case');
+  const expertIdx = headers.findIndex((h: string) => h === 'expert' || h === 'source');
+  const statusIdx = headers.findIndex((h: string) => h === 'status');
 
   if (topicIdx === -1) {
     console.error('Sheet headers found:', headers);
@@ -87,8 +93,11 @@ export async function fetchSheetData(spreadsheetId: string, sheetName?: string):
       : [];
 
     const link = linkIdx !== -1 ? row[linkIdx]?.trim() : undefined;
+    const difficulty = difficultyIdx !== -1 ? row[difficultyIdx]?.trim() : undefined;
+    const useCase = useCaseIdx !== -1 ? row[useCaseIdx]?.trim() : undefined;
+    const searchContext = contextIdx !== -1 ? row[contextIdx]?.trim() : undefined;
 
-    data.push({ topic, question, answer, keywords, link });
+    data.push({ topic, question, answer, keywords, link, difficulty, useCase, searchContext });
   }
 
   return data;
