@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useChat } from "@/hooks/use-chat";
-import { Send, User, Sparkles, Loader2, Play } from "lucide-react";
+import { Send, User, Sparkles, Loader2, Play, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,25 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
     },
   ]);
   const [input, setInput] = useState("");
+  const [popupUrl, setPopupUrl] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  function getEmbedUrl(url: string): string {
+    try {
+      const u = new URL(url);
+      if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
+        const videoId = u.hostname.includes('youtu.be')
+          ? u.pathname.slice(1)
+          : u.searchParams.get('v') || '';
+        const start = u.searchParams.get('t')?.replace('s', '') || '0';
+        return `https://www.youtube.com/embed/${videoId}?start=${start}&autoplay=1`;
+      }
+      // For other URLs (Loom, Vimeo, Canva, etc.) try embedding directly
+      return url;
+    } catch {
+      return url;
+    }
+  }
   
   const chatMutation = useChat();
 
@@ -225,7 +243,12 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
                   <ReactMarkdown
                     components={{
                       a: ({ href, children }) => (
-                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium" data-testid="link-markdown">
+                        <a
+                          href={href}
+                          onClick={(e) => { e.preventDefault(); if (href) setPopupUrl(href); }}
+                          className="text-primary hover:underline font-medium cursor-pointer"
+                          data-testid="link-markdown"
+                        >
                           {children}
                         </a>
                       ),
@@ -234,35 +257,15 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
                     {msg.content}
                   </ReactMarkdown>
                 ) : msg.content}
-                {msg.link && msg.link.includes('youtube.com') && (() => {
-                  const url = new URL(msg.link!);
-                  const videoId = url.searchParams.get('v');
-                  const startTime = url.searchParams.get('t')?.replace('s', '') || '0';
-                  const embedSrc = `https://www.youtube.com/embed/${videoId}?start=${startTime}`;
-                  return (
-                    <div className="mt-3">
-                      <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                        <iframe
-                          className="absolute inset-0 w-full h-full rounded-lg"
-                          src={embedSrc}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
-                      </div>
-                    </div>
-                  );
-                })()}
-                {msg.link && !msg.link.includes('youtube.com') && (
-                  <a 
-                    href={msg.link} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
+                {msg.link && (
+                  <button
+                    onClick={() => setPopupUrl(msg.link!)}
                     className="mt-2 flex items-center gap-2 text-primary hover:underline text-sm font-medium"
                     data-testid="link-resource"
                   >
                     <Play className="w-4 h-4" />
                     {t.chat.watchVideo}
-                  </a>
+                  </button>
                 )}
               </div>
             </motion.div>
@@ -313,6 +316,35 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
           {t.chat.enterToSend}
         </p>
       </div>
+
+      {/* Video popup modal */}
+      {popupUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setPopupUrl(null)}
+        >
+          <div
+            className="relative w-full max-w-3xl bg-black rounded-2xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setPopupUrl(null)}
+              className="absolute top-3 right-3 z-10 bg-black/60 hover:bg-black/80 text-white rounded-full p-1.5 transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src={getEmbedUrl(popupUrl)}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
