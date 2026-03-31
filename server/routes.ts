@@ -265,19 +265,36 @@ ${contentItems.map((item, i) => `[${i}] ${item.subtopic} | Keywords: ${item.keyw
 
         const isQuickMode = /\b(rápido|rapido|brief|quick|just one|só um|somente um)\b/i.test(question);
 
-        const answerPrompt = `You are "onset. Assistant", a friendly learning coach. Answer the user's question using the information from this knowledge base entry.
+        // Pre-process keyTakeaway: split by | separator, clean up each segment
+        const rawTakeaways = (entry.keyTakeaway || '')
+          .split('|')
+          .map((s: string) => s.trim())
+          .filter((s: string) => s.length > 0);
+        const cleanedTakeaway = rawTakeaways.join('\n- ');
 
-CONTEXT AWARENESS (CRITICAL): Read the conversation history carefully. Connect your answer to what was discussed before — reference previous topics, acknowledge the user's learning journey, make the response feel like a natural progression. If the user asked about a topic you previously suggested, acknowledge that.
+        const answerPrompt = `You are "onset. Assistant", a learning coach. Answer the user's question using the information from this knowledge base entry.
+
+EMOJI RULE (ABSOLUTE): NEVER use emojis in any response. Not a single one. The only exception is if the user explicitly asks you to use emojis.
+
+TONE MIRRORING (CRITICAL): Read the user's messages and match their communication style exactly — if they are formal, be formal; if they are casual and direct, be casual and direct; if they write in short sentences, keep your answer tight; if they are detailed, you can expand. Do not impose a fixed tone.
+
+CONTEXT AWARENESS (CRITICAL): Read the conversation history carefully. Explicitly reference what the user has already asked about — name the previous topics, connect this answer to their learning journey, make it feel like a natural continuation. If the user asked about a topic you previously suggested, acknowledge that directly.
 
 HALLUCINATION GUARD: If the user references something you supposedly said that is NOT in the conversation history, do not invent it. Only refer to things actually present in the history or in the knowledge base entry below.
 
-LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every single word — topic names, suggestions, headers, follow-up questions. If the knowledge base data below is in a different language, translate EVERYTHING. If the user asked to switch language mid-conversation, switch immediately and confirm it.
+LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every single word. The source notes below may be in a different language — it doesn't matter, you must translate and rewrite ALL of it into ${userLang}. Never output a single word in any other language.
+
+SOURCE NOTES RULE (CRITICAL): The "Source Notes" below are RAW INTERNAL DATABASE CONTENT — they are NOT ready to show to the user. They may be in Portuguese, English, or a mix. They may use shorthand, fragments, or informal notes. You MUST:
+1. Completely rewrite them as natural, flowing ${userLang} sentences — never copy or paraphrase them directly.
+2. Never reveal that you have source notes or a database.
+3. Never output any text that resembles the raw notes format.
+4. Treat them as private research material that informs your coaching, nothing more.
 
 RESPONSE STYLE (CRITICAL):
-- Write 3–5 natural sentences in coaching style. Absorb the knowledge base content and rewrite it — NEVER copy it verbatim.
+- Write 3–5 natural sentences in coaching style. Absorb the knowledge base content and rewrite it as your own coaching voice.
 - NEVER use pipe characters (|) in your response.
 - NEVER bold the subtopic title and dump notes below it.
-- Address the user's question directly, weave in ONE key insight from the source notes, connect it to the conversation context.
+- Address the user's question directly, weave in ONE key insight from the source notes (rewritten naturally), connect it to the conversation context.
 - Close with a coaching question or gentle next step.${isQuickMode ? '\n- QUICK MODE: The user wants a brief answer. Max 3 sentences, one insight only.' : ''}${linkLangNote}
 
 After your answer, suggest 2–3 related topics. Translate every topic name to ${userLang}. Keep suggestions short — just the names, no explanations.
@@ -285,7 +302,8 @@ ${profileContext}
 
 Topic area: ${entry.subtopic}
 Context: ${entry.searchContext || ''}
-Source Notes (INTERNAL ONLY — do not copy or expose this text): ${entry.keyTakeaway || ''}
+Source Notes (REWRITE ENTIRELY — do not copy, translate to ${userLang}):
+- ${cleanedTakeaway}
 Difficulty: ${entry.difficulty || ''}
 Use Case: ${entry.useCase || ''}
 
@@ -318,12 +336,20 @@ ${fallbackRelated}`;
       const langMismatch = (isPt && !entryLooksPortuguese) || (!isPt && entryLooksPortuguese);
       const linkLangNote = langMismatch ? `\nNote: The content was originally created in ${contentLang}.` : '';
 
-      const overviewPrompt = `You are "onset. Assistant", a warm learning coach for "${topic}".
-The user wants to know what content is available. Present an organized overview of the knowledge base grouped into logical categories/themes (e.g., "Giving Feedback", "Listening Skills", "Conflict Resolution", etc.). Group related subtopics together under clear category headings.
-For each category, list the subtopics briefly. After the overview, invite the user to pick a category or ask about any specific subtopic.
+      const overviewPrompt = `You are "onset. Assistant", a learning coach for "${topic}".
 
-LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every single word, including category headings, subtopic names, bullet points, and follow-up questions. If the knowledge base entries below are in a different language, translate EVERYTHING — never leave any word in the original language.${linkLangNote}
-Keep it concise and scannable — use short bullet points, not long descriptions.
+EMOJI RULE (ABSOLUTE): NEVER use emojis. Only use them if the user explicitly asks.
+
+TONE MIRRORING: Match the user's communication style from their message — formal, casual, brief, detailed. Don't impose a tone.
+
+The user wants to know what content is available. Give a HIGH-LEVEL overview only.
+- Group the ${contentItems.length} entries into logical categories (e.g., "Feedback", "Listening", "Conflict").
+- List ONLY the category names and how many entries each has (e.g., "Feedback — 3 topics").
+- Do NOT list individual subtopic names or describe them.
+- After listing the categories, ask the user which area they want to explore. Make it clear they can ask for more detail on any category.
+
+LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every single word including category names. Translate everything.${linkLangNote}
+Keep it short and scannable — no walls of text.
 ${profileContext}
 
 ALL ENTRIES IN THE KNOWLEDGE BASE (${contentItems.length} total):
@@ -360,7 +386,11 @@ ${subtopicListForOverview}`;
       const linkLangNote = langMismatch ? `\nThe linked videos are in ${contentLang}. Mention this once to the user.` : '';
 
       const guidePrompt = isplan
-        ? `You are "onset. Assistant", a warm learning coach for "${topic}".
+        ? `You are "onset. Assistant", a learning coach for "${topic}".
+
+EMOJI RULE (ABSOLUTE): NEVER use emojis. Only use them if the user explicitly asks.
+TONE MIRRORING: Match the user's communication style — formal/casual, brief/detailed. Don't impose a fixed tone.
+
 The user wants a learning plan. Create a structured plan using ONLY the entries below. For EACH entry in the plan, you MUST include its link so the user can access the content directly. Format links as markdown: [title](url).
 
 LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every single word, including subtopic names, plan titles, section headers, and descriptions. If the entries below are in a different language, translate EVERYTHING — never leave any word in the original language.${linkLangNote}
@@ -369,9 +399,13 @@ ${profileContext}
 
 KNOWLEDGE BASE ENTRIES (use these — include the links!):
 ${subtopicListWithLinks}`
-        : `You are "onset. Assistant", a warm learning coach for "${topic}".
+        : `You are "onset. Assistant", a learning coach for "${topic}".
 
-CONTEXT AWARENESS (CRITICAL): The user's message is a REPLY to your previous message. ALWAYS read the last 6 messages of conversation history before responding. If you previously listed topics/options and the user references one ("the first one", "yes", "that one", "let's do it"), you MUST resolve the reference and respond about THAT topic. Never claim you don't have information about something you just suggested.
+EMOJI RULE (ABSOLUTE): NEVER use emojis. Only use them if the user explicitly asks.
+
+TONE MIRRORING (CRITICAL): Read the user's messages and match their style exactly — formal or casual, direct or conversational, brief or expansive. Do not impose a fixed tone.
+
+CONTEXT AWARENESS (CRITICAL): The user's message is a REPLY to your previous message. ALWAYS read the last 6 messages of conversation history before responding. If you previously listed topics/options and the user references one ("the first one", "yes", "that one", "let's do it"), you MUST resolve the reference and respond about THAT topic. Explicitly reference what was already discussed — name the topics, acknowledge the progression. Never claim you don't have information about something you just suggested.
 
 HALLUCINATION GUARD: If the user references something you supposedly said that is NOT in the conversation history, do not invent it. Only refer to things actually present in the history or knowledge base below.
 
@@ -420,7 +454,10 @@ ${profileContext}`;
         .map(item => item.subtopic)
         .join(', ');
 
-      const offTopicPrompt = `You are "onset. Assistant", a friendly and professional learning coach focused exclusively on "${topic}".
+      const offTopicPrompt = `You are "onset. Assistant", a learning coach focused exclusively on "${topic}".
+
+EMOJI RULE (ABSOLUTE): NEVER use emojis. Only use them if the user explicitly asks.
+TONE MIRRORING: Match the user's communication style — don't be warmer or more formal than they are.
 
 The user just sent a message that is off-topic. It could be:
 - A navigation command like "exit", "quit", "stop"
@@ -428,11 +465,11 @@ The user just sent a message that is off-topic. It could be:
 - Nonsense, random words, or jokes
 - Inappropriate language or insults
 
-Respond warmly but clearly. Show that you understand what they said, then gently redirect them. Let them know this chat is specifically designed to help them learn about "${topic}". Mention 2-3 specific subtopics you can help with from this list: ${subtopicList}.
+Respond clearly. Show that you understand what they said, then redirect them. Let them know this chat is specifically designed to help them learn about "${topic}". Mention 2-3 specific subtopics you can help with from this list: ${subtopicList}.
 
 LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every single word, including subtopic names you mention. If the subtopic names in the list above are in a different language, translate them — never leave any word in the original language.
 
-Keep it brief (2-3 sentences). Be understanding, not robotic. If they said "exit" or similar, let them know they can simply close the chat or pick a different topic, and offer to help with something before they go.
+Keep it brief (2-3 sentences). If they said "exit" or similar, let them know they can simply close the chat or pick a different topic, and offer to help with something before they go.
 ${profileContext}`;
 
       const offTopicMsg = (await callClaude([
@@ -452,7 +489,10 @@ ${profileContext}`;
         .map(item => `• ${item.subtopic} (${item.difficulty || 'General'})`)
         .join('\n');
 
-      const suggestPrompt = `You are "onset. Assistant", a friendly learning coach for "${topic}".
+      const suggestPrompt = `You are "onset. Assistant", a learning coach for "${topic}".
+
+EMOJI RULE (ABSOLUTE): NEVER use emojis. Only use them if the user explicitly asks.
+TONE MIRRORING: Match the user's communication style — formal or casual, brief or detailed.
 
 The user asked about something that is NOT directly in the knowledge base, but 1–3 related entries could partially help.
 
@@ -482,7 +522,10 @@ ${relatedEntries}`;
 
     if (classification.startsWith("NOT_FOUND")) {
       const hintTopics = contentItems.slice(0, 2).map(item => item.subtopic).join(isPt ? ' ou ' : ' or ');
-      const notFoundPrompt = `You are "onset. Assistant", a friendly learning coach for "${topic}".
+      const notFoundPrompt = `You are "onset. Assistant", a learning coach for "${topic}".
+
+EMOJI RULE (ABSOLUTE): NEVER use emojis. Only use them if the user explicitly asks.
+TONE MIRRORING: Match the user's communication style.
 
 The user asked about something that genuinely has no match in the knowledge base. Be honest and brief.
 
@@ -803,9 +846,30 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/usage", async (_req, res) => {
+    const limit = parseInt(process.env.MONTHLY_MESSAGE_LIMIT || "0", 10);
+    const used = await storage.getMonthlyMessageCount();
+    res.json({ used, limit: limit || null, remaining: limit ? Math.max(0, limit - used) : null });
+  });
+
   app.post(api.chat.ask.path, async (req: any, res) => {
     try {
       const { topic, question, language, history } = api.chat.ask.input.parse(req.body);
+
+      // Monthly message limit check
+      const monthlyLimit = parseInt(process.env.MONTHLY_MESSAGE_LIMIT || "0", 10);
+      if (monthlyLimit > 0) {
+        const used = await storage.getMonthlyMessageCount();
+        if (used >= monthlyLimit) {
+          const isPt = (language || "en") === "pt-BR";
+          return res.status(429).json({
+            message: isPt
+              ? "Sua organização atingiu o limite mensal de perguntas do plano atual. Entre em contato para fazer upgrade."
+              : "Your organization has reached the monthly message limit for the current plan. Please contact us to upgrade.",
+            limitReached: true,
+          });
+        }
+      }
 
       let profile: UserProfile | null = null;
       let topicExp: TopicExperience | null = null;

@@ -11,11 +11,13 @@ import Admin from "@/pages/admin";
 import Onboarding from "@/pages/onboarding";
 import Profile from "@/pages/profile";
 import Login from "@/pages/login";
+import Pricing from "@/pages/pricing";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
+      <Route path="/pricing" component={Pricing} />
       <Route path="/bot" component={Home} />
       <Route path="/admin" component={Admin} />
       <Route path="/onboarding" component={Onboarding} />

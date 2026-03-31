@@ -36,6 +36,7 @@ const landingText = {
       features: "Features",
       useCases: "Use Cases",
       howItWorks: "How It Works",
+      pricing: "Pricing",
       tryIt: "Try It Free",
     },
     hero: {
@@ -119,6 +120,7 @@ const landingText = {
       features: "Recursos",
       useCases: "Casos de Uso",
       howItWorks: "Como Funciona",
+      pricing: "Preços",
       tryIt: "Teste Grátis",
     },
     hero: {
@@ -232,6 +234,7 @@ export default function Landing() {
             <a href="#features" className="hover:text-foreground transition-colors" data-testid="link-features">{t.nav.features}</a>
             <a href="#use-cases" className="hover:text-foreground transition-colors" data-testid="link-use-cases">{t.nav.useCases}</a>
             <a href="#how-it-works" className="hover:text-foreground transition-colors" data-testid="link-how-it-works">{t.nav.howItWorks}</a>
+            <Link href="/pricing" className="hover:text-foreground transition-colors font-medium text-primary" data-testid="link-pricing">{t.nav.pricing}</Link>
           </div>
           <div className="flex items-center justify-end gap-2 md:justify-self-end">
             <div className="hidden md:block">
@@ -266,6 +269,7 @@ export default function Landing() {
             <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1" data-testid="link-features-mobile">{t.nav.features}</a>
             <a href="#use-cases" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1" data-testid="link-use-cases-mobile">{t.nav.useCases}</a>
             <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1" data-testid="link-how-it-works-mobile">{t.nav.howItWorks}</a>
+            <Link href="/pricing" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-primary py-1" data-testid="link-pricing-mobile">{t.nav.pricing}</Link>
             <div className="flex items-center gap-2 py-1 border-t border-slate-100 pt-3">
               <Globe className="w-3.5 h-3.5 text-muted-foreground" />
               <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>

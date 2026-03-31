@@ -14,6 +14,11 @@ export function useChat() {
         body: JSON.stringify(validated),
       });
 
+      if (res.status === 429) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || "Monthly limit reached");
+      }
+
       if (!res.ok) {
         throw new Error("Failed to send message");
       }

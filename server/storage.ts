@@ -40,6 +40,7 @@ export interface IStorage {
   logChatHistory(data: InsertChatHistory): Promise<ChatHistory>;
   getChatHistory(userId: string): Promise<ChatHistory[]>;
   getChatHistoryByTopic(userId: string, topic: string): Promise<ChatHistory[]>;
+  getMonthlyMessageCount(): Promise<number>;
   getAllUsersWithStats(): Promise<Array<{
     id: string;
     email: string | null;
@@ -184,6 +185,16 @@ export class DatabaseStorage implements IStorage {
       .from(chatHistory)
       .where(and(eq(chatHistory.userId, userId), eq(chatHistory.topic, topic)))
       .orderBy(desc(chatHistory.createdAt));
+  }
+
+  async getMonthlyMessageCount(): Promise<number> {
+    const result = await db.execute(sql`
+      SELECT COUNT(*)::int AS cnt
+      FROM chat_history
+      WHERE created_at >= date_trunc('month', now())
+    `);
+    const rows = result.rows as Array<{ cnt: number }>;
+    return rows[0]?.cnt ?? 0;
   }
 
   async getAllUsersWithStats(): Promise<Array<{
