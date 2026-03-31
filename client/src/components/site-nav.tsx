@@ -9,15 +9,15 @@ import onsetLogo from "@assets/onset_logo.png";
 
 const navText = {
   en: {
-    features: "Features",
-    useCases: "Use Cases",
+    features: "Home",
+    useCases: "Applications",
     howItWorks: "How It Works",
     pricing: "Pricing",
     tryIt: "Try It Free",
   },
   "pt-BR": {
-    features: "Recursos",
-    useCases: "Casos de Uso",
+    features: "Home",
+    useCases: "Aplicações",
     howItWorks: "Como Funciona",
     pricing: "Preços",
     tryIt: "Teste Grátis",
@@ -42,7 +42,7 @@ export function SiteNav() {
 
         {/* Center links — desktop only */}
         <div className="hidden md:flex items-center justify-center gap-5 text-sm text-muted-foreground whitespace-nowrap">
-          <a href="/#features" className="hover:text-foreground transition-colors">{t.features}</a>
+          <a href="/" className="hover:text-foreground transition-colors">{t.features}</a>
           <a href="/#use-cases" className="hover:text-foreground transition-colors">{t.useCases}</a>
           <a href="/#how-it-works" className="hover:text-foreground transition-colors">{t.howItWorks}</a>
           <Link href="/pricing" className="hover:text-foreground transition-colors">{t.pricing}</Link>
@@ -80,7 +80,7 @@ export function SiteNav() {
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-slate-100 bg-white px-4 py-3 flex flex-col gap-3">
-          <a href="/#features" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.features}</a>
+          <a href="/" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.features}</a>
           <a href="/#use-cases" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.useCases}</a>
           <a href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.howItWorks}</a>
           <Link href="/pricing" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.pricing}</Link>
