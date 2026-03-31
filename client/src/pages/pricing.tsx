@@ -2,10 +2,8 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { useLanguage } from "@/lib/language-context";
 import type { Language } from "@/lib/i18n";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {
-  Globe,
   MessageSquareText,
   CheckCircle2,
   ArrowRight,
@@ -18,11 +16,10 @@ import {
   Star,
   Plus,
   Minus,
-  Menu,
-  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import onsetLogo from "@assets/onset_logo.png";
+import { SiteNav } from "@/components/site-nav";
 
 const pricingText = {
   en: {
@@ -328,76 +325,13 @@ const iconMap: Record<string, any> = {
 };
 
 export default function Pricing() {
-  const { language, setLanguage } = useLanguage();
+  const { language } = useLanguage();
   const t = pricingText[language as Language] || pricingText["pt-BR"];
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-foreground">
-      {/* Nav — same structure as landing */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-slate-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between md:grid md:grid-cols-3 md:justify-items-center">
-          <Link href="/">
-            <div className="flex items-center gap-2 cursor-pointer md:justify-self-start">
-              <img src={onsetLogo} alt="onset." className="w-8 h-8 object-contain" />
-              <span className="text-lg font-bold font-display tracking-tight">onset.</span>
-            </div>
-          </Link>
-          <div className="hidden md:flex items-center justify-center gap-6 text-sm text-muted-foreground whitespace-nowrap">
-            <Link href="/#features" className="hover:text-foreground transition-colors">{t.nav.features}</Link>
-            <Link href="/#use-cases" className="hover:text-foreground transition-colors">{t.nav.useCases}</Link>
-            <Link href="/#how-it-works" className="hover:text-foreground transition-colors">{t.nav.howItWorks}</Link>
-            <Link href="/pricing" className="hover:text-foreground transition-colors">{t.nav.pricing}</Link>
-          </div>
-          <div className="flex items-center justify-end gap-2 md:justify-self-end">
-            <div className="hidden md:block">
-              <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
-                <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-xs sm:text-sm px-2">
-                  <Globe className="w-3.5 h-3.5 shrink-0" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en">EN</SelectItem>
-                  <SelectItem value="pt-BR">PT</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Link href="/bot">
-              <Button size="sm" className="gap-1.5 text-xs sm:text-sm">
-                <MessageSquareText className="w-3.5 h-3.5" />
-                {t.nav.tryIt}
-              </Button>
-            </Link>
-            <button
-              className="md:hidden p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-slate-100 transition-colors"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-100 bg-white px-4 py-3 flex flex-col gap-3">
-            <Link href="/#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.nav.features}</Link>
-            <Link href="/#use-cases" className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.nav.useCases}</Link>
-            <Link href="/#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.nav.howItWorks}</Link>
-            <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.nav.pricing}</Link>
-            <div className="flex items-center gap-2 py-1 border-t border-slate-100 pt-3">
-              <Globe className="w-3.5 h-3.5 text-muted-foreground" />
-              <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
-                <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-sm px-0 h-auto">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="pt-BR">Português</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
-      </nav>
+      <SiteNav />
 
       {/* Hero */}
       <section className="py-16 sm:py-24 bg-white text-center">
