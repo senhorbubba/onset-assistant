@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link } from "wouter";
 
 import { useLanguage } from "@/lib/language-context";
@@ -216,6 +217,16 @@ const iconMap: Record<string, any> = {
 export default function Landing() {
   const { language } = useLanguage();
   const t = landingText[language] || landingText.en;
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      setTimeout(() => {
+        const el = document.querySelector(hash);
+        if (el) el.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-foreground">
