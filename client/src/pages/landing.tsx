@@ -87,9 +87,9 @@ const landingText = {
       title: "Simple. Powerful. Trustworthy.",
       subtitle: "Three steps to smarter learning.",
       steps: [
-        { number: "01", title: "Upload Your Content", desc: "Curators upload structured knowledge, one file per topic. The bot learns only what you teach it." },
-        { number: "02", title: "Users Ask Questions", desc: "Learners choose a topic and ask naturally. The AI understands context, not just keywords." },
-        { number: "03", title: "Personalized Answers", desc: "Responses adapt to each user's experience level, learning preference, and pace. Always sourced, never invented." },
+        { number: "01", title: "Select and Structure Content", desc: "We help you select and organize knowledge by topic. The bot learns only from what your team chose. Nothing more." },
+        { number: "02", title: "We Train the Bot", desc: "The selected content is used to train the assistant. It learns your language, your context, and your organization's expertise." },
+        { number: "03", title: "Teams Learn at Their Own Pace", desc: "Users ask questions naturally. The bot adapts to each person's profile and style, delivering personalized answers including videos and audio from the selected content." },
       ],
     },
     deploy: {
@@ -171,9 +171,9 @@ const landingText = {
       title: "Simples. Poderoso. Confiável.",
       subtitle: "Três passos para um aprendizado mais inteligente.",
       steps: [
-        { number: "01", title: "Envie seu Conteúdo", desc: "Curadores enviam conhecimento estruturado, um arquivo por tópico. O bot aprende apenas o que você ensina." },
-        { number: "02", title: "Usuários Fazem Perguntas", desc: "Aprendizes escolhem um tópico e perguntam naturalmente. A IA entende contexto, não apenas palavras-chave." },
-        { number: "03", title: "Respostas Personalizadas", desc: "Respostas se adaptam ao nível de experiência, preferência de aprendizado e ritmo de cada usuário. Sempre com fonte, nunca inventadas." },
+        { number: "01", title: "Selecione e Estruture o Conteúdo", desc: "Ajudamos você a selecionar e organizar o conhecimento por tópicos. O bot aprende apenas com o que sua equipe escolheu. Nada além disso." },
+        { number: "02", title: "Treinamos o Bot", desc: "O conteúdo selecionado é usado para treinar o assistente. Ele passa a entender sua linguagem, seu contexto e a expertise da sua organização." },
+        { number: "03", title: "Equipes Aprendem no Próprio Ritmo", desc: "Usuários fazem perguntas naturalmente. O bot se adapta ao perfil e estilo de cada pessoa, entregando respostas personalizadas, incluindo vídeos e áudios do conteúdo selecionado." },
       ],
     },
     deploy: {

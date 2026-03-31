@@ -29,11 +29,6 @@ export function SiteNav() {
   const t = navText[language as Language] || navText["pt-BR"];
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Anchor links only work from landing page; from /pricing they navigate to /#section
-  const featureHref = "/#features";
-  const useCasesHref = "/#use-cases";
-  const howItWorksHref = "/#how-it-works";
-
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-slate-100">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 grid grid-cols-[auto_1fr_auto] items-center gap-4">
@@ -47,9 +42,9 @@ export function SiteNav() {
 
         {/* Center links — desktop only */}
         <div className="hidden md:flex items-center justify-center gap-5 text-sm text-muted-foreground whitespace-nowrap">
-          <Link href={featureHref} className="hover:text-foreground transition-colors">{t.features}</Link>
-          <Link href={useCasesHref} className="hover:text-foreground transition-colors">{t.useCases}</Link>
-          <Link href={howItWorksHref} className="hover:text-foreground transition-colors">{t.howItWorks}</Link>
+          <a href="/#features" className="hover:text-foreground transition-colors">{t.features}</a>
+          <a href="/#use-cases" className="hover:text-foreground transition-colors">{t.useCases}</a>
+          <a href="/#how-it-works" className="hover:text-foreground transition-colors">{t.howItWorks}</a>
           <Link href="/pricing" className="hover:text-foreground transition-colors">{t.pricing}</Link>
         </div>
 
@@ -85,9 +80,9 @@ export function SiteNav() {
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-slate-100 bg-white px-4 py-3 flex flex-col gap-3">
-          <Link href={featureHref} onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.features}</Link>
-          <Link href={useCasesHref} onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.useCases}</Link>
-          <Link href={howItWorksHref} onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.howItWorks}</Link>
+          <a href="/#features" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.features}</a>
+          <a href="/#use-cases" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.useCases}</a>
+          <a href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.howItWorks}</a>
           <Link href="/pricing" onClick={() => setMobileMenuOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.pricing}</Link>
           <div className="flex items-center gap-2 border-t border-slate-100 pt-3">
             <Globe className="w-3.5 h-3.5 text-muted-foreground" />
