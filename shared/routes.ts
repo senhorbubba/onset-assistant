@@ -33,6 +33,7 @@ export const api = {
           answer: z.string(),
           found: z.boolean(),
           link: z.string().nullable().optional(),
+          suggestions: z.array(z.string()).optional(),
         }),
       },
     },

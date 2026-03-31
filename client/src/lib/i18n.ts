@@ -31,6 +31,13 @@ export const translations = {
       errorMessage: "I'm having trouble connecting right now. Please try again later.",
       noAnswer: "I'm sorry, I don't have an answer for that question in our knowledge base yet. I've logged it for our team to review and they'll follow up with you.",
       noContent: "There is no content available for this topic yet. Please try again later.",
+      entryChips: [
+        { label: "Start with what's most relevant to me", message: "Based on my background and goals, what should I start learning first?" },
+        { label: "Show me what's available", message: "What topics and content do you cover?" },
+        { label: "Give me one quick insight", message: "Give me one quick insight I can apply right away" },
+        { label: "I have a specific question", message: "" },
+      ],
+      entryChipSpecific: "I have a specific question",
     },
     admin: {
       dashboard: "Admin Dashboard",
@@ -259,6 +266,13 @@ export const translations = {
       errorMessage: "Estou com dificuldade para conectar agora. Por favor, tente novamente mais tarde.",
       noAnswer: "Desculpe, ainda não tenho uma resposta para essa pergunta em nossa base de conhecimento. Registrei para nossa equipe analisar e retornar.",
       noContent: "Ainda não há conteúdo disponível para este tópico. Por favor, tente novamente mais tarde.",
+      entryChips: [
+        { label: "Começar pelo mais relevante para mim", message: "Com base no meu perfil e objetivos, por onde devo começar?" },
+        { label: "Ver o que está disponível", message: "Quais tópicos e conteúdos você cobre?" },
+        { label: "Me dê um insight rápido", message: "Me dê um insight rápido que eu possa aplicar agora" },
+        { label: "Tenho uma pergunta específica", message: "" },
+      ],
+      entryChipSpecific: "Tenho uma pergunta específica",
     },
     admin: {
       dashboard: "Painel Administrativo",
@@ -487,6 +501,8 @@ export interface Translations {
     errorMessage: string;
     noAnswer: string;
     noContent: string;
+    entryChips: ReadonlyArray<{ label: string; message: string }>;
+    entryChipSpecific: string;
   };
   admin: {
     dashboard: string;

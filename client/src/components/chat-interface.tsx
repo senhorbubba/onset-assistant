@@ -16,6 +16,7 @@ interface Message {
   role: "user" | "bot";
   content: string;
   link?: string | null;
+  suggestions?: string[];
   timestamp: Date;
 }
 
@@ -67,6 +68,8 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
   ]);
   const [input, setInput] = useState("");
   const [popupUrl, setPopupUrl] = useState<string | null>(null);
+  const [conversationStarted, setConversationStarted] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   function getEmbedUrl(url: string): string {
@@ -105,13 +108,14 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
     ]);
   }, [language, topic]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const sendMessage = async (text: string) => {
+    if (!text.trim()) return;
+    setConversationStarted(true);
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input,
+      content: text,
       timestamp: new Date(),
     };
 
@@ -136,6 +140,7 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
         role: "bot",
         content: response.answer,
         link: response.link,
+        suggestions: response.suggestions,
         timestamp: new Date(),
       };
 
@@ -150,6 +155,8 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
       setMessages((prev) => [...prev, errorMessage]);
     }
   };
+
+  const handleSend = () => sendMessage(input);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -267,6 +274,21 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
                     {t.chat.watchVideo}
                   </button>
                 )}
+                {/* Post-response suggestion chips */}
+                {msg.role === "bot" && msg.suggestions && msg.suggestions.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-border/30">
+                    {msg.suggestions.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => sendMessage(s)}
+                        disabled={chatMutation.isPending}
+                        className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary/8 text-primary border border-primary/20 hover:bg-primary hover:text-white hover:border-primary transition-all duration-150 disabled:opacity-40"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}
@@ -289,8 +311,31 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
       </div>
 
       <div className="p-3 sm:p-4 bg-white/50 border-t border-border/50 backdrop-blur-sm">
+        {/* Entry chips — shown before first message */}
+        {!conversationStarted && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {t.chat.entryChips.map((chip) => (
+              <button
+                key={chip.label}
+                onClick={() => {
+                  if (chip.message) {
+                    sendMessage(chip.message);
+                  } else {
+                    setConversationStarted(true);
+                    setTimeout(() => textareaRef.current?.focus(), 50);
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white border border-border text-foreground hover:bg-primary hover:text-white hover:border-primary transition-all duration-150 shadow-sm"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="flex gap-2 relative">
           <Textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}

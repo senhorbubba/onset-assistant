@@ -106,6 +106,49 @@ interface ConversationMessage {
   content: string;
 }
 
+function buildSuggestions(classification: string, contentItems: Content[], matchedIdx: number | undefined, isPt: boolean): string[] {
+  const pt = isPt;
+
+  if (classification.startsWith("MATCH") && matchedIdx !== undefined) {
+    const related = contentItems.filter((_, i) => i !== matchedIdx).slice(0, 1).map(item => item.subtopic);
+    return [
+      pt ? "Me conte mais sobre isso" : "Tell me more about this",
+      pt ? "Me dê um exemplo prático" : "Give me a practical example",
+      ...related,
+    ].slice(0, 3);
+  }
+
+  if (classification.startsWith("OVERVIEW")) {
+    return [
+      pt ? "Começar com conteúdo básico" : "Start with beginner content",
+      pt ? "Mostrar plano de aprendizado" : "Show me a learning path",
+      pt ? "Tenho uma pergunta específica" : "I have a specific question",
+    ];
+  }
+
+  if (classification.startsWith("PLAN")) {
+    const first = contentItems.filter(i => i.difficulty === "Beginner")[0]?.subtopic || contentItems[0]?.subtopic;
+    return [
+      ...(first ? [first] : []),
+      pt ? "Tenho uma pergunta específica" : "I have a specific question",
+    ].slice(0, 3);
+  }
+
+  if (classification.startsWith("EXPLORE")) {
+    const picks = contentItems.slice(0, 2).map(i => i.subtopic);
+    return [
+      ...picks,
+      pt ? "Mostrar tudo disponível" : "Show me everything available",
+    ].slice(0, 3);
+  }
+
+  // SUGGEST, NOT_FOUND, OFF_TOPIC
+  return [
+    pt ? "Mostrar o que está disponível" : "Show me what's available",
+    pt ? "Fazer outra pergunta" : "Ask something else",
+  ];
+}
+
 async function findBestAnswer(
   topic: string,
   question: string,
@@ -113,7 +156,7 @@ async function findBestAnswer(
   profile?: UserProfile | null,
   topicExp?: TopicExperience | null,
   history?: ConversationMessage[]
-): Promise<{ answer: string; found: boolean; link?: string }> {
+): Promise<{ answer: string; found: boolean; link?: string; suggestions?: string[] }> {
   const contentItems = await storage.getContentByTopic(topic);
 
   const isPt = language === "pt-BR";
@@ -261,7 +304,7 @@ ${fallbackRelated}`;
 
         const rawAnswer = await callClaude(answerMessages, 800);
         const answer = rawAnswer || `I found information about "${entry.subtopic}" in our knowledge base. Would you like me to explain this topic in more detail?`;
-        return { answer, found: true, link: entry.timestampLink || undefined };
+        return { answer, found: true, link: entry.timestampLink || undefined, suggestions: buildSuggestions(classification, contentItems, matchedIdx, isPt) };
       }
     }
 
@@ -298,7 +341,7 @@ ${subtopicListForOverview}`;
 
       const overviewAnswer = await callClaude(overviewMessages, 800);
       if (overviewAnswer) {
-        return { answer: overviewAnswer, found: true };
+        return { answer: overviewAnswer, found: true, suggestions: buildSuggestions(classification, contentItems, undefined, isPt) };
       }
     }
 
@@ -367,7 +410,7 @@ ${profileContext}`;
 
       const guideAnswer = await callClaude(guideMessages, 1200);
       if (guideAnswer) {
-        return { answer: guideAnswer, found: true };
+        return { answer: guideAnswer, found: true, suggestions: buildSuggestions(classification, contentItems, undefined, isPt) };
       }
     }
 
@@ -400,7 +443,7 @@ ${profileContext}`;
           ? `Essa pergunta está fora do escopo da nossa base sobre "${topic}". Posso te ajudar com algo sobre ${subtopicList}?`
           : `That's outside our "${topic}" knowledge base. I can help with topics like ${subtopicList}. What interests you?`);
 
-      return { answer: offTopicMsg, found: true };
+      return { answer: offTopicMsg, found: true, suggestions: buildSuggestions(classification, contentItems, undefined, isPt) };
     }
 
     if (classification.startsWith("SUGGEST")) {
@@ -434,7 +477,7 @@ ${relatedEntries}`;
 
       return { answer: suggestAnswer || (isPt
         ? `Não tenho conteúdo específico sobre isso, mas posso te ajudar com tópicos relacionados. Qual desses te interessa?\n${relatedEntries}`
-        : `I don't have content on that exact topic, but these related areas might help. Which interests you?\n${relatedEntries}`), found: true };
+        : `I don't have content on that exact topic, but these related areas might help. Which interests you?\n${relatedEntries}`), found: true, suggestions: buildSuggestions(classification, contentItems, undefined, isPt) };
     }
 
     if (classification.startsWith("NOT_FOUND")) {
@@ -460,7 +503,7 @@ Things you CAN help with: ${hintTopics}`;
 
       return { answer: notFoundAnswer || (isPt
         ? `Não tenho conteúdo sobre esse assunto específico. Posso te ajudar com ${hintTopics} — quer explorar algum desses?`
-        : `I don't have content on that specific topic. I can help with ${hintTopics} — would you like to explore one of those?`), found: false };
+        : `I don't have content on that specific topic. I can help with ${hintTopics} — would you like to explore one of those?`), found: false, suggestions: buildSuggestions(classification, contentItems, undefined, isPt) };
     }
 
     // Fallback: if classification didn't match any pattern, try keyword match
