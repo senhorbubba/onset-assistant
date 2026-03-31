@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { useLanguage } from "@/lib/language-context";
 import type { Language } from "@/lib/i18n";
@@ -15,6 +16,10 @@ import {
   BarChart3,
   HeadphonesIcon,
   Star,
+  Plus,
+  Minus,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import onsetLogo from "@assets/onset_logo.png";
@@ -23,11 +28,12 @@ const pricingText = {
   en: {
     nav: {
       features: "Features",
+      useCases: "Use Cases",
+      howItWorks: "How It Works",
       pricing: "Pricing",
       tryIt: "Try It Free",
     },
     hero: {
-      badge: "Simple, transparent pricing",
       title: "Plans that grow with",
       titleHighlight: "your team.",
       subtitle:
@@ -35,23 +41,22 @@ const pricingText = {
     },
     setup: {
       title: "Implementation (one-time fee)",
-      subtitle: "We set everything up for you — content structure, configuration, deployment, and training.",
-      cta: "Included in every plan",
+      subtitle: "We handle everything: content structure, configuration, deployment, and training.",
       plans: [
         {
           name: "Starter Setup",
-          price: "R$\u00a04.900",
+          price: "R$\u00a02.500",
           desc: "Up to 3 topics, up to 15 entries per topic",
           features: [
-            "Content structuring & upload",
-            "Bot configuration & deploy",
+            "Content structuring and upload",
+            "Bot configuration and deploy",
             "1 language (EN or PT-BR)",
             "Admin training session",
           ],
         },
         {
           name: "Professional Setup",
-          price: "R$\u00a09.900",
+          price: "R$\u00a04.900",
           desc: "Up to 8 topics, up to 20 entries per topic",
           highlighted: true,
           features: [
@@ -64,7 +69,7 @@ const pricingText = {
         },
         {
           name: "Enterprise Setup",
-          price: "R$\u00a017.900",
+          price: "R$\u00a09.900",
           desc: "Unlimited topics and entries",
           features: [
             "Everything in Professional",
@@ -78,16 +83,16 @@ const pricingText = {
     },
     monthly: {
       title: "Monthly subscription",
-      subtitle: "Pay month-to-month or annually (save 2 months). Cancel anytime.",
+      subtitle: "Pay month-to-month or annually and save 2 months. Cancel anytime.",
       annualBadge: "Annual: 2 months free",
       limitNote: "messages/month",
       plans: [
         {
           name: "Starter",
           icon: "zap",
-          price: "R$\u00a0990",
+          price: "R$\u00a0799",
           period: "/month",
-          users: "Up to 30 users",
+          users: "Up to 25 users",
           limit: "600",
           features: [
             "Up to 3 active topics",
@@ -101,7 +106,7 @@ const pricingText = {
           icon: "rocket",
           price: "R$\u00a01.990",
           period: "/month",
-          users: "Up to 120 users",
+          users: "Up to 100 users",
           limit: "2.500",
           highlighted: true,
           features: [
@@ -133,7 +138,7 @@ const pricingText = {
     },
     overLimit: {
       title: "Need more messages?",
-      desc: "When your organization reaches the monthly limit, the bot pauses gracefully and notifies users to contact you. You can upgrade your plan at any time — no data is lost.",
+      desc: "When your organization reaches the monthly limit, the bot pauses gracefully and notifies users to contact you. Upgrade your plan at any time, no data is lost.",
     },
     faq: {
       title: "Common questions",
@@ -158,7 +163,7 @@ const pricingText = {
     },
     cta: {
       title: "Ready to get started?",
-      subtitle: "Try the live demo first — no commitment required.",
+      subtitle: "Try the live demo first, no commitment required.",
       button: "Launch the Assistant",
       contact: "Talk to us",
     },
@@ -170,11 +175,12 @@ const pricingText = {
   "pt-BR": {
     nav: {
       features: "Recursos",
+      useCases: "Casos de Uso",
+      howItWorks: "Como Funciona",
       pricing: "Preços",
       tryIt: "Teste Grátis",
     },
     hero: {
-      badge: "Preços simples e transparentes",
       title: "Planos que crescem com",
       titleHighlight: "a sua equipe.",
       subtitle:
@@ -182,12 +188,11 @@ const pricingText = {
     },
     setup: {
       title: "Implantação (taxa única)",
-      subtitle: "Cuidamos de tudo — estrutura de conteúdo, configuração, deploy e treinamento.",
-      cta: "Incluso em todos os planos",
+      subtitle: "Cuidamos de tudo: estrutura de conteúdo, configuração, deploy e treinamento.",
       plans: [
         {
           name: "Implantação Starter",
-          price: "R$\u00a04.900",
+          price: "R$\u00a02.500",
           desc: "Até 3 tópicos, até 15 entradas por tópico",
           features: [
             "Estruturação e carga de conteúdo",
@@ -198,7 +203,7 @@ const pricingText = {
         },
         {
           name: "Implantação Profissional",
-          price: "R$\u00a09.900",
+          price: "R$\u00a04.900",
           desc: "Até 8 tópicos, até 20 entradas por tópico",
           highlighted: true,
           features: [
@@ -211,7 +216,7 @@ const pricingText = {
         },
         {
           name: "Implantação Enterprise",
-          price: "R$\u00a017.900",
+          price: "R$\u00a09.900",
           desc: "Tópicos e entradas ilimitados",
           features: [
             "Tudo do Profissional",
@@ -225,16 +230,16 @@ const pricingText = {
     },
     monthly: {
       title: "Assinatura mensal",
-      subtitle: "Pague mês a mês ou anualmente (economize 2 meses). Cancele quando quiser.",
+      subtitle: "Pague mês a mês ou anualmente e economize 2 meses. Cancele quando quiser.",
       annualBadge: "Anual: 2 meses grátis",
       limitNote: "mensagens/mês",
       plans: [
         {
           name: "Starter",
           icon: "zap",
-          price: "R$\u00a0990",
+          price: "R$\u00a0799",
           period: "/mês",
-          users: "Até 30 usuários",
+          users: "Até 25 usuários",
           limit: "600",
           features: [
             "Até 3 tópicos ativos",
@@ -248,7 +253,7 @@ const pricingText = {
           icon: "rocket",
           price: "R$\u00a01.990",
           period: "/mês",
-          users: "Até 120 usuários",
+          users: "Até 100 usuários",
           limit: "2.500",
           highlighted: true,
           features: [
@@ -280,7 +285,7 @@ const pricingText = {
     },
     overLimit: {
       title: "Precisa de mais mensagens?",
-      desc: "Quando sua organização atinge o limite mensal, o bot pausa com uma mensagem amigável orientando os usuários a entrar em contato. Você pode fazer upgrade a qualquer momento — nenhum dado é perdido.",
+      desc: "Quando sua organização atinge o limite mensal, o bot pausa com uma mensagem amigável orientando os usuários a entrar em contato. Faça upgrade a qualquer momento, nenhum dado é perdido.",
     },
     faq: {
       title: "Perguntas frequentes",
@@ -305,7 +310,7 @@ const pricingText = {
     },
     cta: {
       title: "Pronto para começar?",
-      subtitle: "Experimente a demo ao vivo primeiro — sem compromisso.",
+      subtitle: "Experimente a demo ao vivo primeiro, sem compromisso.",
       button: "Abrir o Assistente",
       contact: "Fale conosco",
     },
@@ -325,49 +330,78 @@ const iconMap: Record<string, any> = {
 export default function Pricing() {
   const { language, setLanguage } = useLanguage();
   const t = pricingText[language as Language] || pricingText["pt-BR"];
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-foreground">
-      {/* Nav */}
+      {/* Nav — same structure as landing */}
       <nav className="sticky top-0 z-50 bg-white border-b border-slate-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between md:grid md:grid-cols-3 md:justify-items-center">
           <Link href="/">
-            <div className="flex items-center gap-2 cursor-pointer">
+            <div className="flex items-center gap-2 cursor-pointer md:justify-self-start">
               <img src={onsetLogo} alt="onset." className="w-8 h-8 object-contain" />
               <span className="text-lg font-bold font-display tracking-tight">onset.</span>
             </div>
           </Link>
-          <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
+          <div className="hidden md:flex items-center justify-center gap-6 text-sm text-muted-foreground whitespace-nowrap">
             <Link href="/#features" className="hover:text-foreground transition-colors">{t.nav.features}</Link>
-            <Link href="/pricing" className="text-primary font-medium">{t.nav.pricing}</Link>
+            <Link href="/#use-cases" className="hover:text-foreground transition-colors">{t.nav.useCases}</Link>
+            <Link href="/#how-it-works" className="hover:text-foreground transition-colors">{t.nav.howItWorks}</Link>
+            <Link href="/pricing" className="hover:text-foreground transition-colors">{t.nav.pricing}</Link>
           </div>
-          <div className="flex items-center gap-2">
-            <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
-              <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-xs sm:text-sm px-2">
-                <Globe className="w-3.5 h-3.5 shrink-0" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">EN</SelectItem>
-                <SelectItem value="pt-BR">PT</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex items-center justify-end gap-2 md:justify-self-end">
+            <div className="hidden md:block">
+              <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
+                <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-xs sm:text-sm px-2">
+                  <Globe className="w-3.5 h-3.5 shrink-0" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">EN</SelectItem>
+                  <SelectItem value="pt-BR">PT</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <Link href="/bot">
               <Button size="sm" className="gap-1.5 text-xs sm:text-sm">
                 <MessageSquareText className="w-3.5 h-3.5" />
                 {t.nav.tryIt}
               </Button>
             </Link>
+            <button
+              className="md:hidden p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-slate-100 transition-colors"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-slate-100 bg-white px-4 py-3 flex flex-col gap-3">
+            <Link href="/#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.nav.features}</Link>
+            <Link href="/#use-cases" className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.nav.useCases}</Link>
+            <Link href="/#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.nav.howItWorks}</Link>
+            <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1">{t.nav.pricing}</Link>
+            <div className="flex items-center gap-2 py-1 border-t border-slate-100 pt-3">
+              <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+              <Select value={language} onValueChange={(val) => setLanguage(val as Language)}>
+                <SelectTrigger className="w-auto gap-1 border-none bg-transparent text-muted-foreground text-sm px-0 h-auto">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="pt-BR">Português</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero */}
       <section className="py-16 sm:py-24 bg-white text-center">
         <div className="max-w-3xl mx-auto px-6">
-          <span className="inline-block text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full mb-4 tracking-wide uppercase">
-            {t.hero.badge}
-          </span>
           <h1 className="text-3xl sm:text-5xl font-extrabold font-display leading-tight mb-4">
             {t.hero.title}{" "}
             <span className="text-primary">{t.hero.titleHighlight}</span>
@@ -503,15 +537,26 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* FAQ — accordion */}
       <section className="py-12 sm:py-20 bg-white">
         <div className="max-w-2xl mx-auto px-6">
           <h2 className="text-2xl sm:text-3xl font-bold font-display text-center mb-10">{t.faq.title}</h2>
-          <div className="space-y-6">
+          <div className="divide-y divide-slate-100">
             {t.faq.items.map((item, i) => (
-              <div key={i} className="border-b border-slate-100 pb-6">
-                <p className="font-semibold font-display mb-2">{item.q}</p>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.a}</p>
+              <div key={i}>
+                <button
+                  className="w-full flex items-center justify-between gap-4 py-5 text-left"
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                >
+                  <span className="font-semibold font-display text-sm sm:text-base">{item.q}</span>
+                  {openFaq === i
+                    ? <Minus className="w-4 h-4 shrink-0 text-primary" />
+                    : <Plus className="w-4 h-4 shrink-0 text-muted-foreground" />
+                  }
+                </button>
+                {openFaq === i && (
+                  <p className="pb-5 text-sm text-muted-foreground leading-relaxed">{item.a}</p>
+                )}
               </div>
             ))}
           </div>
