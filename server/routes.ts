@@ -211,6 +211,7 @@ CRITICAL — CONTEXT AWARENESS:
 - Short replies ("the first one", "yes", "that one", "it", "this") ALWAYS resolve against the previous bot message — NEVER classify these as NOT_FOUND or OFF_TOPIC.
 - Continuation phrases ("tell me more", "continue", "me ensina mais", "expand on that") always expand the last topic discussed — classify as EXPLORE.
 - If the bot previously listed topics/options and the user picks one, resolve the reference and classify as MATCH or EXPLORE accordingly.
+- OVERVIEW FOLLOW-UP (CRITICAL): If the previous bot message listed categories or topics (an overview), and the user's reply mentions or references ANY of those category names — even casually ("Meetings I guess", "let's do feedback", "the listening one") — ALWAYS classify as EXPLORE. NEVER classify these as NOT_FOUND.
 - When in doubt between EXPLORE and OFF_TOPIC, always choose EXPLORE. Greetings, thank-yous, and conversational follow-ups are NEVER off-topic.
 - When in doubt between MATCH and EXPLORE, choose EXPLORE.
 - The entries may be in a different language than the user's question — match by MEANING, not literal text.
@@ -241,7 +242,10 @@ ${contentItems.map((item, i) => `[${i}] ${item.subtopic} | Keywords: ${item.keyw
 
     // Pre-check: short continuation phrases are always EXPLORE — don't waste a classifier call
     const CONTINUATION_RE = /^(tell me more|tellme more|me conta mais|me ensina mais|continue|continua|continuar|go on|expand|expand on that|yes|sim|sure|claro|ok|okay|got it|entendi|and then|e depois|e aí|what else|o que mais|more|mais)[\s?!.]*$/i;
-    const rawClassification = CONTINUATION_RE.test(question.trim()) && history && history.length > 0
+    // If the last bot message looks like an OVERVIEW (bullet list of categories) and the user replied with something short, force EXPLORE
+    const lastBotMsg = history && history.length > 0 ? [...history].reverse().find(m => m.role === "bot")?.content || "" : "";
+    const lastWasOverview = (lastBotMsg.match(/\n/g) || []).length >= 3 && /\*\*|—\s*\d+\s*topic|\btopics?\b/i.test(lastBotMsg);
+    const rawClassification = (CONTINUATION_RE.test(question.trim()) || (lastWasOverview && question.trim().length < 80)) && history && history.length > 0
       ? "EXPLORE"
       : await callClaude(classifyMessages, 50);
 
@@ -367,6 +371,7 @@ The user wants to know what content is available. Give a HIGH-LEVEL overview onl
 - Do NOT put multiple categories on the same line. Each category gets its own bullet.
 - Do NOT list individual subtopic names or describe them.
 - After the list, add one short sentence inviting the user to pick a category.
+- Then on a new line write: [OPTIONS: Category 1 | Category 2 | Category 3] — list the exact category names you used above (translated), max 4.
 
 LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every single word including category names. Translate everything.${linkLangNote}
 Keep it short and scannable — no walls of text.
@@ -385,9 +390,10 @@ ${subtopicListForOverview}`;
       }
       overviewMessages.push({ role: "user", content: question });
 
-      const overviewAnswer = await callClaude(overviewMessages, 800);
-      if (overviewAnswer) {
-        return { answer: overviewAnswer, found: true, suggestions: buildSuggestions(classification, contentItems, undefined, isPt) };
+      const rawOverviewAnswer = await callClaude(overviewMessages, 800);
+      if (rawOverviewAnswer) {
+        const { answer: overviewAnswer, chips } = parseChips(rawOverviewAnswer);
+        return { answer: overviewAnswer, found: true, suggestions: chips.length ? chips : buildSuggestions(classification, contentItems, undefined, isPt) };
       }
     }
 
