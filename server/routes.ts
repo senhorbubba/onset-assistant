@@ -553,32 +553,48 @@ ${relatedEntries}`;
     }
 
     if (classification.startsWith("NOT_FOUND")) {
-      const hintTopics = contentItems.slice(0, 2).map(item => item.subtopic).join(isPt ? ' ou ' : ' or ');
+      const hintTopics = contentItems.slice(0, 4).map(item => item.subtopic).join(', ');
       const notFoundPrompt = `You are "onset. Assistant", a learning coach for "${topic}".
 
 EMOJI RULE (ABSOLUTE): NEVER use emojis. Only use them if the user explicitly asks.
-TONE MIRRORING: Match the user's communication style.
+TONE MIRRORING: Match the user's communication style exactly.
+CONTEXT AWARENESS: Read the conversation history before responding. Reference what was already discussed.
 
-The user asked about something that genuinely has no match in the knowledge base. Be honest and brief.
+The user asked about something not in the knowledge base. DO NOT end the conversation. Keep it alive.
 
 Your response must:
-1. Honestly say you don't have content on that specific topic (1 sentence).
-2. Gently hint at 1–2 things you CAN help with.
-3. Maximum 2–3 sentences total.
+1. Briefly acknowledge you don't have that specific content (1 short sentence — not a wall of apology).
+2. Pivot immediately: reference what you DO have that's related, based on the conversation so far.
+3. Offer 2–3 specific directions to continue. Ask which interests them.
+4. Total: 3–4 sentences max. Coaching tone, warm, not robotic.
+
+At the very end, on a new line: [OPTIONS: label 1 | label 2 | label 3] — short labels (2–4 words) matching the options you offered, in ${userLang}.
 
 LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Translate all topic names.
-NEVER use pipe characters (|). Keep it very short.
+NEVER use pipe characters (|) in your response body.
 
-Things you CAN help with: ${hintTopics}`;
+Related topics you CAN help with: ${hintTopics}`;
 
-      const notFoundAnswer = await callClaude([
-        { role: "system", content: notFoundPrompt },
-        { role: "user", content: question },
-      ], 150);
+      const notFoundMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+        { role: "system", content: notFoundPrompt }
+      ];
+      if (history && history.length > 0) {
+        for (const msg of history.slice(-4)) {
+          notFoundMessages.push({ role: msg.role === "user" ? "user" : "assistant", content: msg.content });
+        }
+      }
+      notFoundMessages.push({ role: "user", content: question });
 
-      return { answer: notFoundAnswer || (isPt
+      const rawNotFound = await callClaude(notFoundMessages, 200);
+      const { answer: notFoundAnswer, chips: notFoundChips } = parseChips(rawNotFound || "");
+      const fallbackAnswer = isPt
         ? `Não tenho conteúdo sobre esse assunto específico. Posso te ajudar com ${hintTopics} — quer explorar algum desses?`
-        : `I don't have content on that specific topic. I can help with ${hintTopics} — would you like to explore one of those?`), found: false, suggestions: buildSuggestions(classification, contentItems, undefined, isPt) };
+        : `I don't have content on that specific topic yet. I can help with ${hintTopics} — would you like to explore one of those?`;
+      return {
+        answer: notFoundAnswer || fallbackAnswer,
+        found: false,
+        suggestions: notFoundChips.length ? notFoundChips : buildSuggestions(classification, contentItems, undefined, isPt)
+      };
     }
 
     // Fallback: if classification didn't match any pattern, try keyword match
@@ -940,23 +956,17 @@ export async function registerRoutes(
         });
       }
 
-      if (result.found) {
-        res.json({
-          answer: result.answer,
-          found: true,
-          link: result.link || null,
-        });
-      } else {
+      if (!result.found) {
+        // Log for admin review — do this silently in the background
         const userEmail = req.isAuthenticated?.() ? req.user?.claims?.email : null;
-        await storage.logUnansweredQuestion({ topic, question, userId: userId || null, userEmail: userEmail || null });
-        const notFoundMsg = result.answer || (language === "pt-BR"
-          ? "Desculpe, ainda não tenho uma resposta para essa pergunta em nossa base de conhecimento. Registrei para nossa equipe analisar e retornar."
-          : "I'm sorry, I don't have an answer for that question in our knowledge base yet. I've logged it for our team to review and they'll follow up with you.");
-        res.json({
-          answer: notFoundMsg,
-          found: false
-        });
+        storage.logUnansweredQuestion({ topic, question, userId: userId || null, userEmail: userEmail || null }).catch(() => {});
       }
+      res.json({
+        answer: result.answer,
+        found: result.found,
+        link: result.link || null,
+        suggestions: result.suggestions || [],
+      });
     } catch (err) {
       console.error("Chat error:", err);
       res.status(400).json({ message: "Invalid request" });
