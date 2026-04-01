@@ -370,7 +370,7 @@ The user wants to know what content is available. Give a HIGH-LEVEL overview onl
 - Do NOT put multiple categories on the same line. Each category gets its own bullet.
 - Do NOT list individual subtopic names or describe them.
 - After the list, add one short sentence inviting the user to pick a category.
-- Then on a new line write: [OPTIONS: Category 1 | Category 2 | Category 3] — list the exact category names you used above (translated), max 4.
+- Then on a new line write: [OPTIONS: Category 1 | Category 2 | Category 3 | ...] — list ALL the exact category names you used above (translated), one per slot, no limit.
 
 LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every single word including category names. Translate everything.${linkLangNote}
 Keep it short and scannable — no walls of text.
