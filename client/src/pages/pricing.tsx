@@ -37,7 +37,7 @@ const pricingText = {
         "One-time setup, monthly subscription. No hidden fees. Each plan includes a monthly message limit to keep your costs predictable.",
     },
     setup: {
-      title: "Implementation (one-time fee)",
+      title: "Implementation",
       subtitle: "We handle everything: content structure, configuration, deployment, and training.",
       plans: [
         {
@@ -195,7 +195,7 @@ const pricingText = {
         "Implantação única, assinatura mensal. Sem taxas ocultas. Cada plano inclui um limite mensal de mensagens para manter seus custos previsíveis.",
     },
     setup: {
-      title: "Implantação (taxa única)",
+      title: "Implantação",
       subtitle: "Cuidamos de tudo: estrutura de conteúdo, configuração, deploy e treinamento.",
       plans: [
         {
