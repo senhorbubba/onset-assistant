@@ -1048,6 +1048,53 @@ export async function registerRoutes(
     res.json({ success: true });
   });
 
+  app.patch("/api/profile/whatsapp", async (req: any, res) => {
+    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const userId = req.user.claims.sub;
+    const { phone } = req.body;
+    const normalized = phone ? phone.replace(/\D/g, "") : null;
+    try {
+      await storage.setUserWhatsappPhone(userId, normalized || null);
+      res.json({ success: true, phone: normalized || null });
+    } catch (error: any) {
+      if (error?.code === "23505") {
+        return res.status(409).json({ message: "This number is already linked to another account." });
+      }
+      res.status(500).json({ message: "Failed to update WhatsApp number" });
+    }
+  });
+
+  app.get("/api/profile/learning-summary", async (req: any, res) => {
+    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const userId = req.user.claims.sub;
+    const history = await storage.getChatHistory(userId);
+    if (history.length === 0) {
+      return res.json({ summary: null });
+    }
+    const historyText = history
+      .map(h => `[${h.topic}] Q: ${h.question}${h.found ? ` → A: ${h.answer.slice(0, 200)}` : " (not answered)"}`)
+      .join("\n");
+    const prompt = `You are a learning coach. Based on the user's full conversation history below, write a personalized learning summary. Include:
+- Main topics they explored
+- Key concepts they seem to have grasped
+- Areas they returned to multiple times (showing interest or difficulty)
+- A brief encouragement and suggested next step
+
+Be warm, specific, and concise. 3-5 short paragraphs. No emojis. Write in the same language as the majority of the questions below.
+
+CONVERSATION HISTORY:
+${historyText.slice(0, 8000)}`;
+    const summary = await callClaude([
+      { role: "system", content: prompt },
+      { role: "user", content: "Generate my learning summary." },
+    ], 800);
+    res.json({ summary });
+  });
+
   // ==================== WhatsApp Webhook ====================
 
   app.get("/api/whatsapp/webhook", (req, res) => {

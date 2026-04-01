@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/hooks/use-auth";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Save, Loader2, MessageSquare, BookOpen, CheckCircle, Clock, LogOut, Settings, Mail } from "lucide-react";
+import { ArrowLeft, Save, Loader2, MessageSquare, BookOpen, CheckCircle, Clock, LogOut, Settings, Mail, Phone, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import onsetLogo from "@assets/onset_logo.png";
@@ -89,6 +89,40 @@ export default function Profile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
     },
+  });
+
+  const [whatsappPhone, setWhatsappPhone] = useState("");
+  useEffect(() => {
+    if ((user as any)?.whatsappPhone) setWhatsappPhone((user as any).whatsappPhone);
+  }, [user]);
+
+  const saveWhatsapp = useMutation({
+    mutationFn: async (phone: string) => {
+      const res = await fetch("/api/profile/whatsapp", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ phone }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to save");
+      }
+      return res.json();
+    },
+    onSuccess: () => toast({ title: "Saved", description: "WhatsApp number linked." }),
+    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const [learningSummary, setLearningSummary] = useState<string | null>(null);
+  const generateSummary = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/profile/learning-summary", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed");
+      return res.json() as Promise<{ summary: string | null }>;
+    },
+    onSuccess: (data) => setLearningSummary(data.summary),
+    onError: () => toast({ title: "Error", description: "Could not generate summary", variant: "destructive" }),
   });
 
   useEffect(() => {
@@ -321,6 +355,35 @@ export default function Profile() {
 
             <Card className="p-6">
               <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-green-50 rounded-lg">
+                  <Phone className="w-5 h-5 text-green-600" />
+                </div>
+                <h2 className="text-lg font-bold text-slate-900">WhatsApp</h2>
+              </div>
+              <p className="text-sm text-slate-500 mb-4">Link your WhatsApp number to chat with the bot directly from WhatsApp.</p>
+              <div className="flex gap-2">
+                <input
+                  type="tel"
+                  placeholder="+55 11 99999-9999"
+                  className="border rounded-lg px-3 py-2 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  value={whatsappPhone}
+                  onChange={(e) => setWhatsappPhone(e.target.value)}
+                />
+                <Button
+                  size="sm"
+                  onClick={() => saveWhatsapp.mutate(whatsappPhone)}
+                  disabled={saveWhatsapp.isPending}
+                >
+                  {saveWhatsapp.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                </Button>
+              </div>
+              {whatsappPhone && (
+                <p className="text-xs text-slate-400 mt-2">Linked: +{whatsappPhone.replace(/\D/g, "")}</p>
+              )}
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 bg-slate-100 rounded-lg">
                   <Settings className="w-5 h-5 text-slate-600" />
                 </div>
@@ -336,12 +399,15 @@ export default function Profile() {
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-lg font-bold text-slate-900 mb-4">{t.profile.recentQuestions}</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-slate-900">{t.profile.recentQuestions}</h2>
+                <Badge variant="secondary" className="text-xs">{chatHistory.length} total</Badge>
+              </div>
               {chatHistory.length === 0 ? (
                 <p className="text-sm text-slate-400" data-testid="text-no-history">{t.profile.noHistory}</p>
               ) : (
-                <div className="space-y-3 max-h-80 overflow-y-auto">
-                  {chatHistory.slice(0, 20).map((item: any) => (
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                  {chatHistory.map((item: any) => (
                     <div key={item.id} className="border-b border-slate-100 pb-3 last:border-0">
                       <div className="flex items-start gap-2">
                         <Badge variant={item.found ? "default" : "secondary"} className="shrink-0 text-[10px] mt-0.5">
@@ -357,6 +423,33 @@ export default function Profile() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                </div>
+                <h2 className="text-lg font-bold text-slate-900">Learning Summary</h2>
+              </div>
+              <p className="text-sm text-slate-500 mb-4">Get an AI-generated summary of your learning journey based on your full conversation history.</p>
+              <Button
+                variant="outline"
+                className="w-full mb-4"
+                onClick={() => generateSummary.mutate()}
+                disabled={generateSummary.isPending || chatHistory.length === 0}
+              >
+                {generateSummary.isPending ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
+                ) : (
+                  <><Sparkles className="w-4 h-4 mr-2" /> Generate Summary</>
+                )}
+              </Button>
+              {learningSummary && (
+                <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap bg-slate-50 rounded-lg p-4 border border-slate-100">
+                  {learningSummary}
                 </div>
               )}
             </Card>
