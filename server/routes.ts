@@ -106,6 +106,16 @@ interface ConversationMessage {
   content: string;
 }
 
+// Parse [OPTIONS: chip 1 | chip 2] from the end of a Claude response.
+// Returns { answer: cleaned text, chips: string[] }
+function parseChips(raw: string): { answer: string; chips: string[] } {
+  const match = raw.match(/\[OPTIONS:\s*([^\]]+)\]\s*$/i);
+  if (!match) return { answer: raw.trimEnd(), chips: [] };
+  const chips = match[1].split('|').map(s => s.trim()).filter(Boolean);
+  const answer = raw.slice(0, raw.lastIndexOf(match[0])).trimEnd();
+  return { answer, chips };
+}
+
 function buildSuggestions(classification: string, contentItems: Content[], matchedIdx: number | undefined, isPt: boolean): string[] {
   const pt = isPt;
 
@@ -302,9 +312,10 @@ RESPONSE STYLE (CRITICAL):
 - NEVER use pipe characters (|) in your response.
 - NEVER bold the subtopic title and dump notes below it.
 - Address the user's question directly, weave in ONE key insight from the source notes (rewritten naturally), connect it to the conversation context.
-- Close with a coaching question or gentle next step.${isQuickMode ? '\n- QUICK MODE: The user wants a brief answer. Max 3 sentences, one insight only.' : ''}${linkLangNote}
+- Close with a coaching question or gentle next step offering 2–3 specific follow-up directions.${isQuickMode ? '\n- QUICK MODE: The user wants a brief answer. Max 3 sentences, one insight only.' : ''}${linkLangNote}
 
-After your answer, suggest 2–3 related topics. Translate every topic name to ${userLang}. Keep suggestions short — just the names, no explanations.
+After your answer, on a new line, write exactly: [OPTIONS: short label 1 | short label 2 | short label 3]
+These must match the exact follow-up choices you offered in your coaching question — 2–4 words each, in ${userLang}. No explanations, just the labels.
 ${profileContext}
 
 Topic area: ${entry.subtopic}
@@ -328,8 +339,8 @@ ${fallbackRelated}`;
         answerMessages.push({ role: "user", content: question });
 
         const rawAnswer = await callClaude(answerMessages, 800);
-        const answer = rawAnswer || `I found information about "${entry.subtopic}" in our knowledge base. Would you like me to explain this topic in more detail?`;
-        return { answer, found: true, link: entry.timestampLink || undefined, suggestions: buildSuggestions(classification, contentItems, matchedIdx, isPt) };
+        const { answer, chips } = parseChips(rawAnswer || `I found information about "${entry.subtopic}" in our knowledge base. Would you like me to explain this topic in more detail?`);
+        return { answer, found: true, link: entry.timestampLink || undefined, suggestions: chips.length ? chips : buildSuggestions(classification, contentItems, matchedIdx, isPt) };
       }
     }
 
@@ -431,7 +442,10 @@ Special cases:
 - Short follow-up ("yes", "sure", "tell me more", "continue", "me ensina mais") → resolve from history and continue from where you left off.
 - Quick mode (user said "rápido", "brief", "just one", "só um") → max 3 sentences, one insight only.
 
-When providing content, use the knowledge base below as source material — deliver it conversationally, NEVER copy verbatim. NEVER use pipe characters (|) in your response.
+When providing content, use the knowledge base below as source material — deliver it conversationally, NEVER copy verbatim. NEVER use pipe characters (|) in your response body.
+
+CHIPS (MANDATORY): At the very end of every response, on a new line, write: [OPTIONS: label 1 | label 2 | label 3]
+These must be 2–4 word labels in ${userLang} matching the exact follow-up choices you offered. If you offered no explicit choices, derive 2–3 natural next steps from the conversation. Always include this line.
 
 VIDEO/AUDIO RULE: If the user asks about videos or audio for a topic, check the knowledge base entries below for a Link. If a link exists for the relevant topic, share it as a markdown link and mention it naturally. If no link exists for that specific topic, say so honestly and offer the closest related topic that does have one (if any). NEVER say you have no videos/audio without first checking the entries below.
 
@@ -453,9 +467,10 @@ ${profileContext}`;
       }
       guideMessages.push({ role: "user", content: question });
 
-      const guideAnswer = await callClaude(guideMessages, 1200);
-      if (guideAnswer) {
-        return { answer: guideAnswer, found: true, suggestions: buildSuggestions(classification, contentItems, undefined, isPt) };
+      const rawGuideAnswer = await callClaude(guideMessages, 1200);
+      if (rawGuideAnswer) {
+        const { answer: guideAnswer, chips } = parseChips(rawGuideAnswer);
+        return { answer: guideAnswer, found: true, suggestions: chips.length ? chips : buildSuggestions(classification, contentItems, undefined, isPt) };
       }
     }
 

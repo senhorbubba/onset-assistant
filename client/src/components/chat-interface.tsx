@@ -237,7 +237,7 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
         ref={scrollRef}
       >
         <AnimatePresence initial={false}>
-          {messages.map((msg) => (
+          {messages.map((msg, msgIdx) => (
             <motion.div
               key={msg.id}
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -318,15 +318,14 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
                     </a>
                   );
                 })()}
-                {/* Post-response suggestion chips */}
-                {msg.role === "bot" && msg.suggestions && msg.suggestions.length > 0 && (
+                {/* Suggestion chips — only on the latest bot message */}
+                {msg.role === "bot" && msg.suggestions && msg.suggestions.length > 0 && msgIdx === messages.length - 1 && !chatMutation.isPending && (
                   <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-border/30">
                     {msg.suggestions.map((s) => (
                       <button
                         key={s}
                         onClick={() => sendMessage(s)}
-                        disabled={chatMutation.isPending}
-                        className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary/8 text-primary border border-primary/20 hover:bg-primary hover:text-white hover:border-primary transition-all duration-150 disabled:opacity-40"
+                        className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary/8 text-primary border border-primary/20 hover:bg-primary hover:text-white hover:border-primary transition-all duration-150"
                       >
                         {s}
                       </button>
