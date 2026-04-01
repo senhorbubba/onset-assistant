@@ -146,7 +146,7 @@ const pricingText = {
     },
     overLimit: {
       title: "Need more messages?",
-      desc: "When your organization is approaching the monthly limit, the administrator receives an automatic notification. Once the limit is reached, the bot pauses with a friendly message to users. You can upgrade your plan or purchase additional credits at any time — no data is ever lost.",
+      desc: "When your organization is approaching the monthly limit, the administrator receives an automatic notification. Once the limit is reached, the bot pauses with a friendly message to users. You can upgrade your plan or purchase additional credits at any time. No data is ever lost.",
     },
     faq: {
       title: "Common questions",
@@ -304,7 +304,7 @@ const pricingText = {
     },
     overLimit: {
       title: "Precisa de mais mensagens?",
-      desc: "Quando sua organização está se aproximando do limite mensal, o administrador recebe uma notificação automática. Ao atingir o limite, o bot pausa com uma mensagem amigável para os usuários. Você pode fazer upgrade do plano ou adquirir créditos adicionais a qualquer momento — nenhum dado é perdido.",
+      desc: "Quando sua organização está se aproximando do limite mensal, o administrador recebe uma notificação automática. Ao atingir o limite, o bot pausa com uma mensagem amigável para os usuários. Você pode fazer upgrade do plano ou adquirir créditos adicionais a qualquer momento. Nenhum dado é perdido.",
     },
     faq: {
       title: "Perguntas frequentes",
