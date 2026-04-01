@@ -1131,6 +1131,8 @@ ${historyText.slice(0, 6000)}`;
 
   // In-memory store: phone -> { code, userId, expiresAt }
   const pendingVerifications = new Map<string, { code: string; userId: string; expiresAt: number }>();
+  // Last suggestions sent per WhatsApp phone, so "1"/"2"/"3" replies can be resolved
+  const lastSuggestions = new Map<string, string[]>();
 
   app.post("/api/profile/whatsapp/request-code", async (req: any, res) => {
     if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
@@ -1291,7 +1293,16 @@ ${historyText.slice(0, 6000)}`;
               }
             }
 
-            const result = await findBestAnswer(defaultTopic, text, detectedLang, profile ?? null, topicExp ?? null, history);
+            // Resolve numbered reply ("1", "2", "3") to the last suggestion sent to this phone
+            let resolvedText = text;
+            const numericReply = text.trim().match(/^([123])\.?$/);
+            if (numericReply) {
+              const prev = lastSuggestions.get(from);
+              const idx = parseInt(numericReply[1], 10) - 1;
+              if (prev && prev[idx]) resolvedText = prev[idx];
+            }
+
+            const result = await findBestAnswer(defaultTopic, resolvedText, detectedLang, profile ?? null, topicExp ?? null, history);
 
             // Save to chat history so conversation context is preserved
             await storage.logChatHistory({
@@ -1306,6 +1317,13 @@ ${historyText.slice(0, 6000)}`;
               let reply = result.answer;
               if (result.link) {
                 reply += `\n\n${result.link}`;
+              }
+              if (result.suggestions && result.suggestions.length > 0) {
+                lastSuggestions.set(from, result.suggestions);
+                const optionsLabel = detectedLang === "pt-BR" ? "Continuar com:" : "Continue with:";
+                reply += `\n\n*${optionsLabel}*\n` + result.suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n');
+              } else {
+                lastSuggestions.delete(from);
               }
               await sendWhatsAppMessage(from, reply);
             } else {
