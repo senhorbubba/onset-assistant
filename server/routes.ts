@@ -206,6 +206,7 @@ CRITICAL — CONTEXT AWARENESS:
 - The entries may be in a different language than the user's question — match by MEANING, not literal text.
 - If the user asks about a broad area that maps to MULTIPLE entries, use EXPLORE rather than MATCH.
 - If the user asks to switch language ("respond in English", "responde em português"), classify as EXPLORE.
+- VIDEO/AUDIO RULE: If the user asks whether there are videos, audio, or media about a topic they are currently discussing (from conversation history), classify as MATCH for that topic entry so the link can be surfaced. If the topic is broad or unclear, classify as EXPLORE.
 
 Respond with ONLY the classification tag, nothing else.
 ${isPt ? 'The user may write in Portuguese.' : ''}
@@ -426,11 +427,13 @@ Special cases:
 
 When providing content, use the knowledge base below as source material — deliver it conversationally, NEVER copy verbatim. NEVER use pipe characters (|) in your response.
 
+VIDEO/AUDIO RULE: If the user asks about videos or audio for a topic, check the knowledge base entries below for a Link. If a link exists for the relevant topic, share it as a markdown link and mention it naturally. If no link exists for that specific topic, say so honestly and offer the closest related topic that does have one (if any). NEVER say you have no videos/audio without first checking the entries below.
+
 Use ONLY these subtopics (translate all names to ${userLang}, do not invent others):
-${subtopicList}
+${subtopicListWithLinks}
 
 Knowledge base entries (INTERNAL reference only — rewrite as coaching, never expose raw text):
-${contentItems.map(item => `• ${item.subtopic}: ${(item.keyTakeaway || '').split('|')[0].trim()}`).join('\n')}
+${contentItems.map(item => `• ${item.subtopic}: ${(item.keyTakeaway || '').split('|')[0].trim()}${item.timestampLink ? ` | Link: ${item.timestampLink}` : ''}`).join('\n')}
 
 ${profileContext}`;
 
