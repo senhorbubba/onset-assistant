@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, ArrowLeft, CheckCircle2, AlertCircle, ExternalLink, Globe, Users, Download, Upload, Database, FileJson, MessageSquare, Send, Shield, ShieldOff, RefreshCw } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, AlertCircle, ExternalLink, Globe, Users, Download, Upload, Database, FileJson, MessageSquare, Send, Shield, ShieldOff, RefreshCw, Phone } from "lucide-react";
 import { useState, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -50,7 +50,7 @@ function AdminPanel() {
   const { data: unanswered, isLoading: unansweredLoading } = useUnansweredList();
   const { data: usersList, isLoading: usersLoading } = useQuery<Array<{
     id: string; email: string | null; firstName: string | null; lastName: string | null;
-    isAdmin: boolean | null; createdAt: string | null; questionCounts: Record<string, number>;
+    isAdmin: boolean | null; whatsappPhone: string | null; createdAt: string | null; questionCounts: Record<string, number>;
   }>>({ queryKey: ["/api/admin/users"] });
   const uploadMutation = useUploadJSON();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -122,6 +122,31 @@ function AdminPanel() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({ title: "Success", description: "Admin status updated" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const [phoneValues, setPhoneValues] = useState<Record<string, string>>({});
+
+  const setWhatsappMutation = useMutation({
+    mutationFn: async ({ userId, phone }: { userId: string; phone: string }) => {
+      const res = await fetch(`/api/admin/users/${userId}/whatsapp`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ phone }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to update");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Saved", description: "WhatsApp number updated" });
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -532,6 +557,7 @@ function AdminPanel() {
                             <TableHead>{t.admin.userName}</TableHead>
                             <TableHead>{t.admin.userEmail}</TableHead>
                             <TableHead className="text-center">Admin</TableHead>
+                            <TableHead>WhatsApp</TableHead>
                             {topics?.map((topic) => (
                               <TableHead key={topic} className="text-center">{topic} Qs</TableHead>
                             ))}
@@ -557,6 +583,29 @@ function AdminPanel() {
                                   <Shield className="w-3 h-3" />
                                   {user.isAdmin ? "Admin" : "User"}
                                 </Button>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="tel"
+                                    placeholder="+55 11 99999-9999"
+                                    className="border rounded px-2 py-1 text-xs w-36 focus:outline-none focus:ring-1 focus:ring-primary"
+                                    value={phoneValues[user.id] ?? user.whatsappPhone ?? ""}
+                                    onChange={(e) => setPhoneValues(v => ({ ...v, [user.id]: e.target.value }))}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") setWhatsappMutation.mutate({ userId: user.id, phone: phoneValues[user.id] ?? "" });
+                                    }}
+                                  />
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 w-7 p-0"
+                                    onClick={() => setWhatsappMutation.mutate({ userId: user.id, phone: phoneValues[user.id] ?? user.whatsappPhone ?? "" })}
+                                    disabled={setWhatsappMutation.isPending}
+                                  >
+                                    <Phone className="w-3 h-3 text-green-600" />
+                                  </Button>
+                                </div>
                               </TableCell>
                               {topics?.map((topic) => (
                                 <TableCell key={topic} className="text-center">
@@ -603,6 +652,25 @@ function AdminPanel() {
                             >
                               <Shield className="w-3 h-3" />
                               {user.isAdmin ? "Admin" : "User"}
+                            </Button>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Phone className="w-3 h-3 text-green-600 shrink-0" />
+                            <input
+                              type="tel"
+                              placeholder="+55 11 99999-9999"
+                              className="border rounded px-2 py-1 text-[10px] flex-1 focus:outline-none focus:ring-1 focus:ring-primary"
+                              value={phoneValues[user.id] ?? user.whatsappPhone ?? ""}
+                              onChange={(e) => setPhoneValues(v => ({ ...v, [user.id]: e.target.value }))}
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0"
+                              onClick={() => setWhatsappMutation.mutate({ userId: user.id, phone: phoneValues[user.id] ?? user.whatsappPhone ?? "" })}
+                              disabled={setWhatsappMutation.isPending}
+                            >
+                              <CheckCircle2 className="w-3 h-3 text-green-600" />
                             </Button>
                           </div>
                           <div className="flex gap-2 flex-wrap">

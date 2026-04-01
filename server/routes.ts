@@ -828,6 +828,22 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/admin/users/:userId/whatsapp", requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { phone } = req.body;
+      // Normalize: strip spaces and leading +, keep digits only with country code
+      const normalized = phone ? phone.replace(/\D/g, "") : null;
+      await storage.setUserWhatsappPhone(userId, normalized || null);
+      res.json({ success: true, phone: normalized || null });
+    } catch (error: any) {
+      if (error?.code === "23505") {
+        return res.status(409).json({ message: "This phone number is already linked to another user." });
+      }
+      res.status(500).json({ message: "Failed to update WhatsApp phone" });
+    }
+  });
+
   app.get("/api/admin/users/export", requireAdmin, async (req: any, res) => {
     try {
       const usersWithStats = await storage.getAllUsersWithStats();
@@ -1071,6 +1087,18 @@ export async function registerRoutes(
 
             console.log(`[WhatsApp] Message from ${contactName} (${from}): ${text}`);
 
+            // Look up registered user by WhatsApp phone number
+            const linkedUser = await storage.getUserByWhatsappPhone(from);
+
+            if (!linkedUser) {
+              const looksPortuguese = /[àáâãéêíóôõúç]|como|você|quero|obrigad|aprender|sobre|pode|ajud/i.test(text);
+              const unregisteredMsg = looksPortuguese
+                ? `Olá! Seu número do WhatsApp ainda não está vinculado a uma conta. Peça ao administrador para vincular seu número ao seu perfil e tente novamente.`
+                : `Hi! Your WhatsApp number is not linked to an account yet. Ask your administrator to link your number to your profile and try again.`;
+              await sendWhatsAppMessage(from, unregisteredMsg);
+              continue;
+            }
+
             const allTopics = await storage.getAvailableTopics();
             const defaultTopic = allTopics.length > 0 ? allTopics[0] : null;
 
@@ -1082,21 +1110,57 @@ export async function registerRoutes(
             const looksPortuguese = /[àáâãéêíóôõúç]|como|você|quero|obrigad|aprender|sobre|pode|ajud/i.test(text);
             const detectedLang = looksPortuguese ? "pt-BR" : "en";
 
-            const result = await findBestAnswer(defaultTopic, text, detectedLang, null, null);
+            // Load user profile and recent history for context-aware responses
+            const profile = await storage.getUserProfile(linkedUser.id);
+            const topicExp = await storage.getTopicExperience(linkedUser.id, defaultTopic);
+            const rawHistory = await storage.getChatHistoryByTopic(linkedUser.id, defaultTopic);
+            const history: Array<{ role: "user" | "bot"; content: string }> = rawHistory
+              .slice(-10)
+              .flatMap(h => ([
+                { role: "user" as const, content: h.question },
+                { role: "bot" as const, content: h.answer },
+              ]));
+
+            // Check monthly message limit
+            const monthlyLimit = parseInt(process.env.MONTHLY_MESSAGE_LIMIT || "0", 10);
+            if (monthlyLimit > 0) {
+              const used = await storage.getMonthlyMessageCount();
+              if (used >= monthlyLimit) {
+                const limitMsg = looksPortuguese
+                  ? `Sua organização atingiu o limite mensal de mensagens. Entre em contato com o administrador para continuar.`
+                  : `Your organization has reached the monthly message limit. Contact your administrator to continue.`;
+                await sendWhatsAppMessage(from, limitMsg);
+                continue;
+              }
+            }
+
+            const result = await findBestAnswer(defaultTopic, text, detectedLang, profile ?? null, topicExp ?? null, history);
+
+            // Save to chat history so conversation context is preserved
+            await storage.logChatHistory({
+              userId: linkedUser.id,
+              topic: defaultTopic,
+              question: text,
+              answer: result.answer,
+              found: result.found,
+            });
 
             if (result.found && result.answer) {
               let reply = result.answer;
               if (result.link) {
-                reply += `\n\n🎥 ${result.link}`;
+                reply += `\n\n${result.link}`;
               }
               await sendWhatsAppMessage(from, reply);
             } else {
-              await sendWhatsAppMessage(from, `I don't have information about that in our "${defaultTopic}" knowledge base yet. Try asking something else!`);
+              const notFoundMsg = looksPortuguese
+                ? `Não encontrei uma resposta sobre isso na nossa base de conhecimento sobre "${defaultTopic}". Tente perguntar de outra forma!`
+                : `I don't have information about that in our "${defaultTopic}" knowledge base yet. Try asking something else!`;
+              await sendWhatsAppMessage(from, notFoundMsg);
               await storage.logUnansweredQuestion({
                 topic: defaultTopic,
                 question: text,
-                userId: null,
-                userEmail: `whatsapp:${from}`,
+                userId: linkedUser.id,
+                userEmail: linkedUser.email,
               });
             }
           }
@@ -1152,6 +1216,7 @@ export async function seedDatabase() {
   try {
     const { pool } = await import("./db");
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS whatsapp_phone VARCHAR(20) UNIQUE`);
     await pool.query(`UPDATE users SET is_admin = true WHERE email = 'dczarcin@gmail.com' AND (is_admin IS NULL OR is_admin = false)`);
   } catch (error) {
     console.error("Seed database error:", error);

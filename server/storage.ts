@@ -47,11 +47,14 @@ export interface IStorage {
     firstName: string | null;
     lastName: string | null;
     isAdmin: boolean | null;
+    whatsappPhone: string | null;
     createdAt: Date | null;
     questionCounts: Record<string, number>;
   }>>;
   isUserAdmin(userId: string): Promise<boolean>;
   setUserAdmin(userId: string, isAdmin: boolean): Promise<void>;
+  getUserByWhatsappPhone(phone: string): Promise<{ id: string; email: string | null; firstName: string | null; } | null>;
+  setUserWhatsappPhone(userId: string, phone: string | null): Promise<void>;
   respondToQuestion(data: InsertAdminResponse): Promise<AdminResponse>;
   markQuestionReviewed(questionId: number): Promise<void>;
   getNotifications(userId: string): Promise<AdminResponse[]>;
@@ -203,6 +206,7 @@ export class DatabaseStorage implements IStorage {
     firstName: string | null;
     lastName: string | null;
     isAdmin: boolean | null;
+    whatsappPhone: string | null;
     createdAt: Date | null;
     questionCounts: Record<string, number>;
   }>> {
@@ -223,6 +227,7 @@ export class DatabaseStorage implements IStorage {
       firstName: u.firstName,
       lastName: u.lastName,
       isAdmin: u.isAdmin,
+      whatsappPhone: u.whatsappPhone ?? null,
       createdAt: u.createdAt,
       questionCounts: countMap[u.id] || {},
     }));
@@ -235,6 +240,18 @@ export class DatabaseStorage implements IStorage {
 
   async setUserAdmin(userId: string, isAdmin: boolean): Promise<void> {
     await db.update(users).set({ isAdmin }).where(eq(users.id, userId));
+  }
+
+  async getUserByWhatsappPhone(phone: string): Promise<{ id: string; email: string | null; firstName: string | null; } | null> {
+    const [user] = await db
+      .select({ id: users.id, email: users.email, firstName: users.firstName })
+      .from(users)
+      .where(eq(users.whatsappPhone, phone));
+    return user ?? null;
+  }
+
+  async setUserWhatsappPhone(userId: string, phone: string | null): Promise<void> {
+    await db.update(users).set({ whatsappPhone: phone }).where(eq(users.id, userId));
   }
 
   async respondToQuestion(data: InsertAdminResponse): Promise<AdminResponse> {
