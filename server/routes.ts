@@ -1048,22 +1048,14 @@ export async function registerRoutes(
     res.json({ success: true });
   });
 
-  app.patch("/api/profile/whatsapp", async (req: any, res) => {
+  // WhatsApp phone unlink (no verification needed to remove your own number)
+  app.delete("/api/profile/whatsapp", async (req: any, res) => {
     if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     const userId = req.user.claims.sub;
-    const { phone } = req.body;
-    const normalized = phone ? phone.replace(/\D/g, "") : null;
-    try {
-      await storage.setUserWhatsappPhone(userId, normalized || null);
-      res.json({ success: true, phone: normalized || null });
-    } catch (error: any) {
-      if (error?.code === "23505") {
-        return res.status(409).json({ message: "This number is already linked to another account." });
-      }
-      res.status(500).json({ message: "Failed to update WhatsApp number" });
-    }
+    await storage.setUserWhatsappPhone(userId, null);
+    res.json({ success: true });
   });
 
   app.get("/api/profile/learning-summary", async (req: any, res) => {
@@ -1111,6 +1103,73 @@ ${historyText.slice(0, 6000)}`;
       res.json({ summary: parsed.summary, suggestedTopics });
     } catch {
       res.json({ summary: raw, suggestedTopics: [] });
+    }
+  });
+
+  // ==================== WhatsApp Phone Verification ====================
+
+  // In-memory store: phone -> { code, userId, expiresAt }
+  const pendingVerifications = new Map<string, { code: string; userId: string; expiresAt: number }>();
+
+  app.post("/api/profile/whatsapp/request-code", async (req: any, res) => {
+    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const userId = req.user.claims.sub;
+    const { phone } = req.body;
+    const normalized = phone ? phone.replace(/\D/g, "") : null;
+    if (!normalized || normalized.length < 7) {
+      return res.status(400).json({ message: "Invalid phone number." });
+    }
+
+    // Check if number already belongs to another user
+    const existing = await storage.getUserByWhatsappPhone(normalized);
+    if (existing && existing.id !== userId) {
+      return res.status(409).json({ message: "This number is already linked to another account." });
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    pendingVerifications.set(normalized, { code, userId, expiresAt: Date.now() + 10 * 60 * 1000 });
+
+    await sendWhatsAppMessage(normalized, `Your onset. verification code is: *${code}*\n\nThis code expires in 10 minutes.`);
+    res.json({ success: true });
+  });
+
+  app.post("/api/profile/whatsapp/verify", async (req: any, res) => {
+    if (!req.isAuthenticated?.() || !req.user?.claims?.sub) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const userId = req.user.claims.sub;
+    const { phone, code } = req.body;
+    const normalized = phone ? phone.replace(/\D/g, "") : null;
+    if (!normalized || !code) {
+      return res.status(400).json({ message: "Phone and code are required." });
+    }
+
+    const pending = pendingVerifications.get(normalized);
+    if (!pending) {
+      return res.status(400).json({ message: "No verification pending for this number. Request a new code." });
+    }
+    if (pending.userId !== userId) {
+      return res.status(403).json({ message: "Verification mismatch." });
+    }
+    if (Date.now() > pending.expiresAt) {
+      pendingVerifications.delete(normalized);
+      return res.status(400).json({ message: "Code expired. Please request a new one." });
+    }
+    if (pending.code !== code.trim()) {
+      return res.status(400).json({ message: "Incorrect code. Please try again." });
+    }
+
+    pendingVerifications.delete(normalized);
+    try {
+      await storage.setUserWhatsappPhone(userId, normalized);
+      res.json({ success: true, phone: normalized });
+    } catch (error: any) {
+      if (error?.code === "23505") {
+        return res.status(409).json({ message: "This number is already linked to another account." });
+      }
+      res.status(500).json({ message: "Failed to save phone number." });
     }
   });
 

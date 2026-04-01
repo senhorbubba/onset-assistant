@@ -94,27 +94,59 @@ export default function Profile() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/profile"] }),
   });
 
+  const linkedPhone: string | null = (user as any)?.whatsappPhone ?? null;
   const [whatsappPhone, setWhatsappPhone] = useState("");
-  useEffect(() => {
-    if ((user as any)?.whatsappPhone) setWhatsappPhone((user as any).whatsappPhone);
-  }, [user]);
+  const [whatsappCode, setWhatsappCode] = useState("");
+  const [whatsappStep, setWhatsappStep] = useState<"idle" | "code-sent">("idle");
 
-  const saveWhatsapp = useMutation({
+  const requestCode = useMutation({
     mutationFn: async (phone: string) => {
-      const res = await fetch("/api/profile/whatsapp", {
-        method: "PATCH",
+      const res = await fetch("/api/profile/whatsapp/request-code", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ phone }),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Failed to save");
-      }
+      if (!res.ok) { const d = await res.json(); throw new Error(d.message || "Failed"); }
       return res.json();
     },
-    onSuccess: () => toast({ title: "Saved", description: "WhatsApp number linked." }),
+    onSuccess: () => { setWhatsappStep("code-sent"); toast({ title: "Code sent", description: "Check your WhatsApp for the 6-digit code." }); },
     onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const verifyCode = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/profile/whatsapp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ phone: whatsappPhone, code: whatsappCode }),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.message || "Failed"); }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      setWhatsappStep("idle");
+      setWhatsappCode("");
+      toast({ title: "Verified", description: "WhatsApp number linked successfully." });
+    },
+    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const unlinkWhatsapp = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/profile/whatsapp", { method: "DELETE", credentials: "include" });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      setWhatsappPhone("");
+      setWhatsappStep("idle");
+      toast({ title: "Unlinked", description: "WhatsApp number removed." });
+    },
+    onError: () => toast({ title: "Error", description: "Could not unlink.", variant: "destructive" }),
   });
 
   const [learningSummary, setLearningSummary] = useState<{ summary: string; suggestedTopics: Array<{ label: string; topic: string }> } | null>(null);
@@ -300,23 +332,61 @@ export default function Profile() {
 
             {/* WhatsApp */}
             <Card className="p-5">
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-1">
                 <Phone className="w-4 h-4 text-green-600" />
                 <h2 className="text-sm font-bold text-slate-900">WhatsApp</h2>
               </div>
-              <p className="text-xs text-slate-500 mb-3">Link your number to chat with the bot from WhatsApp.</p>
-              <div className="flex gap-2">
-                <input
-                  type="tel"
-                  placeholder="+55 11 99999-9999"
-                  className="border rounded-lg px-2 py-1.5 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={whatsappPhone}
-                  onChange={(e) => setWhatsappPhone(e.target.value)}
-                />
-                <Button size="sm" onClick={() => saveWhatsapp.mutate(whatsappPhone)} disabled={saveWhatsapp.isPending}>
-                  {saveWhatsapp.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                </Button>
-              </div>
+              {linkedPhone ? (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">
+                    <CheckCircle className="w-4 h-4 shrink-0" />
+                    <span className="font-medium">+{linkedPhone}</span>
+                  </div>
+                  <Button size="sm" variant="outline" className="w-full text-xs text-slate-500" onClick={() => unlinkWhatsapp.mutate()} disabled={unlinkWhatsapp.isPending}>
+                    {unlinkWhatsapp.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                    Unlink number
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs text-slate-500 mb-3 mt-1">Link your number to chat with the bot from WhatsApp.</p>
+                  {whatsappStep === "idle" ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="tel"
+                        placeholder="+55 11 99999-9999"
+                        className="border rounded-lg px-2 py-1.5 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        value={whatsappPhone}
+                        onChange={(e) => setWhatsappPhone(e.target.value)}
+                      />
+                      <Button size="sm" onClick={() => requestCode.mutate(whatsappPhone)} disabled={requestCode.isPending || !whatsappPhone.trim()}>
+                        {requestCode.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Send code"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-2">Code sent to <strong>+{whatsappPhone.replace(/\D/g, "")}</strong> via WhatsApp.</p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="6-digit code"
+                          maxLength={6}
+                          className="border rounded-lg px-2 py-1.5 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30 tracking-widest font-mono"
+                          value={whatsappCode}
+                          onChange={(e) => setWhatsappCode(e.target.value.replace(/\D/g, ""))}
+                        />
+                        <Button size="sm" onClick={() => verifyCode.mutate()} disabled={verifyCode.isPending || whatsappCode.length < 6}>
+                          {verifyCode.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Verify"}
+                        </Button>
+                      </div>
+                      <button className="text-xs text-primary hover:underline" onClick={() => { setWhatsappStep("idle"); setWhatsappCode(""); }}>
+                        Change number or resend
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
             </Card>
 
             {/* Email notifications */}
