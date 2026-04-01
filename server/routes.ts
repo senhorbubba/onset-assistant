@@ -229,7 +229,13 @@ ${contentItems.map((item, i) => `[${i}] ${item.subtopic} | Keywords: ${item.keyw
     }
     classifyMessages.push({ role: "user", content: question });
 
-    const classification = await callClaude(classifyMessages, 50);
+    // Pre-check: short continuation phrases are always EXPLORE — don't waste a classifier call
+    const CONTINUATION_RE = /^(tell me more|tellme more|me conta mais|me ensina mais|continue|continua|continuar|go on|expand|expand on that|yes|sim|sure|claro|ok|okay|got it|entendi|and then|e depois|e aí|what else|o que mais|more|mais)[\s?!.]*$/i;
+    const rawClassification = CONTINUATION_RE.test(question.trim()) && history && history.length > 0
+      ? "EXPLORE"
+      : await callClaude(classifyMessages, 50);
+
+    const classification = rawClassification.trim();
 
     // PHASE 2: Generate response based on classification
     const matchResult = classification.match(/MATCH:\[?(\d+)\]?/);
