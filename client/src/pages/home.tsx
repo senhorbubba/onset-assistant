@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTopics } from "@/hooks/use-content";
+import { useToast } from "@/hooks/use-toast";
 import onsetLogo from "@assets/onset_logo.png";
 
 export default function Home() {
@@ -24,6 +25,7 @@ export default function Home() {
   const { data: topics, isLoading: topicsLoading } = useTopics();
 
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -105,10 +107,18 @@ export default function Home() {
   // Auto-select topic when arriving with ?topic= or ?q= param from profile
   useEffect(() => {
     if (initialMessage && topics && topics.length > 0 && !topic) {
-      // Prefer explicit ?topic= param (exact DB name)
       if (initialTopic) {
         const found = topics.find(t => t === initialTopic);
-        setTopic(found || topics[0]);
+        if (found) {
+          setTopic(found);
+        } else {
+          // Topic no longer exists — warn and let user pick
+          toast({
+            title: "Topic not available",
+            description: `"${initialTopic}" is no longer in the knowledge base. Please choose a topic below.`,
+            variant: "destructive",
+          });
+        }
       } else {
         // Fallback: extract from 'Tell me about "TopicName"' pattern
         const match = initialMessage.match(/Tell me about "([^"]+)"/i);

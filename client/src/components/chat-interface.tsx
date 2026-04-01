@@ -73,7 +73,7 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  function getEmbedUrl(url: string): string {
+  function getEmbedInfo(url: string): { embedUrl: string; embeddable: boolean } {
     try {
       const u = new URL(url);
       if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
@@ -81,12 +81,20 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
           ? u.pathname.slice(1)
           : u.searchParams.get('v') || '';
         const start = u.searchParams.get('t')?.replace('s', '') || '0';
-        return `https://www.youtube.com/embed/${videoId}?start=${start}&autoplay=1`;
+        return { embedUrl: `https://www.youtube.com/embed/${videoId}?start=${start}&autoplay=1`, embeddable: true };
       }
-      // For other URLs (Loom, Vimeo, Canva, etc.) try embedding directly
-      return url;
+      if (u.hostname.includes('loom.com')) {
+        const embedUrl = url.replace('share', 'embed');
+        return { embedUrl, embeddable: true };
+      }
+      if (u.hostname.includes('vimeo.com')) {
+        const videoId = u.pathname.split('/').filter(Boolean)[0];
+        return { embedUrl: `https://player.vimeo.com/video/${videoId}?autoplay=1`, embeddable: true };
+      }
+      // PDFs, webpages, etc. — open in new tab
+      return { embedUrl: url, embeddable: false };
     } catch {
-      return url;
+      return { embedUrl: url, embeddable: false };
     }
   }
   
@@ -257,31 +265,59 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
                 {msg.role === "bot" ? (
                   <ReactMarkdown
                     components={{
-                      a: ({ href, children }) => (
-                        <a
-                          href={href}
-                          onClick={(e) => { e.preventDefault(); if (href) setPopupUrl(href); }}
-                          className="text-primary hover:underline font-medium cursor-pointer"
-                          data-testid="link-markdown"
-                        >
-                          {children}
-                        </a>
-                      ),
+                      a: ({ href, children }) => {
+                        if (!href) return <span>{children}</span>;
+                        const { embeddable } = getEmbedInfo(href);
+                        return embeddable ? (
+                          <a
+                            href={href}
+                            onClick={(e) => { e.preventDefault(); setPopupUrl(href); }}
+                            className="text-primary hover:underline font-medium cursor-pointer"
+                            data-testid="link-markdown"
+                          >
+                            {children}
+                          </a>
+                        ) : (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline font-medium"
+                            data-testid="link-markdown"
+                          >
+                            {children}
+                          </a>
+                        );
+                      },
                     }}
                   >
                     {msg.content}
                   </ReactMarkdown>
                 ) : msg.content}
-                {msg.link && (
-                  <button
-                    onClick={() => setPopupUrl(msg.link!)}
-                    className="mt-2 flex items-center gap-2 text-primary hover:underline text-sm font-medium"
-                    data-testid="link-resource"
-                  >
-                    <Play className="w-4 h-4" />
-                    {t.chat.watchVideo}
-                  </button>
-                )}
+                {msg.link && (() => {
+                  const { embeddable } = getEmbedInfo(msg.link);
+                  return embeddable ? (
+                    <button
+                      onClick={() => setPopupUrl(msg.link!)}
+                      className="mt-2 flex items-center gap-2 text-primary hover:underline text-sm font-medium"
+                      data-testid="link-resource"
+                    >
+                      <Play className="w-4 h-4" />
+                      {t.chat.watchVideo}
+                    </button>
+                  ) : (
+                    <a
+                      href={msg.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 flex items-center gap-2 text-primary hover:underline text-sm font-medium"
+                      data-testid="link-resource"
+                    >
+                      <Play className="w-4 h-4" />
+                      {t.chat.watchVideo}
+                    </a>
+                  );
+                })()}
                 {/* Post-response suggestion chips */}
                 {msg.role === "bot" && msg.suggestions && msg.suggestions.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-border/30">
@@ -390,7 +426,7 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
             <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
               <iframe
                 className="absolute inset-0 w-full h-full"
-                src={getEmbedUrl(popupUrl)}
+                src={getEmbedInfo(popupUrl).embedUrl}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                 allowFullScreen
               />
