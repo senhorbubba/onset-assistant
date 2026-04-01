@@ -1071,6 +1071,8 @@ export async function registerRoutes(
       return res.status(401).json({ message: "Unauthorized" });
     }
     const userId = req.user.claims.sub;
+    const lang = (req.query.lang as string) || "en";
+    const langLabel = lang === "pt-BR" ? "Brazilian Portuguese" : "English";
     const history = await storage.getChatHistory(userId);
     if (history.length === 0) {
       return res.json({ summary: null });
@@ -1083,11 +1085,15 @@ export async function registerRoutes(
 Respond with valid JSON only, no markdown, no extra text:
 {
   "summary": "2-3 sentences max: what they explored and one key insight they gained.",
-  "suggestedTopics": ["Topic 1", "Topic 2", "Topic 3"]
+  "suggestedTopics": [
+    { "label": "Translated subtopic name", "topic": "ExactMainTopicFromHistory" }
+  ]
 }
 
-suggestedTopics: 2-3 specific subtopics from their history they should revisit or explore next. Use the exact subtopic names from the history.
-Write in the same language as the majority of the questions. No emojis.
+suggestedTopics: 2-3 specific subtopics from their history they should revisit or explore next.
+- "label": translate/adapt the subtopic name into ${langLabel}
+- "topic": the EXACT main topic string as it appears in the [brackets] in the history — do NOT translate this field
+Write the summary in ${langLabel}. No emojis.
 
 CONVERSATION HISTORY:
 ${historyText.slice(0, 6000)}`;
@@ -1097,7 +1103,12 @@ ${historyText.slice(0, 6000)}`;
     ], 400);
     try {
       const parsed = JSON.parse(raw);
-      res.json({ summary: parsed.summary, suggestedTopics: parsed.suggestedTopics || [] });
+      // Normalize suggestedTopics — support both old string[] and new {label, topic}[] shapes
+      const rawTopics = parsed.suggestedTopics || [];
+      const suggestedTopics = rawTopics.map((t: any) =>
+        typeof t === "string" ? { label: t, topic: t } : t
+      );
+      res.json({ summary: parsed.summary, suggestedTopics });
     } catch {
       res.json({ summary: raw, suggestedTopics: [] });
     }

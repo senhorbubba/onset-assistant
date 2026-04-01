@@ -15,12 +15,13 @@ import { useTopics } from "@/hooks/use-content";
 import onsetLogo from "@assets/onset_logo.png";
 
 export default function Home() {
+  const [initialMessage] = useState<string | undefined>(() => new URLSearchParams(window.location.search).get("q") || undefined);
+  const [initialTopic] = useState<string | undefined>(() => new URLSearchParams(window.location.search).get("topic") || undefined);
   const [topic, setTopic] = useState<string>("");
   const { language, setLanguage, t } = useLanguage();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [, navigate] = useLocation();
   const { data: topics, isLoading: topicsLoading } = useTopics();
-  const initialMessage = new URLSearchParams(window.location.search).get("q") || undefined;
 
   const queryClient = useQueryClient();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -101,10 +102,20 @@ export default function Home() {
     window.scrollTo(0, 0);
   }, []);
 
-  // Auto-select first topic when arriving with ?q= param from profile
+  // Auto-select topic when arriving with ?topic= or ?q= param from profile
   useEffect(() => {
     if (initialMessage && topics && topics.length > 0 && !topic) {
-      setTopic(topics[0]);
+      // Prefer explicit ?topic= param (exact DB name)
+      if (initialTopic) {
+        const found = topics.find(t => t === initialTopic);
+        setTopic(found || topics[0]);
+      } else {
+        // Fallback: extract from 'Tell me about "TopicName"' pattern
+        const match = initialMessage.match(/Tell me about "([^"]+)"/i);
+        const targetTopic = match ? match[1] : null;
+        const found = targetTopic ? topics.find(t => t === targetTopic) : null;
+        setTopic(found || topics[0]);
+      }
     }
   }, [initialMessage, topics]);
 

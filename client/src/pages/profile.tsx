@@ -15,7 +15,7 @@ import onsetLogo from "@assets/onset_logo.png";
 import { cn } from "@/lib/utils";
 
 export default function Profile() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
@@ -117,10 +117,10 @@ export default function Profile() {
     onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
-  const [learningSummary, setLearningSummary] = useState<{ summary: string; suggestedTopics: string[] } | null>(null);
+  const [learningSummary, setLearningSummary] = useState<{ summary: string; suggestedTopics: Array<{ label: string; topic: string }> } | null>(null);
   const generateSummary = useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/profile/learning-summary", { credentials: "include" });
+      const res = await fetch(`/api/profile/learning-summary?lang=${language}`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed");
       return res.json() as Promise<{ summary: string; suggestedTopics: string[] }>;
     },
@@ -228,15 +228,14 @@ export default function Profile() {
                     <div>
                       <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Explore next</p>
                       <div className="flex flex-wrap gap-2">
-                        {learningSummary.suggestedTopics.map((topic) => (
+                        {learningSummary.suggestedTopics.map((s) => (
                           <button
-                            key={topic}
-                            onClick={() => navigate(`/bot?q=${encodeURIComponent(`Tell me about "${topic}"`)}`)}
-
+                            key={s.label}
+                            onClick={() => navigate(`/bot?topic=${encodeURIComponent(s.topic)}&q=${encodeURIComponent(`Tell me about "${s.label}"`)}`)}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium rounded-full transition-colors"
                           >
                             <MessageSquare className="w-3.5 h-3.5" />
-                            {topic}
+                            {s.label}
                           </button>
                         ))}
                       </div>
