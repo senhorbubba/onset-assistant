@@ -318,8 +318,7 @@ RESPONSE STYLE (CRITICAL):
 - Address the user's question directly, weave in ONE key insight from the source notes (rewritten naturally), connect it to the conversation context.
 - Close with a coaching question or gentle next step offering 2–3 specific follow-up directions.${isQuickMode ? '\n- QUICK MODE: The user wants a brief answer. Max 3 sentences, one insight only.' : ''}${linkLangNote}
 
-After your answer, on a new line, write exactly: [OPTIONS: short label 1 | short label 2 | short label 3]
-These must match the exact follow-up choices you offered in your coaching question — 2–4 words each, in ${userLang}. No explanations, just the labels.
+CHIPS (conditional): Only add [OPTIONS: label 1 | label 2 | label 3] on a new line at the very end IF your closing question or next step offers specific knowledge base subtopics or content areas to explore. Do NOT add chips if you ended with a personal reflection question, an open-ended coaching question about the user's situation, or a yes/no follow-up. Labels must be 2–4 words in ${userLang}.
 ${profileContext}
 
 Topic area: ${entry.subtopic}
@@ -450,8 +449,7 @@ Special cases:
 
 When providing content, use the knowledge base below as source material — deliver it conversationally, NEVER copy verbatim. NEVER use pipe characters (|) in your response body.
 
-CHIPS (MANDATORY): At the very end of every response, on a new line, write: [OPTIONS: label 1 | label 2 | label 3]
-These must be 2–4 word labels in ${userLang} matching the exact follow-up choices you offered. If you offered no explicit choices, derive 2–3 natural next steps from the conversation. Always include this line.
+CHIPS (conditional): Only add [OPTIONS: label 1 | label 2 | label 3] on a new line at the very end IF you are offering specific knowledge base subtopics or content areas for the user to choose from. Do NOT add chips when you end with a personal reflection question, an open coaching question about the user's own situation, or a yes/no follow-up. Labels must be 2–4 words in ${userLang}.
 
 VIDEO/AUDIO RULE: If the user asks about videos or audio for a topic, check the knowledge base entries below for a Link. If a link exists for the relevant topic, share it as a markdown link and mention it naturally. If no link exists for that specific topic, say so honestly and offer the closest related topic that does have one (if any). NEVER say you have no videos/audio without first checking the entries below.
 
@@ -568,7 +566,7 @@ Your response must:
 3. Offer 2–3 specific directions to continue. Ask which interests them.
 4. Total: 3–4 sentences max. Coaching tone, warm, not robotic.
 
-At the very end, on a new line: [OPTIONS: label 1 | label 2 | label 3] — short labels (2–4 words) matching the options you offered, in ${userLang}.
+At the very end, on a new line: [OPTIONS: label 1 | label 2 | label 3] — short labels (2–4 words) for the specific topics you offered, in ${userLang}. Only include this if you offered concrete topics to explore.
 
 LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Translate all topic names.
 NEVER use pipe characters (|) in your response body.
