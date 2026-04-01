@@ -55,6 +55,7 @@ export interface IStorage {
   setUserAdmin(userId: string, isAdmin: boolean): Promise<void>;
   getUserByWhatsappPhone(phone: string): Promise<{ id: string; email: string | null; firstName: string | null; } | null>;
   setUserWhatsappPhone(userId: string, phone: string | null): Promise<void>;
+  setUserPreferredLanguage(userId: string, language: string): Promise<void>;
   respondToQuestion(data: InsertAdminResponse): Promise<AdminResponse>;
   markQuestionReviewed(questionId: number): Promise<void>;
   getNotifications(userId: string): Promise<AdminResponse[]>;
@@ -252,6 +253,16 @@ export class DatabaseStorage implements IStorage {
 
   async setUserWhatsappPhone(userId: string, phone: string | null): Promise<void> {
     await db.update(users).set({ whatsappPhone: phone }).where(eq(users.id, userId));
+  }
+
+  async setUserPreferredLanguage(userId: string, language: string): Promise<void> {
+    await db
+      .insert(userProfiles)
+      .values({ userId, preferredLanguage: language })
+      .onConflictDoUpdate({
+        target: userProfiles.userId,
+        set: { preferredLanguage: language, updatedAt: new Date() },
+      });
   }
 
   async respondToQuestion(data: InsertAdminResponse): Promise<AdminResponse> {

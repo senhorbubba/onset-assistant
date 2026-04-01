@@ -1107,26 +1107,37 @@ export async function registerRoutes(
               continue;
             }
 
-            const looksPortuguese = /[àáâãéêíóôõúç]|como|você|quero|obrigad|aprender|sobre|pode|ajud/i.test(text);
-            const detectedLang = looksPortuguese ? "pt-BR" : "en";
-
             // Load user profile and recent history for context-aware responses
             const profile = await storage.getUserProfile(linkedUser.id);
             const topicExp = await storage.getTopicExperience(linkedUser.id, defaultTopic);
+
+            // History is returned newest-first — reverse to get chronological order for context
             const rawHistory = await storage.getChatHistoryByTopic(linkedUser.id, defaultTopic);
             const history: Array<{ role: "user" | "bot"; content: string }> = rawHistory
-              .slice(-10)
+              .slice(0, 10)
+              .reverse()
               .flatMap(h => ([
                 { role: "user" as const, content: h.question },
                 { role: "bot" as const, content: h.answer },
               ]));
+
+            // Determine language: use stored preference, update if user explicitly changes it or if switching detected
+            const looksPortuguese = /[àáâãéêíóôõúç]|como|você|quero|obrigad|aprender|sobre|pode|ajud/i.test(text);
+            const explicitPt = /responde?\s+em\s+portugu[eê]s|fala\s+portugu[eê]s/i.test(text);
+            const explicitEn = /respond?\s+in\s+english|speak\s+english|switch\s+to\s+english/i.test(text);
+            let detectedLang = profile?.preferredLanguage || (looksPortuguese ? "pt-BR" : "en");
+            if (explicitPt) detectedLang = "pt-BR";
+            if (explicitEn) detectedLang = "en";
+            if (explicitPt || explicitEn) {
+              await storage.setUserPreferredLanguage(linkedUser.id, detectedLang);
+            }
 
             // Check monthly message limit
             const monthlyLimit = parseInt(process.env.MONTHLY_MESSAGE_LIMIT || "0", 10);
             if (monthlyLimit > 0) {
               const used = await storage.getMonthlyMessageCount();
               if (used >= monthlyLimit) {
-                const limitMsg = looksPortuguese
+                const limitMsg = detectedLang === "pt-BR"
                   ? `Sua organização atingiu o limite mensal de mensagens. Entre em contato com o administrador para continuar.`
                   : `Your organization has reached the monthly message limit. Contact your administrator to continue.`;
                 await sendWhatsAppMessage(from, limitMsg);
@@ -1152,7 +1163,7 @@ export async function registerRoutes(
               }
               await sendWhatsAppMessage(from, reply);
             } else {
-              const notFoundMsg = looksPortuguese
+              const notFoundMsg = detectedLang === "pt-BR"
                 ? `Não encontrei uma resposta sobre isso na nossa base de conhecimento sobre "${defaultTopic}". Tente perguntar de outra forma!`
                 : `I don't have information about that in our "${defaultTopic}" knowledge base yet. Try asking something else!`;
               await sendWhatsAppMessage(from, notFoundMsg);
@@ -1217,6 +1228,7 @@ export async function seedDatabase() {
     const { pool } = await import("./db");
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS whatsapp_phone VARCHAR(20) UNIQUE`);
+    await pool.query(`ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS preferred_language TEXT`);
     await pool.query(`UPDATE users SET is_admin = true WHERE email = 'dczarcin@gmail.com' AND (is_admin IS NULL OR is_admin = false)`);
   } catch (error) {
     console.error("Seed database error:", error);

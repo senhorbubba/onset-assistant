@@ -12,6 +12,7 @@ export const userProfiles = pgTable("user_profiles", {
   goal: text("goal"),
   challenge: text("challenge"),
   learningPreference: text("learning_preference"),
+  preferredLanguage: text("preferred_language"),
   completedOnboarding: boolean("completed_onboarding").default(false),
   emailNotifications: boolean("email_notifications").default(true),
   createdAt: timestamp("created_at").defaultNow(),
