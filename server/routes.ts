@@ -344,9 +344,11 @@ TONE MIRRORING: Match the user's communication style from their message — form
 
 The user wants to know what content is available. Give a HIGH-LEVEL overview only.
 - Group the ${contentItems.length} entries into logical categories (e.g., "Feedback", "Listening", "Conflict").
-- List ONLY the category names and how many entries each has (e.g., "Feedback — 3 topics").
+- Format MUST be a markdown bullet list, one category per line, like this:
+  - **Category Name** — N topics
+- Do NOT put multiple categories on the same line. Each category gets its own bullet.
 - Do NOT list individual subtopic names or describe them.
-- After listing the categories, ask the user which area they want to explore. Make it clear they can ask for more detail on any category.
+- After the list, add one short sentence inviting the user to pick a category.
 
 LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every single word including category names. Translate everything.${linkLangNote}
 Keep it short and scannable — no walls of text.
