@@ -1319,6 +1319,8 @@ async function sendWhatsAppMessage(to: string, text: string): Promise<void> {
     return;
   }
 
+  if (text.length > 4000) text = text.slice(0, 4000);
+
   try {
     const response = await fetch(
       `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
