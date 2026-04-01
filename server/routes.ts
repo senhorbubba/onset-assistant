@@ -1078,21 +1078,29 @@ export async function registerRoutes(
     const historyText = history
       .map(h => `[${h.topic}] Q: ${h.question}${h.found ? ` → A: ${h.answer.slice(0, 200)}` : " (not answered)"}`)
       .join("\n");
-    const prompt = `You are a learning coach. Based on the user's full conversation history below, write a personalized learning summary. Include:
-- Main topics they explored
-- Key concepts they seem to have grasped
-- Areas they returned to multiple times (showing interest or difficulty)
-- A brief encouragement and suggested next step
+    const prompt = `You are a learning coach. Based on the user's conversation history, write a SHORT personalized learning summary.
 
-Be warm, specific, and concise. 3-5 short paragraphs. No emojis. Write in the same language as the majority of the questions below.
+Respond with valid JSON only, no markdown, no extra text:
+{
+  "summary": "2-3 sentences max: what they explored and one key insight they gained.",
+  "suggestedTopics": ["Topic 1", "Topic 2", "Topic 3"]
+}
+
+suggestedTopics: 2-3 specific subtopics from their history they should revisit or explore next. Use the exact subtopic names from the history.
+Write in the same language as the majority of the questions. No emojis.
 
 CONVERSATION HISTORY:
-${historyText.slice(0, 8000)}`;
-    const summary = await callClaude([
+${historyText.slice(0, 6000)}`;
+    const raw = await callClaude([
       { role: "system", content: prompt },
       { role: "user", content: "Generate my learning summary." },
-    ], 800);
-    res.json({ summary });
+    ], 400);
+    try {
+      const parsed = JSON.parse(raw);
+      res.json({ summary: parsed.summary, suggestedTopics: parsed.suggestedTopics || [] });
+    } catch {
+      res.json({ summary: raw, suggestedTopics: [] });
+    }
   });
 
   // ==================== WhatsApp Webhook ====================

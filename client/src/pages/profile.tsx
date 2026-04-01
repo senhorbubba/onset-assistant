@@ -8,10 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/language-context";
 import { useAuth } from "@/hooks/use-auth";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Save, Loader2, MessageSquare, BookOpen, CheckCircle, Clock, LogOut, Settings, Mail, Phone, Sparkles } from "lucide-react";
+import { ArrowLeft, Save, Loader2, MessageSquare, BookOpen, CheckCircle, Clock, LogOut, Settings, Mail, Phone, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import onsetLogo from "@assets/onset_logo.png";
+import { cn } from "@/lib/utils";
 
 export default function Profile() {
   const { t } = useLanguage();
@@ -47,6 +48,8 @@ export default function Profile() {
   const [goal, setGoal] = useState("");
   const [challenge, setChallenge] = useState("");
   const [learningPreference, setLearningPreference] = useState("");
+  const [showPersonalInfo, setShowPersonalInfo] = useState(false);
+  const [showLearningPref, setShowLearningPref] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -71,6 +74,8 @@ export default function Profile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+      setShowPersonalInfo(false);
+      setShowLearningPref(false);
       toast({ title: t.profile.saved, description: t.profile.savedDesc });
     },
   });
@@ -86,9 +91,7 @@ export default function Profile() {
       if (!res.ok) throw new Error("Failed to update");
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/profile"] }),
   });
 
   const [whatsappPhone, setWhatsappPhone] = useState("");
@@ -114,21 +117,19 @@ export default function Profile() {
     onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
-  const [learningSummary, setLearningSummary] = useState<string | null>(null);
+  const [learningSummary, setLearningSummary] = useState<{ summary: string; suggestedTopics: string[] } | null>(null);
   const generateSummary = useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/profile/learning-summary", { credentials: "include" });
       if (!res.ok) throw new Error("Failed");
-      return res.json() as Promise<{ summary: string | null }>;
+      return res.json() as Promise<{ summary: string; suggestedTopics: string[] }>;
     },
-    onSuccess: (data) => setLearningSummary(data.summary),
+    onSuccess: (data) => setLearningSummary(data),
     onError: () => toast({ title: "Error", description: "Could not generate summary", variant: "destructive" }),
   });
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      navigate("/bot");
-    }
+    if (!authLoading && !isAuthenticated) navigate("/bot");
   }, [authLoading, isAuthenticated, navigate]);
 
   if (authLoading || profileLoading) {
@@ -151,7 +152,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex items-center gap-3">
+      <header className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => navigate("/bot")} data-testid="button-back-home">
           <ArrowLeft className="w-4 h-4 mr-1" />
           {t.profile.backToHome}
@@ -162,7 +163,8 @@ export default function Profile() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 pb-12">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 pb-12">
+        {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Avatar className="w-14 h-14 sm:w-16 sm:h-16 ring-2 ring-primary/20 ring-offset-2">
             <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || ""} />
@@ -171,27 +173,17 @@ export default function Profile() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 truncate" data-testid="text-profile-title">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 truncate">
               {`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || t.profile.title}
             </h1>
             <p className="text-sm text-slate-500 truncate">{user?.email || ""}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => navigate("/bot")}
-              data-testid="button-back-learning"
-            >
+            <Button variant="default" size="sm" onClick={() => navigate("/bot")} data-testid="button-back-learning">
               <ArrowLeft className="w-4 h-4 mr-1" />
               {t.profile.backToHome}
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => logout()}
-              data-testid="button-logout"
-            >
+            <Button variant="outline" size="sm" onClick={() => logout()} data-testid="button-logout">
               <LogOut className="w-4 h-4 mr-1" />
               {t.profile.signOut}
             </Button>
@@ -199,209 +191,15 @@ export default function Profile() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* LEFT COLUMN — main content */}
           <div className="lg:col-span-2 space-y-6">
-            <Card className="p-6">
-              <h2 className="text-lg font-bold text-slate-900 mb-4">{t.profile.personalInfo}</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-600 mb-1 block">{t.profile.role}</label>
-                  <Select value={role} onValueChange={setRole}>
-                    <SelectTrigger data-testid="select-profile-role">
-                      <SelectValue placeholder={t.onboarding.rolePlaceholder} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(t.onboarding.roleOptions).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>{label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
 
-                <div>
-                  <label className="text-sm font-medium text-slate-600 mb-1 block">{t.profile.industry}</label>
-                  <Select value={industry} onValueChange={setIndustry}>
-                    <SelectTrigger data-testid="select-profile-industry">
-                      <SelectValue placeholder={t.onboarding.industryPlaceholder} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(t.onboarding.industryOptions).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>{label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-slate-600 mb-1 block">{t.profile.goal}</label>
-                  <Select value={goal} onValueChange={setGoal}>
-                    <SelectTrigger data-testid="select-profile-goal">
-                      <SelectValue placeholder={t.onboarding.goalPlaceholder} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(t.onboarding.goalOptions).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>{label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-slate-600 mb-1 block">{t.profile.challenge}</label>
-                  <Select value={challenge} onValueChange={setChallenge}>
-                    <SelectTrigger data-testid="select-profile-challenge">
-                      <SelectValue placeholder={t.onboarding.challengePlaceholder} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(t.onboarding.challengeOptions).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>{label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <h2 className="text-lg font-bold text-slate-900 mb-4">{t.profile.learningPreference}</h2>
-              <div className="space-y-3">
-                {learningOptions.map((opt) => (
-                  <Button
-                    key={opt.value}
-                    variant={learningPreference === opt.value ? "default" : "outline"}
-                    className="w-full h-12 justify-start text-left"
-                    onClick={() => setLearningPreference(opt.value)}
-                    data-testid={`button-profile-learning-${opt.value}`}
-                  >
-                    {opt.label}
-                  </Button>
-                ))}
-              </div>
-            </Card>
-
-            <Button
-              className="w-full"
-              onClick={() => saveProfile.mutate({ role, industry, goal, challenge, learningPreference })}
-              disabled={saveProfile.isPending}
-              data-testid="button-save-profile"
-            >
-              {saveProfile.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {t.profile.saving}
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  {t.profile.save}
-                </>
-              )}
-            </Button>
-          </div>
-
-          <div className="space-y-6">
-            <Card className="p-6">
-              <h2 className="text-lg font-bold text-slate-900 mb-4">{t.profile.learningSummary}</h2>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <MessageSquare className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-slate-900" data-testid="text-questions-count">{questionsAsked}</p>
-                    <p className="text-xs text-slate-500">{t.profile.questionsAsked}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-accent/10 rounded-lg">
-                    <BookOpen className="w-5 h-5 text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-slate-900" data-testid="text-topics-count">{topicsExplored}</p>
-                    <p className="text-xs text-slate-500">{t.profile.topicsExplored}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-500/10 rounded-lg">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-slate-900" data-testid="text-answers-count">{answersReceived}</p>
-                    <p className="text-xs text-slate-500">{t.profile.answersReceived}</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-slate-100 rounded-lg">
-                  <Mail className="w-5 h-5 text-slate-600" />
-                </div>
-                <h2 className="text-lg font-bold text-slate-900">{t.profile.emailNotifications}</h2>
-              </div>
-              <p className="text-sm text-slate-500 mb-4">{t.profile.emailNotificationsDesc}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-700">
-                  {profile?.emailNotifications !== false ? t.profile.emailNotificationsOn : t.profile.emailNotificationsOff}
-                </span>
-                <Switch
-                  checked={profile?.emailNotifications !== false}
-                  onCheckedChange={(checked) => toggleEmailNotifications.mutate(checked)}
-                  disabled={toggleEmailNotifications.isPending}
-                  data-testid="switch-email-notifications"
-                />
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-green-50 rounded-lg">
-                  <Phone className="w-5 h-5 text-green-600" />
-                </div>
-                <h2 className="text-lg font-bold text-slate-900">WhatsApp</h2>
-              </div>
-              <p className="text-sm text-slate-500 mb-4">Link your WhatsApp number to chat with the bot directly from WhatsApp.</p>
-              <div className="flex gap-2">
-                <input
-                  type="tel"
-                  placeholder="+55 11 99999-9999"
-                  className="border rounded-lg px-3 py-2 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={whatsappPhone}
-                  onChange={(e) => setWhatsappPhone(e.target.value)}
-                />
-                <Button
-                  size="sm"
-                  onClick={() => saveWhatsapp.mutate(whatsappPhone)}
-                  disabled={saveWhatsapp.isPending}
-                >
-                  {saveWhatsapp.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                </Button>
-              </div>
-              {whatsappPhone && (
-                <p className="text-xs text-slate-400 mt-2">Linked: +{whatsappPhone.replace(/\D/g, "")}</p>
-              )}
-            </Card>
-
-            <Card className="p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-slate-100 rounded-lg">
-                  <Settings className="w-5 h-5 text-slate-600" />
-                </div>
-                <h2 className="text-lg font-bold text-slate-900">{t.profile.adminMode}</h2>
-              </div>
-              <p className="text-sm text-slate-500 mb-4">{t.profile.adminModeDesc}</p>
-              <Link href="/admin">
-                <Button variant="outline" className="w-full" data-testid="button-open-admin">
-                  <Settings className="w-4 h-4 mr-2" />
-                  {t.profile.openAdminPanel}
-                </Button>
-              </Link>
-            </Card>
-
+            {/* Recent Questions */}
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold text-slate-900">{t.profile.recentQuestions}</h2>
-                <Badge variant="secondary" className="text-xs">{chatHistory.length} total</Badge>
+                <Badge variant="secondary" className="text-xs">{questionsAsked} total</Badge>
               </div>
               {chatHistory.length === 0 ? (
                 <p className="text-sm text-slate-400" data-testid="text-no-history">{t.profile.noHistory}</p>
@@ -427,6 +225,7 @@ export default function Profile() {
               )}
             </Card>
 
+            {/* Learning Summary */}
             <Card className="p-6">
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 bg-primary/10 rounded-lg">
@@ -434,25 +233,255 @@ export default function Profile() {
                 </div>
                 <h2 className="text-lg font-bold text-slate-900">Learning Summary</h2>
               </div>
-              <p className="text-sm text-slate-500 mb-4">Get an AI-generated summary of your learning journey based on your full conversation history.</p>
+              <p className="text-sm text-slate-500 mb-4">AI summary of your learning journey with suggested next topics.</p>
               <Button
                 variant="outline"
                 className="w-full mb-4"
                 onClick={() => generateSummary.mutate()}
                 disabled={generateSummary.isPending || chatHistory.length === 0}
               >
-                {generateSummary.isPending ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
-                ) : (
-                  <><Sparkles className="w-4 h-4 mr-2" /> Generate Summary</>
-                )}
+                {generateSummary.isPending
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
+                  : <><Sparkles className="w-4 h-4 mr-2" /> Generate Summary</>
+                }
               </Button>
               {learningSummary && (
-                <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap bg-slate-50 rounded-lg p-4 border border-slate-100">
-                  {learningSummary}
+                <div className="space-y-4">
+                  <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-lg p-4 border border-slate-100">
+                    {learningSummary.summary}
+                  </p>
+                  {learningSummary.suggestedTopics.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Explore next</p>
+                      <div className="flex flex-wrap gap-2">
+                        {learningSummary.suggestedTopics.map((topic) => (
+                          <button
+                            key={topic}
+                            onClick={() => navigate(`/bot?topic=${encodeURIComponent(topic)}`)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium rounded-full transition-colors"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            {topic}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </Card>
+          </div>
+
+          {/* RIGHT COLUMN — sidebar */}
+          <div className="space-y-4">
+
+            {/* Stats */}
+            <Card className="p-5">
+              <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">{t.profile.learningSummary}</h2>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <MessageSquare className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-slate-900" data-testid="text-questions-count">{questionsAsked}</p>
+                    <p className="text-xs text-slate-500">{t.profile.questionsAsked}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-accent/10 rounded-lg">
+                    <BookOpen className="w-4 h-4 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-slate-900" data-testid="text-topics-count">{topicsExplored}</p>
+                    <p className="text-xs text-slate-500">{t.profile.topicsExplored}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-500/10 rounded-lg">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-slate-900" data-testid="text-answers-count">{answersReceived}</p>
+                    <p className="text-xs text-slate-500">{t.profile.answersReceived}</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* WhatsApp */}
+            <Card className="p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Phone className="w-4 h-4 text-green-600" />
+                <h2 className="text-sm font-bold text-slate-900">WhatsApp</h2>
+              </div>
+              <p className="text-xs text-slate-500 mb-3">Link your number to chat with the bot from WhatsApp.</p>
+              <div className="flex gap-2">
+                <input
+                  type="tel"
+                  placeholder="+55 11 99999-9999"
+                  className="border rounded-lg px-2 py-1.5 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  value={whatsappPhone}
+                  onChange={(e) => setWhatsappPhone(e.target.value)}
+                />
+                <Button size="sm" onClick={() => saveWhatsapp.mutate(whatsappPhone)} disabled={saveWhatsapp.isPending}>
+                  {saveWhatsapp.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                </Button>
+              </div>
+            </Card>
+
+            {/* Email notifications */}
+            <Card className="p-5">
+              <div className="flex items-center gap-2 mb-1">
+                <Mail className="w-4 h-4 text-slate-500" />
+                <h2 className="text-sm font-bold text-slate-900">{t.profile.emailNotifications}</h2>
+              </div>
+              <div className="flex items-center justify-between mt-3">
+                <span className="text-xs text-slate-500">
+                  {profile?.emailNotifications !== false ? t.profile.emailNotificationsOn : t.profile.emailNotificationsOff}
+                </span>
+                <Switch
+                  checked={profile?.emailNotifications !== false}
+                  onCheckedChange={(checked) => toggleEmailNotifications.mutate(checked)}
+                  disabled={toggleEmailNotifications.isPending}
+                  data-testid="switch-email-notifications"
+                />
+              </div>
+            </Card>
+
+            {/* Personal Info — collapsible */}
+            <Card className="overflow-hidden">
+              <button
+                className="w-full flex items-center justify-between p-5 text-left hover:bg-slate-50 transition-colors"
+                onClick={() => setShowPersonalInfo(!showPersonalInfo)}
+              >
+                <div className="flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-slate-500" />
+                  <span className="text-sm font-bold text-slate-900">{t.profile.personalInfo}</span>
+                </div>
+                {showPersonalInfo ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+              </button>
+              {showPersonalInfo && (
+                <div className="px-5 pb-5 space-y-3 border-t border-slate-100">
+                  <div className="pt-3">
+                    <label className="text-xs font-medium text-slate-500 mb-1 block">{t.profile.role}</label>
+                    <Select value={role} onValueChange={setRole}>
+                      <SelectTrigger className="h-9 text-sm" data-testid="select-profile-role">
+                        <SelectValue placeholder={t.onboarding.rolePlaceholder} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(t.onboarding.roleOptions).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-500 mb-1 block">{t.profile.industry}</label>
+                    <Select value={industry} onValueChange={setIndustry}>
+                      <SelectTrigger className="h-9 text-sm" data-testid="select-profile-industry">
+                        <SelectValue placeholder={t.onboarding.industryPlaceholder} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(t.onboarding.industryOptions).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-500 mb-1 block">{t.profile.goal}</label>
+                    <Select value={goal} onValueChange={setGoal}>
+                      <SelectTrigger className="h-9 text-sm" data-testid="select-profile-goal">
+                        <SelectValue placeholder={t.onboarding.goalPlaceholder} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(t.onboarding.goalOptions).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-500 mb-1 block">{t.profile.challenge}</label>
+                    <Select value={challenge} onValueChange={setChallenge}>
+                      <SelectTrigger className="h-9 text-sm" data-testid="select-profile-challenge">
+                        <SelectValue placeholder={t.onboarding.challengePlaceholder} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(t.onboarding.challengeOptions).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    className="w-full mt-1"
+                    size="sm"
+                    onClick={() => saveProfile.mutate({ role, industry, goal, challenge, learningPreference })}
+                    disabled={saveProfile.isPending}
+                    data-testid="button-save-profile"
+                  >
+                    {saveProfile.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
+                    {t.profile.save}
+                  </Button>
+                </div>
+              )}
+            </Card>
+
+            {/* Learning Preference — collapsible */}
+            <Card className="overflow-hidden">
+              <button
+                className="w-full flex items-center justify-between p-5 text-left hover:bg-slate-50 transition-colors"
+                onClick={() => setShowLearningPref(!showLearningPref)}
+              >
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-slate-500" />
+                  <span className="text-sm font-bold text-slate-900">{t.profile.learningPreference}</span>
+                </div>
+                {showLearningPref ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+              </button>
+              {showLearningPref && (
+                <div className="px-5 pb-5 space-y-2 border-t border-slate-100 pt-3">
+                  {learningOptions.map((opt) => (
+                    <Button
+                      key={opt.value}
+                      variant={learningPreference === opt.value ? "default" : "outline"}
+                      className="w-full h-10 justify-start text-sm"
+                      onClick={() => setLearningPreference(opt.value)}
+                      data-testid={`button-profile-learning-${opt.value}`}
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
+                  <Button
+                    className="w-full mt-1"
+                    size="sm"
+                    onClick={() => saveProfile.mutate({ role, industry, goal, challenge, learningPreference })}
+                    disabled={saveProfile.isPending}
+                  >
+                    {saveProfile.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
+                    {t.profile.save}
+                  </Button>
+                </div>
+              )}
+            </Card>
+
+            {/* Admin panel */}
+            <Card className="p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Settings className="w-4 h-4 text-slate-500" />
+                <h2 className="text-sm font-bold text-slate-900">{t.profile.adminMode}</h2>
+              </div>
+              <p className="text-xs text-slate-500 mb-3">{t.profile.adminModeDesc}</p>
+              <Link href="/admin">
+                <Button variant="outline" className="w-full" size="sm" data-testid="button-open-admin">
+                  <Settings className="w-3.5 h-3.5 mr-1.5" />
+                  {t.profile.openAdminPanel}
+                </Button>
+              </Link>
+            </Card>
+
           </div>
         </div>
       </main>
