@@ -43,9 +43,9 @@ const pricingText = {
         {
           name: "Starter Setup",
           price: "R$\u00a02.500",
-          desc: "Up to 3 topics configured",
+          desc: "Up to 3 topics",
           features: [
-            "Up to 3 topics, 15 entries each",
+            "Up to 3 topics configured",
             "Content structuring and upload",
             "Bot configuration and deployment",
             "1 language (EN or PT-BR)",
@@ -55,10 +55,10 @@ const pricingText = {
         {
           name: "Professional Setup",
           price: "R$\u00a04.900",
-          desc: "Up to 8 topics configured",
+          desc: "Up to 8 topics",
           highlighted: true,
           features: [
-            "Up to 8 topics, 20 entries each",
+            "Up to 8 topics configured",
             "Content structuring and upload",
             "2 languages (PT-BR + EN)",
             "Custom branding",
@@ -69,9 +69,9 @@ const pricingText = {
         {
           name: "Enterprise Setup",
           price: "R$\u00a09.900",
-          desc: "Unlimited topics and entries",
+          desc: "Up to 20 topics",
           features: [
-            "Unlimited topics and entries",
+            "Up to 20 topics configured",
             "Content structuring and upload",
             "Multiple languages",
             "Custom domain",
@@ -84,15 +84,16 @@ const pricingText = {
     },
     monthly: {
       title: "Monthly subscription",
-      subtitle: "Pay month-to-month or annually and save 2 months. Cancel anytime.",
-      annualBadge: "Annual: 2 months free",
+      subtitle: "Cancel anytime.",
+      toggle: { monthly: "Monthly", annual: "Annual", save: "Save 17%", billedAnnually: "billed annually" },
       limitNote: "messages/month",
       plans: [
         {
           name: "Starter",
           icon: "zap",
-          price: "R$\u00a0799",
-          period: "/month",
+          priceMonthly: "R$\u00a0799",
+          priceAnnual: "R$\u00a0665",
+          period: "/mo",
           users: "Up to 25 users",
           limit: "600",
           features: [
@@ -105,8 +106,9 @@ const pricingText = {
         {
           name: "Professional",
           icon: "rocket",
-          price: "R$\u00a01.990",
-          period: "/month",
+          priceMonthly: "R$\u00a01.990",
+          priceAnnual: "R$\u00a01.658",
+          period: "/mo",
           users: "Up to 100 users",
           limit: "2.500",
           highlighted: true,
@@ -121,8 +123,9 @@ const pricingText = {
         {
           name: "Enterprise",
           icon: "building",
-          price: "R$\u00a03.990",
-          period: "/month",
+          priceMonthly: "R$\u00a03.990",
+          priceAnnual: "R$\u00a03.325",
+          period: "/mo",
           users: "Up to 500 users",
           limit: "8.000",
           features: [
@@ -192,9 +195,9 @@ const pricingText = {
         {
           name: "Implantação Starter",
           price: "R$\u00a02.500",
-          desc: "Até 3 tópicos configurados",
+          desc: "Até 3 tópicos",
           features: [
-            "Até 3 tópicos, 15 entradas cada",
+            "Até 3 tópicos configurados",
             "Estruturação e carga de conteúdo",
             "Configuração e deploy do bot",
             "1 idioma (PT-BR ou EN)",
@@ -204,10 +207,10 @@ const pricingText = {
         {
           name: "Implantação Profissional",
           price: "R$\u00a04.900",
-          desc: "Até 8 tópicos configurados",
+          desc: "Até 8 tópicos",
           highlighted: true,
           features: [
-            "Até 8 tópicos, 20 entradas cada",
+            "Até 8 tópicos configurados",
             "Estruturação e carga de conteúdo",
             "2 idiomas (PT-BR + EN)",
             "Identidade visual personalizada",
@@ -218,9 +221,9 @@ const pricingText = {
         {
           name: "Implantação Enterprise",
           price: "R$\u00a09.900",
-          desc: "Tópicos e entradas ilimitados",
+          desc: "Até 20 tópicos",
           features: [
-            "Tópicos e entradas ilimitados",
+            "Até 20 tópicos configurados",
             "Estruturação e carga de conteúdo",
             "Múltiplos idiomas",
             "Domínio personalizado",
@@ -233,14 +236,15 @@ const pricingText = {
     },
     monthly: {
       title: "Assinatura mensal",
-      subtitle: "Pague mês a mês ou anualmente e economize 2 meses. Cancele quando quiser.",
-      annualBadge: "Anual: 2 meses grátis",
+      subtitle: "Cancele quando quiser.",
+      toggle: { monthly: "Mensal", annual: "Anual", save: "17% de desconto", billedAnnually: "cobrado anualmente" },
       limitNote: "mensagens/mês",
       plans: [
         {
           name: "Starter",
           icon: "zap",
-          price: "R$\u00a0799",
+          priceMonthly: "R$\u00a0799",
+          priceAnnual: "R$\u00a0665",
           period: "/mês",
           users: "Até 25 usuários",
           limit: "600",
@@ -254,7 +258,8 @@ const pricingText = {
         {
           name: "Profissional",
           icon: "rocket",
-          price: "R$\u00a01.990",
+          priceMonthly: "R$\u00a01.990",
+          priceAnnual: "R$\u00a01.658",
           period: "/mês",
           users: "Até 100 usuários",
           limit: "2.500",
@@ -270,7 +275,8 @@ const pricingText = {
         {
           name: "Enterprise",
           icon: "building",
-          price: "R$\u00a03.990",
+          priceMonthly: "R$\u00a03.990",
+          priceAnnual: "R$\u00a03.325",
           period: "/mês",
           users: "Até 500 usuários",
           limit: "8.000",
@@ -332,6 +338,7 @@ export default function Pricing() {
   const { language } = useLanguage();
   const t = pricingText[language as Language] || pricingText["pt-BR"];
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-foreground">
@@ -403,14 +410,40 @@ export default function Pricing() {
         <div className="max-w-6xl mx-auto px-6 sm:px-8">
           <div className="text-center mb-10 sm:mb-14">
             <h2 className="text-2xl sm:text-3xl font-bold font-display mb-3">{t.monthly.title}</h2>
-            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto mb-3">{t.monthly.subtitle}</p>
-            <span className="inline-block text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-              {t.monthly.annualBadge}
-            </span>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto mb-6">{t.monthly.subtitle}</p>
+            {/* Billing toggle */}
+            <div className="inline-flex items-center bg-slate-100 rounded-full p-1 gap-1">
+              <button
+                onClick={() => setBilling("monthly")}
+                className={cn(
+                  "px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200",
+                  billing === "monthly"
+                    ? "bg-white text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t.monthly.toggle.monthly}
+              </button>
+              <button
+                onClick={() => setBilling("annual")}
+                className={cn(
+                  "px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2",
+                  billing === "annual"
+                    ? "bg-white text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t.monthly.toggle.annual}
+                <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">
+                  {t.monthly.toggle.save}
+                </span>
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {t.monthly.plans.map((plan, i) => {
               const Icon = iconMap[plan.icon] || Zap;
+              const price = billing === "annual" ? plan.priceAnnual : plan.priceMonthly;
               return (
                 <div
                   key={i}
@@ -439,13 +472,18 @@ export default function Pricing() {
                   </p>
                   <div className="flex items-end gap-1 mb-1">
                     <span className={cn("text-4xl font-extrabold font-display", plan.highlighted ? "text-white" : "text-foreground")}>
-                      {plan.price}
+                      {price}
                     </span>
                     <span className={cn("text-sm mb-1.5", plan.highlighted ? "text-white/70" : "text-muted-foreground")}>
                       {plan.period}
                     </span>
                   </div>
-                  <div className={cn("flex items-center gap-1.5 mb-6 text-xs font-medium", plan.highlighted ? "text-white/80" : "text-primary")}>
+                  {billing === "annual" && (
+                    <p className={cn("text-xs mb-2", plan.highlighted ? "text-white/60" : "text-muted-foreground")}>
+                      {t.monthly.toggle.billedAnnually}
+                    </p>
+                  )}
+                  <div className={cn("flex items-center gap-1.5 mb-6 text-xs font-medium", plan.highlighted ? "text-white/80" : "text-primary", billing === "annual" ? "" : "mt-2")}>
                     <ShieldCheck className="w-3.5 h-3.5" />
                     {plan.limit} {t.monthly.limitNote}
                   </div>
