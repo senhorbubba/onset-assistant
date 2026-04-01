@@ -20,6 +20,7 @@ export default function Home() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [, navigate] = useLocation();
   const { data: topics, isLoading: topicsLoading } = useTopics();
+  const initialMessage = new URLSearchParams(window.location.search).get("q") || undefined;
 
   const queryClient = useQueryClient();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -99,6 +100,13 @@ export default function Home() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Auto-select first topic when arriving with ?q= param from profile
+  useEffect(() => {
+    if (initialMessage && topics && topics.length > 0 && !topic) {
+      setTopic(topics[0]);
+    }
+  }, [initialMessage, topics]);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -310,7 +318,7 @@ export default function Home() {
               </Button>
             </div>
             
-            <ChatInterface topic={topic} />
+            <ChatInterface topic={topic} initialMessage={initialMessage} />
           </motion.div>
         )}
       </main>

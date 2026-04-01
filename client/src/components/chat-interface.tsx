@@ -22,9 +22,10 @@ interface Message {
 
 interface ChatInterfaceProps {
   topic: string;
+  initialMessage?: string;
 }
 
-export function ChatInterface({ topic }: ChatInterfaceProps) {
+export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
   const { language, t } = useLanguage();
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
@@ -107,6 +108,13 @@ export function ChatInterface({ topic }: ChatInterfaceProps) {
       },
     ]);
   }, [language, topic]);
+
+  useEffect(() => {
+    if (initialMessage && topic) {
+      const timer = setTimeout(() => sendMessage(initialMessage), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [initialMessage, topic]);
 
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;

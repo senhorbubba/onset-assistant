@@ -231,7 +231,8 @@ export default function Profile() {
                         {learningSummary.suggestedTopics.map((topic) => (
                           <button
                             key={topic}
-                            onClick={() => navigate(`/bot?topic=${encodeURIComponent(topic)}`)}
+                            onClick={() => navigate(`/bot?q=${encodeURIComponent(`Tell me about "${topic}"`)}`)}
+
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium rounded-full transition-colors"
                           >
                             <MessageSquare className="w-3.5 h-3.5" />
