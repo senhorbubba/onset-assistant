@@ -146,7 +146,7 @@ const pricingText = {
     },
     overLimit: {
       title: "Need more messages?",
-      desc: "When your organization reaches the monthly limit, the bot pauses gracefully and notifies users to contact you. Upgrade your plan at any time, no data is lost.",
+      desc: "When your organization is approaching the monthly limit, the administrator receives an automatic notification. Once the limit is reached, the bot pauses with a friendly message to users. You can upgrade your plan or purchase additional credits at any time — no data is ever lost.",
     },
     faq: {
       title: "Common questions",
@@ -304,7 +304,7 @@ const pricingText = {
     },
     overLimit: {
       title: "Precisa de mais mensagens?",
-      desc: "Quando sua organização atinge o limite mensal, o bot pausa com uma mensagem amigável orientando os usuários a entrar em contato. Faça upgrade a qualquer momento, nenhum dado é perdido.",
+      desc: "Quando sua organização está se aproximando do limite mensal, o administrador recebe uma notificação automática. Ao atingir o limite, o bot pausa com uma mensagem amigável para os usuários. Você pode fazer upgrade do plano ou adquirir créditos adicionais a qualquer momento — nenhum dado é perdido.",
     },
     faq: {
       title: "Perguntas frequentes",
@@ -383,7 +383,7 @@ export default function Pricing() {
                 className={cn(
                   "relative p-6 sm:p-8 rounded-2xl border transition-all duration-300",
                   plan.highlighted
-                    ? "bg-primary text-white border-primary shadow-xl shadow-primary/20 scale-[1.02]"
+                    ? "bg-primary text-white border-primary shadow-xl shadow-primary/20 md:scale-[1.02]"
                     : "bg-white border-slate-100 hover:shadow-lg hover:border-primary/20"
                 )}
               >
@@ -430,7 +430,7 @@ export default function Pricing() {
                 className={cn(
                   "px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200",
                   billing === "monthly"
-                    ? "bg-white text-foreground shadow-sm"
+                    ? "bg-primary text-white shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -441,12 +441,12 @@ export default function Pricing() {
                 className={cn(
                   "px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2",
                   billing === "annual"
-                    ? "bg-white text-foreground shadow-sm"
+                    ? "bg-primary text-white shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {t.monthly.toggle.annual}
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">
+                <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full", billing === "annual" ? "text-white bg-white/20" : "text-emerald-600 bg-emerald-100")}>
                   {t.monthly.toggle.save}
                 </span>
               </button>
