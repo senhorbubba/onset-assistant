@@ -1,108 +1,151 @@
-# onset. Assistant - Knowledge Base Chatbot
+# onset. Assistant — Project Reference
 
 ## Overview
-A chatbot web application branded "onset. Assistant" that answers user questions based on curated JSON file uploads (one per topic). Users choose from dynamically available topics based on uploaded files, provide their experience level for that specific topic, and receive personalized microlearning responses. The bot uses OpenAI (gpt-4o-mini) with a two-phase conversational approach: Phase 1 classifies the user's intent (specific match, general/exploratory, learning plan, off-topic, not found), and Phase 2 generates a contextual response. For general questions the bot engages conversationally and suggests relevant subtopics; for specific questions it provides answers from the knowledge base with video links. Unanswered questions are logged for curator review. The bot never invents answers beyond the knowledge base.
+A chatbot web application branded "onset. Assistant" that answers user questions based on a curated knowledge base (uploaded per topic via admin panel). Users choose a topic, set their experience level, and receive personalized microlearning responses. The bot uses Anthropic Claude (claude-sonnet-4-6) with a two-phase conversational approach: Phase 1 classifies intent (MATCH/EXPLORE/PLAN/OVERVIEW/SUGGEST/NOT_FOUND/OFF_TOPIC), Phase 2 generates a contextual coaching response. Unanswered questions are logged for admin review. The bot never invents answers beyond the knowledge base.
 
-## Current State
-- Landing page at `/` with product overview, features, use cases, and CTA to try the bot
-- Chat interface at `/bot` with dynamic topic selection
-- Admin panel at `/admin` (admin-only access) to upload JSON files, visually inspect knowledge base per topic, manage users, and toggle admin roles
-- Two-phase conversational AI (gpt-4o-mini via Replit AI Integrations): Phase 1 classifies intent, Phase 2 generates response
-- Conversational flow: general questions get guided exploration, specific questions get knowledge base answers with video links
-- Conversation history support (last 6 messages) for multi-turn dialogues
-- Database-backed content storage with JSON structure (Unit_ID, Subtopic, Search_Context, Keywords, Key_Takeaway, Difficulty, Use_Case, Timestamp_Link)
-- Multi-language support: English (en) and Brazilian Portuguese (pt-BR)
-- Auto-detects user region (browser locale) — defaults to Portuguese for pt* locales
-- Language choice persisted in localStorage across page navigation
-- Mobile-first responsive design (no framer-motion on landing page — causes dark block artifacts on iOS Safari)
-- Authentication: Google OAuth + email/password registration/login
-- Login page at `/login` with both options; `/bot` requires authentication
-- User profile/onboarding system with personalized AI responses
-- Onboarding questionnaire at /onboarding (role, industry, learning preference, goal, challenge)
-- Per-topic experience level: asked once per topic on first visit, stored in `topic_experience` table
-- Learning preference: quick tips, step-by-step, or real-world examples (set during onboarding)
-- Microlearning format: AI delivers concise, single-insight responses tailored to preference
-- Chat history tracking: all Q&A logged for authenticated users in `chat_history` table
-- User profile panel at /profile: editable profile, learning preference, and learning summary dashboard
-- Admin Users tab with dynamic question counts per topic and Excel/CSV export
-- Admin response system: admins can respond to unanswered questions from admin panel
-- Notification bell in user header: shows admin responses with unread count badge
-- Email notification toggle in user profile settings (opt-out)
-- Unanswered questions track userId and email for notification routing
+## Deployment
+- **Platform:** Railway (`https://onset-assistant-production.up.railway.app`)
+- **Custom domain:** `https://www.onset-edu.com` (DNS via Cloudflare, nameservers: armando + eleanor)
+- **Start command** (railway.toml): `npm run db:push && NODE_ENV=production node dist/index.cjs`
+- **Build command:** `npm install && npm run build`
+- **Key env vars:** `ANTHROPIC_API_KEY`, `DATABASE_URL`, `SESSION_SECRET`, `GMAIL_APP_PASSWORD`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`, `MONTHLY_MESSAGE_LIMIT`
+
+## Current Features
+- Landing page `/` with product overview and CTA
+- Chat interface `/bot` — dynamic topic selection, per-topic experience level, conversation history
+- Admin panel `/admin` — JSON upload, topic inspector, unanswered questions, user management, CSV export, admin respond to questions
+- Two-phase AI classification + response (Claude claude-sonnet-4-6)
+- Suggestion chips on bot responses — context-aware, only shown on latest message, only when offering topics to explore
+- OVERVIEW response lists categories as chips
+- NOT_FOUND keeps conversation alive — pivots to related topics, never dead-ends user
+- Continuation phrases ("tell me more", "yes", "ok") pre-intercepted as EXPLORE before classifier
+- Multi-language: English and Brazilian Portuguese (pt-BR)
+- Language toggle in header, persisted per user in `user_profiles.preferred_language`
+- Authentication: Google OAuth + email/password (passport)
+- Onboarding questionnaire `/onboarding` (role, industry, goal, challenge, learning preference)
+- Per-topic experience level (beginner/intermediate/advanced) — asked once per topic
+- Chat history tracking for authenticated users
+- User profile `/profile`:
+  - Left column: AI Learning Summary (generate button, clickable topic chips → bot auto-starts)
+  - Left column: Activity card (stats grid + full question history)
+  - Right sidebar: WhatsApp linking (2-step verification via code sent over WhatsApp), Email notifications toggle, Personal Info (collapsible), Learning Preference (collapsible), Admin link
+- Learning summary chips navigate to `/bot?topic=ExactDBTopic&q=Tell me about "TranslatedLabel"` — topic auto-selected, bot auto-sends question
+- Notification bell in header — admin responses, unread count badge, mark all/one read
+- WhatsApp bot integration — user links phone via verified code, bot responds on WhatsApp, numbered options (1/2/3) for chips, messages capped at 4000 chars
+- Monthly message limit (global, configurable via `MONTHLY_MESSAGE_LIMIT` env var)
+- Video/link popup — YouTube/Loom/Vimeo embed in modal, other URLs open in new tab
+- OG meta tags with absolute URLs (https://www.onset-edu.com/og-image.png)
 
 ## Architecture
-- Frontend: React + Vite + Tailwind CSS + shadcn/ui
-- Backend: Express.js + Drizzle ORM + PostgreSQL
-- Auth: Google OAuth (passport-google-oauth20) + Local email/password (passport-local + bcryptjs)
-- AI: OpenAI gpt-4o-mini via Replit AI Integrations (no API key needed)
-- Email: Nodemailer with Gmail SMTP (onset.devs@gmail.com, App Password in GMAIL_APP_PASSWORD secret)
-- Data source: JSON file uploads (one file per topic, uploaded via admin panel)
+- **Frontend:** React + Vite + Tailwind CSS + shadcn/ui + framer-motion + wouter routing
+- **Backend:** Express.js + Drizzle ORM + PostgreSQL
+- **Auth:** Google OAuth (passport-google-oauth20) + Local email/password (passport-local + bcryptjs)
+- **AI:** Anthropic Claude claude-sonnet-4-6 (replaced OpenAI)
+- **Email:** Nodemailer with Gmail SMTP (onset.devs@gmail.com, GMAIL_APP_PASSWORD env var)
+- **WhatsApp:** Meta Graph API v21.0 webhook
 
 ## Key Files
-- `shared/schema.ts` - Database models (content with JSON fields, unanswered_questions, user_profiles, topic_experience, chat_history, admin_responses + auth tables)
-- `shared/models/auth.ts` - Auth tables (users, sessions)
-- `shared/routes.ts` - API contract definitions (chat, topics, content, upload, unanswered)
-- `server/routes.ts` - Backend API endpoints with OpenAI matching + auth + profile + topic experience + chat history + JSON upload
-- `server/storage.ts` - Database operations (CRUD, bulk create, clear by topic, available topics, user stats)
-- `server/replit_integrations/auth/` - Auth integration (login, session, user management)
-- `client/src/pages/landing.tsx` - Landing page with product overview, features, use cases, how it works, CTA
-- `client/src/pages/home.tsx` - Main chat page at /bot with dynamic topic selection
-- `client/src/pages/admin.tsx` - Admin dashboard with JSON upload, topic inspector, unanswered questions, users tab
-- `client/src/pages/login.tsx` - Login/register page with Google OAuth and email/password
-- `client/src/pages/onboarding.tsx` - Onboarding questionnaire with progress indicator (5 steps: role, industry, goal, challenge, learning preference)
-- `client/src/pages/profile.tsx` - User profile panel with editable fields, learning preference, and learning summary
-- `client/src/components/chat-interface.tsx` - Chat widget with per-topic experience prompt
-- `client/src/hooks/use-auth.ts` - Auth hook (user, login, logout)
-- `client/src/hooks/use-content.ts` - Content, topics, upload, and unanswered hooks
-- `client/src/hooks/use-chat.ts` - Chat mutation hook
-- `client/src/lib/i18n.ts` - Translations for en and pt-BR with language detection
-- `client/src/lib/language-context.tsx` - React context for language state and persistence
+- `shared/schema.ts` — DB models (content, unanswered_questions, user_profiles, topic_experience, chat_history, admin_responses)
+- `shared/models/auth.ts` — Auth tables (users with isAdmin, whatsappPhone columns; sessions)
+- `shared/routes.ts` — API contract definitions
+- `server/routes.ts` — All backend endpoints, AI classification + response logic, WhatsApp webhook, phone verification
+- `server/storage.ts` — All DB operations
+- `server/db.ts` — Database connection
+- `client/src/pages/landing.tsx` — Landing page
+- `client/src/pages/home.tsx` — /bot page, stable initialMessage/initialTopic via useState lazy init, auto-selects topic from URL params
+- `client/src/pages/admin.tsx` — Admin dashboard
+- `client/src/pages/login.tsx` — Login/register
+- `client/src/pages/onboarding.tsx` — Onboarding flow
+- `client/src/pages/profile.tsx` — User profile with learning summary, activity, WhatsApp card
+- `client/src/components/chat-interface.tsx` — Chat widget, getEmbedInfo() for URL detection, chips on latest bot message only
+- `client/src/components/site-nav.tsx` — Shared nav component
+- `client/src/hooks/use-auth.ts` — Auth hook
+- `client/src/hooks/use-content.ts` — Content/topics hooks
+- `client/src/hooks/use-chat.ts` — Chat mutation hook
+- `client/src/lib/i18n.ts` — Translations en + pt-BR
+- `client/src/lib/language-context.tsx` — Language state context
+- `railway.toml` — Railway deploy config
+- `client/index.html` — OG meta tags with absolute URLs
+
+## AI Bot Logic (server/routes.ts — findBestAnswer)
+### Phase 1: Classification
+- Pre-intercept: continuation phrases (tell me more, yes, ok, etc.) → EXPLORE immediately
+- Pre-intercept: if last bot message was an OVERVIEW and user reply is short → EXPLORE immediately
+- Otherwise: callClaude with classify prompt (50 tokens), result trimmed
+- Classifications: MATCH:[n] / EXPLORE / PLAN / OVERVIEW / SUGGEST / NOT_FOUND / OFF_TOPIC
+
+### Phase 2: Response
+- **MATCH** — coaching response from specific KB entry, related subtopics, conditional chips
+- **EXPLORE** — conversational coaching using full KB list, MODE A (specific) or MODE B (exploring), conditional chips
+- **PLAN** — structured learning path with links
+- **OVERVIEW** — category list as bullet points, ALL category chips
+- **SUGGEST** — partial matches listed, user picks one
+- **NOT_FOUND** — brief pivot + related topics + chips, question logged for admin review (silently)
+- **OFF_TOPIC** — polite redirect
+
+### Chips ([OPTIONS:] format)
+- Claude appends `[OPTIONS: label 1 | label 2 | label 3]` only when offering KB topics to explore
+- NOT on personal/reflective questions or yes/no follow-ups
+- parseChips() strips it from display, returns as suggestions array
+- Client renders chips only on latest bot message, not on history
+
+### WhatsApp
+- Webhook at `POST /api/whatsapp/webhook`
+- User links phone in profile → 2-step: request code → verify code (10-min TTL, in-memory)
+- Bot sends numbered options (1/2/3) matching chips; user replies with number
+- lastSuggestions Map tracks last options per phone for number resolution
+- Messages capped at 4000 chars in sendWhatsAppMessage()
 
 ## API Endpoints
-- `POST /api/chat` - Ask a question (topic + question + language?), returns AI-matched answer
-- `GET /api/topics` - List all available topics (derived from uploaded content)
-- `GET /api/content` - List all knowledge base content
-- `GET /api/content/:topic` - List content for a specific topic
-- `POST /api/content/upload` - Upload JSON file for a topic (requires auth, replaces existing content for that topic)
-- `GET /api/unanswered` - List unanswered questions
-- `GET /api/admin/users` - List all registered users with question counts per topic (requires auth)
-- `GET /api/admin/users/export` - Export all users as CSV file (requires admin)
-- `PATCH /api/admin/users/:userId/admin` - Toggle admin status for a user (requires admin)
-- `GET /api/auth/admin-check` - Check if current user is admin
-- `GET /api/auth/user` - Get current authenticated user
-- `GET /api/login` - Initiate login flow
-- `GET /api/logout` - Logout
-- `GET /api/profile` - Get user profile (requires auth)
-- `POST /api/profile` - Save/update user profile (requires auth)
-- `GET /api/topic-experience/:topic` - Get user's experience level for a topic (requires auth)
-- `POST /api/topic-experience` - Set experience level for a topic (requires auth)
-- `GET /api/chat-history` - Get user's chat history (requires auth)
-- `POST /api/admin/respond` - Admin responds to unanswered question (requires auth)
-- `GET /api/notifications` - Get user's notifications (requires auth)
-- `GET /api/notifications/count` - Get unread notification count (requires auth)
-- `PATCH /api/notifications/:id/read` - Mark notification as read (requires auth)
-- `PATCH /api/profile/notifications` - Toggle email notifications preference (requires auth)
+- `POST /api/chat` — Ask question, returns answer + found + link + suggestions
+- `GET /api/topics` — Available topics
+- `GET /api/content` — All KB content
+- `POST /api/content/upload` — Upload JSON for a topic
+- `GET /api/unanswered` — Unanswered questions (admin)
+- `POST /api/admin/respond` — Admin responds to question
+- `PATCH /api/admin/users/:id/admin` — Toggle admin
+- `PATCH /api/admin/users/:id/whatsapp` — Admin sets user phone
+- `GET /api/profile` — Get profile
+- `POST /api/profile` — Save profile
+- `PATCH /api/profile/notifications` — Toggle email notifications
+- `POST /api/profile/whatsapp/request-code` — Send WhatsApp verification code
+- `POST /api/profile/whatsapp/verify` — Verify code and save phone
+- `DELETE /api/profile/whatsapp` — Unlink phone
+- `GET /api/profile/learning-summary?lang=` — AI learning summary + suggestedTopics [{label, topic}]
+- `GET /api/topic-experience/:topic` — Get experience for topic
+- `POST /api/topic-experience` — Set experience for topic
+- `GET /api/chat-history` — User's full chat history
+- `GET /api/notifications` — User notifications
+- `GET /api/notifications/count` — Unread count
+- `PATCH /api/notifications/:id/read` — Mark one read
+- `PATCH /api/notifications/read-all` — Mark all read
+- `GET /api/whatsapp/webhook` — WhatsApp webhook verification
+- `POST /api/whatsapp/webhook` — WhatsApp incoming messages
+- `GET /api/admin/users` — All users with stats
+- `GET /api/admin/users/export` — CSV export
 
-## JSON File Structure
-Each JSON file should be an array of objects with these fields:
-- `Unit_ID`: Unique identifier for the content unit (optional)
-- `Topic`: Topic name (e.g., "Communication", "AI Skills") — all items in one file must have the same Topic
-- `Subtopic`: Specific subtopic title
-- `Search_Context`: Detailed context for AI matching
-- `Keywords`: Comma-separated keywords for matching
-- `Key_Takeaway`: Main learning points (pipe-separated)
-- `Difficulty`: "Beginner", "Intermediate", or "Advanced"
-- `Use_Case`: Example use case
-- `Timestamp_Link`: URL with timestamp to video content
+## JSON Knowledge Base Format
+```json
+[{
+  "Unit_ID": "optional",
+  "Topic": "TopicName",
+  "Subtopic": "Specific subtopic title",
+  "Search_Context": "Detailed context for AI matching",
+  "Keywords": "comma, separated, keywords",
+  "Key_Takeaway": "Point one | Point two | Point three",
+  "Difficulty": "Beginner|Intermediate|Advanced",
+  "Use_Case": "Example use case",
+  "Timestamp_Link": "https://video-url-with-timestamp"
+}]
+```
 
-## User Preferences
+## User/Brand Preferences
 - Branding: "onset. Assistant" (lowercase o, period, space, capital A)
-- Wants MVP simplicity
-- Content managed via JSON file uploads (one file per topic)
-- OpenAI for intelligent matching (not just keywords)
-- Never invent answers - only use curated content
-- Profile personalizes HOW answers are phrased, never adds new content
-- Experience level is per-topic, not global — ask once per topic, save it
-- Microlearning format — one key insight at a time, not long study plans
-- Learning preference maps to AI prompt: quick_tips = brief/actionable, step_by_step = clear breakdown, examples = practical scenarios
-- Topics are dynamic — available based on uploaded JSON files
+- Domain: www.onset-edu.com
+- Never invent answers — only curated content
+- Microlearning format — one key insight at a time
+- Profile personalizes HOW answers are phrased, never adds content
+- Experience level is per-topic, asked once per topic
+- Topics are dynamic — based on uploaded JSON files
+- No emojis in bot responses (unless user explicitly asks)
+- Tone mirroring — bot matches user's communication style
