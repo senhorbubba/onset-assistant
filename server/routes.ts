@@ -145,11 +145,9 @@ function buildSuggestions(classification: string, contentItems: Content[], match
   }
 
   if (classification.startsWith("EXPLORE")) {
-    const picks = contentItems.slice(0, 2).map(i => i.subtopic);
-    return [
-      ...picks,
-      pt ? "Mostrar tudo disponível" : "Show me everything available",
-    ].slice(0, 3);
+    // Return empty — let Claude generate contextual chips or have no chips at all.
+    // Arbitrary subtopic picks from the DB are unrelated to the conversation and cause confusion.
+    return [];
   }
 
   // SUGGEST, NOT_FOUND, OFF_TOPIC
@@ -216,7 +214,7 @@ CRITICAL — CONTEXT AWARENESS:
 - When in doubt between MATCH and EXPLORE, choose EXPLORE.
 - The entries may be in a different language than the user's question — match by MEANING, not literal text.
 - If the user asks about a broad area that maps to MULTIPLE entries, use EXPLORE rather than MATCH.
-- If the user asks to switch language ("respond in English", "responde em português"), classify as EXPLORE.
+- Pure language-switch requests ("respond in English", "responde em português" with no topic) are intercepted before classification and never reach here. If a language-switch request arrives AND includes a topic/question, classify by the content part (MATCH, EXPLORE, etc.) and ignore the language-switch component.
 - VIDEO/AUDIO RULE: If the user asks whether there are videos, audio, or media about a topic they are currently discussing (from conversation history), classify as MATCH for that topic entry so the link can be surfaced. If the topic is broad or unclear, classify as EXPLORE.
 
 Respond with ONLY the classification tag, nothing else.
@@ -242,6 +240,17 @@ ${contentItems.map((item, i) => `[${i}] ${item.subtopic} | Keywords: ${item.keyw
 
     // Pre-check: short continuation phrases are always EXPLORE — don't waste a classifier call
     const CONTINUATION_RE = /^(tell me more|tellme more|me conta mais|me ensina mais|continue|continua|continuar|go on|expand|expand on that|yes|sim|sure|claro|ok|okay|got it|entendi|and then|e depois|e aí|what else|o que mais|more|mais)[\s?!.]*$/i;
+
+    // Pre-check: pure language-switch requests — handle immediately without going through EXPLORE flow.
+    // These messages ONLY ask to change language with no content request attached.
+    const LANG_SWITCH_RE = /^(responde?\s+(em\s+)?(português|portugues|english|inglês|inglés)|change\s+(to\s+)?(english|portuguese|português)|switch\s+to\s+(english|portuguese|português)|s[oó]\s+em\s+portugu[eê]s|please\s+(respond\s+in|use)\s+(english|portuguese|português)|fala\s+em\s+(português|english|inglês)|continua?\s+(em|in)\s+(português|portuguese|english|inglês|english)|in\s+english\s+please|em\s+português\s+por\s+favor)[.!?]?\s*$/i;
+    if (LANG_SWITCH_RE.test(question.trim())) {
+      const ackMsg = isPt
+        ? "Claro, vou continuar em português. O que você gostaria de explorar?"
+        : "Sure, I'll continue in English. What would you like to explore?";
+      return { answer: ackMsg, found: true, suggestions: [] };
+    }
+
     // If the last bot message looks like an OVERVIEW (bullet list of categories) and the user replied with something short, force EXPLORE
     const lastBotMsg = history && history.length > 0 ? [...history].reverse().find(m => m.role === "bot")?.content || "" : "";
     const lastWasOverview = (lastBotMsg.match(/\n/g) || []).length >= 3 && /\*\*|—\s*\d+\s*topic|\btopics?\b/i.test(lastBotMsg);
@@ -449,7 +458,7 @@ Special cases:
 
 When providing content, use the knowledge base below as source material — deliver it conversationally, NEVER copy verbatim. NEVER use pipe characters (|) in your response body.
 
-CHIPS (conditional): Only add [OPTIONS: label 1 | label 2 | label 3] on a new line at the very end IF you are offering specific knowledge base subtopics or content areas for the user to choose from. Do NOT add chips when you end with a personal reflection question, an open coaching question about the user's own situation, or a yes/no follow-up. Labels must be 2–4 words in ${userLang}.
+CHIPS (conditional): Only add [OPTIONS: label 1 | label 2 | label 3] on a new line at the very end IF you are offering specific knowledge base subtopics or content areas for the user to choose from. Do NOT add chips when you end with a personal reflection question, an open coaching question about the user's own situation, or a yes/no follow-up. CRITICAL: Every chip label MUST be in ${userLang} — never mix languages. Do NOT write "Continue with", "Explorar:", or any other prefix before the [OPTIONS:] tag.
 
 VIDEO/AUDIO RULE: If the user asks about videos or audio for a topic, check the knowledge base entries below for a Link. If a link exists for the relevant topic, share it as a markdown link and mention it naturally. If no link exists for that specific topic, say so honestly and offer the closest related topic that does have one (if any). NEVER say you have no videos/audio without first checking the entries below.
 
