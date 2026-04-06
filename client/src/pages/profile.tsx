@@ -351,17 +351,20 @@ export default function Profile() {
                 <>
                   <p className="text-xs text-slate-500 mb-3 mt-1">Link your number to chat with the bot from WhatsApp.</p>
                   {whatsappStep === "idle" ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="tel"
-                        placeholder="+55 11 99999-9999"
-                        className="border rounded-lg px-2 py-1.5 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                        value={whatsappPhone}
-                        onChange={(e) => setWhatsappPhone(e.target.value)}
-                      />
-                      <Button size="sm" onClick={() => requestCode.mutate(whatsappPhone)} disabled={requestCode.isPending || !whatsappPhone.trim()}>
-                        {requestCode.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Send code"}
-                      </Button>
+                    <div className="space-y-1.5">
+                      <div className="flex gap-2">
+                        <input
+                          type="tel"
+                          placeholder="5511940484040"
+                          className="border rounded-lg px-2 py-1.5 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
+                          value={whatsappPhone}
+                          onChange={(e) => setWhatsappPhone(e.target.value.replace(/\D/g, ""))}
+                        />
+                        <Button size="sm" onClick={() => requestCode.mutate(whatsappPhone)} disabled={requestCode.isPending || !whatsappPhone.trim()}>
+                          {requestCode.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Send code"}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-slate-400">Country code + number, digits only. Example: <span className="font-mono">5511940484040</span></p>
                     </div>
                   ) : (
                     <div className="space-y-2">
