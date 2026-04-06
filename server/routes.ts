@@ -106,6 +106,12 @@ interface ConversationMessage {
   content: string;
 }
 
+// Strip trailing punctuation that Claude sometimes puts inside markdown URL parentheses.
+// Converts [text](https://url.) → [text](https://url)
+function sanitizeMarkdownLinks(text: string): string {
+  return text.replace(/\((https?:[^)]+?)[.,;!?]+\)/g, '($1)');
+}
+
 // Parse [OPTIONS: chip 1 | chip 2] from the end of a Claude response.
 // Returns { answer: cleaned text, chips: string[] }
 function parseChips(raw: string): { answer: string; chips: string[] } {
@@ -425,7 +431,7 @@ ${subtopicListForOverview}`;
 EMOJI RULE (ABSOLUTE): NEVER use emojis. Only use them if the user explicitly asks.
 TONE MIRRORING: Match the user's communication style — formal/casual, brief/detailed. Don't impose a fixed tone.
 
-The user wants a learning plan. Create a structured plan using ONLY the entries below. For EACH entry in the plan, you MUST include its link so the user can access the content directly. Format links as markdown: [title](url).
+The user wants a learning plan. Create a structured plan using ONLY the entries below. For EACH entry that has a link, you MUST include it so the user can access the content directly. Format links as markdown: [short title](url) — use the subtopic name (translated) as the link text, keep it short. CRITICAL: Never put any punctuation (period, comma, etc.) inside the URL parentheses. The period ending a sentence goes AFTER the closing parenthesis: [title](url). not [title](url.)
 
 LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every single word, including subtopic names, plan titles, section headers, and descriptions. If the entries below are in a different language, translate EVERYTHING — never leave any word in the original language.${linkLangNote}
 Organize by difficulty: Beginner → Intermediate → Advanced. Be practical and brief.
@@ -480,9 +486,9 @@ ${profileContext}`;
       }
       guideMessages.push({ role: "user", content: question });
 
-      const rawGuideAnswer = await callClaude(guideMessages, 1200);
+      const rawGuideAnswer = await callClaude(guideMessages, 1500);
       if (rawGuideAnswer) {
-        const { answer: guideAnswer, chips } = parseChips(rawGuideAnswer);
+        const { answer: guideAnswer, chips } = parseChips(sanitizeMarkdownLinks(rawGuideAnswer));
         return { answer: guideAnswer, found: true, suggestions: chips.length ? chips : buildSuggestions(classification, contentItems, undefined, isPt) };
       }
     }
