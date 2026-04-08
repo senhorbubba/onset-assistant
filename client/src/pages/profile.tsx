@@ -154,7 +154,7 @@ export default function Profile() {
     mutationFn: async () => {
       const res = await fetch(`/api/profile/learning-summary?lang=${language}`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed");
-      return res.json() as Promise<{ summary: string; suggestedTopics: string[] }>;
+      return res.json() as Promise<{ summary: string; suggestedTopics: Array<{ label: string; topic: string }> }>;
     },
     onSuccess: (data) => setLearningSummary(data),
     onError: () => toast({ title: "Error", description: "Could not generate summary", variant: "destructive" }),
@@ -336,8 +336,19 @@ export default function Profile() {
                 <Phone className="w-4 h-4 text-green-600" />
                 <h2 className="text-sm font-bold text-slate-900">WhatsApp</h2>
               </div>
+              {/* Bot number — always visible */}
+              <a
+                href="https://wa.me/551153045402"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 mt-2 mb-3 px-3 py-2 bg-green-50 hover:bg-green-100 rounded-lg transition-colors group"
+              >
+                <Phone className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                <span className="text-xs text-green-700 font-medium">Chat with bot: <span className="font-mono">+55 11 5304-5402</span></span>
+                <span className="text-xs text-green-500 ml-auto group-hover:underline">Open ↗</span>
+              </a>
               {linkedPhone ? (
-                <div className="mt-3 space-y-2">
+                <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">
                     <CheckCircle className="w-4 h-4 shrink-0" />
                     <span className="font-medium">+{linkedPhone}</span>
@@ -349,7 +360,7 @@ export default function Profile() {
                 </div>
               ) : (
                 <>
-                  <p className="text-xs text-slate-500 mb-3 mt-1">Link your number to chat with the bot from WhatsApp.</p>
+                  <p className="text-xs text-slate-500 mb-3">Link your number to receive answers on WhatsApp. You must message the bot first to activate the connection.</p>
                   {whatsappStep === "idle" ? (
                     <div className="space-y-1.5">
                       <div className="flex gap-2">
