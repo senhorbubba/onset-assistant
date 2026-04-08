@@ -223,6 +223,26 @@ export const translations = {
       emailNotificationsDesc: "Receive email when an admin responds to your question.",
       emailNotificationsOn: "Enabled",
       emailNotificationsOff: "Disabled",
+      activity: "Activity",
+      questions: "questions",
+      learningSummaryGenerate: "Generate",
+      learningSummaryGenerating: "Generating...",
+      learningSummaryEmpty: "Click Generate to get an AI summary of your learning journey.",
+      learningSummaryExploreNext: "Explore next",
+      whatsappChatWithBot: "Chat with bot",
+      whatsappLinkDesc: "Link your number to receive answers on WhatsApp. You must message the bot first to activate the connection.",
+      whatsappUnlink: "Unlink number",
+      whatsappSendCode: "Send code",
+      whatsappVerify: "Verify",
+      whatsappChangeNumber: "Change number or resend",
+      whatsappCodeSentTo: (phone: string) => `Code sent to +${phone} via WhatsApp.`,
+      whatsappCodeSentTitle: "Code sent",
+      whatsappCodeSentDesc: "Check your WhatsApp for the 6-digit code.",
+      whatsappVerifiedTitle: "Verified",
+      whatsappVerifiedDesc: "WhatsApp number linked successfully.",
+      whatsappUnlinkedTitle: "Unlinked",
+      whatsappUnlinkedDesc: "WhatsApp number removed.",
+      whatsappUnlinkError: "Could not unlink.",
     },
     notifications: {
       title: "Notifications",
@@ -458,6 +478,26 @@ export const translations = {
       emailNotificationsDesc: "Receba e-mail quando um administrador responder sua pergunta.",
       emailNotificationsOn: "Ativado",
       emailNotificationsOff: "Desativado",
+      activity: "Atividade",
+      questions: "perguntas",
+      learningSummaryGenerate: "Gerar",
+      learningSummaryGenerating: "Gerando...",
+      learningSummaryEmpty: "Clique em Gerar para obter um resumo de IA da sua jornada de aprendizado.",
+      learningSummaryExploreNext: "Explorar mais",
+      whatsappChatWithBot: "Falar com o bot",
+      whatsappLinkDesc: "Vincule seu número para receber respostas pelo WhatsApp. Você deve enviar uma mensagem ao bot primeiro para ativar a conexão.",
+      whatsappUnlink: "Desvincular número",
+      whatsappSendCode: "Enviar código",
+      whatsappVerify: "Verificar",
+      whatsappChangeNumber: "Trocar número ou reenviar",
+      whatsappCodeSentTo: (phone: string) => `Código enviado para +${phone} pelo WhatsApp.`,
+      whatsappCodeSentTitle: "Código enviado",
+      whatsappCodeSentDesc: "Verifique seu WhatsApp para o código de 6 dígitos.",
+      whatsappVerifiedTitle: "Verificado",
+      whatsappVerifiedDesc: "Número do WhatsApp vinculado com sucesso.",
+      whatsappUnlinkedTitle: "Desvinculado",
+      whatsappUnlinkedDesc: "Número do WhatsApp removido.",
+      whatsappUnlinkError: "Não foi possível desvincular.",
     },
     notifications: {
       title: "Notificações",
@@ -648,6 +688,26 @@ export interface Translations {
     emailNotificationsDesc: string;
     emailNotificationsOn: string;
     emailNotificationsOff: string;
+    activity: string;
+    questions: string;
+    learningSummaryGenerate: string;
+    learningSummaryGenerating: string;
+    learningSummaryEmpty: string;
+    learningSummaryExploreNext: string;
+    whatsappChatWithBot: string;
+    whatsappLinkDesc: string;
+    whatsappUnlink: string;
+    whatsappSendCode: string;
+    whatsappVerify: string;
+    whatsappChangeNumber: string;
+    whatsappCodeSentTo: (phone: string) => string;
+    whatsappCodeSentTitle: string;
+    whatsappCodeSentDesc: string;
+    whatsappVerifiedTitle: string;
+    whatsappVerifiedDesc: string;
+    whatsappUnlinkedTitle: string;
+    whatsappUnlinkedDesc: string;
+    whatsappUnlinkError: string;
   };
   notifications: {
     title: string;

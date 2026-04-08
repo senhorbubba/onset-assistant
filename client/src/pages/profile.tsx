@@ -110,8 +110,8 @@ export default function Profile() {
       if (!res.ok) { const d = await res.json(); throw new Error(d.message || "Failed"); }
       return res.json();
     },
-    onSuccess: () => { setWhatsappStep("code-sent"); toast({ title: "Code sent", description: "Check your WhatsApp for the 6-digit code." }); },
-    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onSuccess: () => { setWhatsappStep("code-sent"); toast({ title: t.profile.whatsappCodeSentTitle, description: t.profile.whatsappCodeSentDesc }); },
+    onError: (e: Error) => toast({ title: t.admin.error, description: e.message, variant: "destructive" }),
   });
 
   const verifyCode = useMutation({
@@ -129,9 +129,9 @@ export default function Profile() {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       setWhatsappStep("idle");
       setWhatsappCode("");
-      toast({ title: "Verified", description: "WhatsApp number linked successfully." });
+      toast({ title: t.profile.whatsappVerifiedTitle, description: t.profile.whatsappVerifiedDesc });
     },
-    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t.admin.error, description: e.message, variant: "destructive" }),
   });
 
   const unlinkWhatsapp = useMutation({
@@ -144,9 +144,9 @@ export default function Profile() {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       setWhatsappPhone("");
       setWhatsappStep("idle");
-      toast({ title: "Unlinked", description: "WhatsApp number removed." });
+      toast({ title: t.profile.whatsappUnlinkedTitle, description: t.profile.whatsappUnlinkedDesc });
     },
-    onError: () => toast({ title: "Error", description: "Could not unlink.", variant: "destructive" }),
+    onError: () => toast({ title: t.admin.error, description: t.profile.whatsappUnlinkError, variant: "destructive" }),
   });
 
   const [learningSummary, setLearningSummary] = useState<{ summary: string; suggestedTopics: Array<{ label: string; topic: string }> } | null>(null);
@@ -234,7 +234,7 @@ export default function Profile() {
                   <div className="p-2 bg-primary/10 rounded-lg">
                     <Sparkles className="w-5 h-5 text-primary" />
                   </div>
-                  <h2 className="text-lg font-bold text-slate-900">Learning Summary</h2>
+                  <h2 className="text-lg font-bold text-slate-900">{t.profile.learningSummary}</h2>
                 </div>
                 <Button
                   variant="outline"
@@ -243,13 +243,13 @@ export default function Profile() {
                   disabled={generateSummary.isPending || chatHistory.length === 0}
                 >
                   {generateSummary.isPending
-                    ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Generating...</>
-                    : <><Sparkles className="w-3.5 h-3.5 mr-1.5" /> Generate</>
+                    ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> {t.profile.learningSummaryGenerating}</>
+                    : <><Sparkles className="w-3.5 h-3.5 mr-1.5" /> {t.profile.learningSummaryGenerate}</>
                   }
                 </Button>
               </div>
               {!learningSummary && !generateSummary.isPending && (
-                <p className="text-sm text-slate-400">Click Generate to get an AI summary of your learning journey.</p>
+                <p className="text-sm text-slate-400">{t.profile.learningSummaryEmpty}</p>
               )}
               {learningSummary && (
                 <div className="space-y-4">
@@ -258,7 +258,7 @@ export default function Profile() {
                   </p>
                   {learningSummary.suggestedTopics.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Explore next</p>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">{t.profile.learningSummaryExploreNext}</p>
                       <div className="flex flex-wrap gap-2">
                         {learningSummary.suggestedTopics.map((s) => (
                           <button
@@ -280,8 +280,8 @@ export default function Profile() {
             {/* Activity — stats + full question history combined */}
             <Card className="p-6">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold text-slate-900">Activity</h2>
-                <Badge variant="secondary" className="text-xs">{questionsAsked} questions</Badge>
+                <h2 className="text-lg font-bold text-slate-900">{t.profile.activity}</h2>
+                <Badge variant="secondary" className="text-xs">{questionsAsked} {t.profile.questions}</Badge>
               </div>
 
               {/* Stats row */}
@@ -345,7 +345,7 @@ export default function Profile() {
               >
                 <Phone className="w-3.5 h-3.5 text-green-600 shrink-0" />
                 <div className="flex flex-col">
-                  <span className="text-xs text-green-700 font-medium">Chat with bot</span>
+                  <span className="text-xs text-green-700 font-medium">{t.profile.whatsappChatWithBot}</span>
                   <span className="text-xs text-green-600 font-mono">+55 11 5304-5402</span>
                 </div>
               </a>
@@ -357,12 +357,12 @@ export default function Profile() {
                   </div>
                   <Button size="sm" variant="outline" className="w-full text-xs text-slate-500" onClick={() => unlinkWhatsapp.mutate()} disabled={unlinkWhatsapp.isPending}>
                     {unlinkWhatsapp.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
-                    Unlink number
+                    {t.profile.whatsappUnlink}
                   </Button>
                 </div>
               ) : (
                 <>
-                  <p className="text-xs text-slate-500 mb-3">Link your number to receive answers on WhatsApp. You must message the bot first to activate the connection.</p>
+                  <p className="text-xs text-slate-500 mb-3">{t.profile.whatsappLinkDesc}</p>
                   {whatsappStep === "idle" ? (
                     <div className="space-y-1.5">
                       <div className="flex gap-2">
@@ -374,13 +374,13 @@ export default function Profile() {
                           onChange={(e) => setWhatsappPhone(e.target.value.replace(/\D/g, ""))}
                         />
                         <Button size="sm" onClick={() => requestCode.mutate(whatsappPhone)} disabled={requestCode.isPending || !whatsappPhone.trim()}>
-                          {requestCode.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Send code"}
+                          {requestCode.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : t.profile.whatsappSendCode}
                         </Button>
                       </div>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <p className="text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-2">Code sent to <strong>+{whatsappPhone.replace(/\D/g, "")}</strong> via WhatsApp.</p>
+                      <p className="text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-2">{t.profile.whatsappCodeSentTo(whatsappPhone.replace(/\D/g, ""))}</p>
                       <div className="flex gap-2">
                         <input
                           type="text"
@@ -392,11 +392,11 @@ export default function Profile() {
                           onChange={(e) => setWhatsappCode(e.target.value.replace(/\D/g, ""))}
                         />
                         <Button size="sm" onClick={() => verifyCode.mutate()} disabled={verifyCode.isPending || whatsappCode.length < 6}>
-                          {verifyCode.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Verify"}
+                          {verifyCode.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : t.profile.whatsappVerify}
                         </Button>
                       </div>
                       <button className="text-xs text-primary hover:underline" onClick={() => { setWhatsappStep("idle"); setWhatsappCode(""); }}>
-                        Change number or resend
+                        {t.profile.whatsappChangeNumber}
                       </button>
                     </div>
                   )}
