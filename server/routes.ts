@@ -643,10 +643,13 @@ export async function registerRoutes(
         expiresAt: Date.now() + 10 * 60 * 1000,
       });
 
-      const sent = await sendWhatsAppMessage(
-        normalized,
-        `Your onset. verification code is: *${code}*\n\nThis code expires in 10 minutes.`
-      );
+      const userProfile = await storage.getUserProfile(userId);
+      const isPt = userProfile?.preferredLanguage === "pt-BR";
+      const otpMessage = isPt
+        ? `Seu código de verificação onset. é: *${code}*\n\nEste código expira em 10 minutos.`
+        : `Your onset. verification code is: *${code}*\n\nThis code expires in 10 minutes.`;
+
+      const sent = await sendWhatsAppMessage(normalized, otpMessage);
       if (!sent) {
         pendingVerifications.delete(normalized);
         return res.status(502).json({
@@ -775,10 +778,11 @@ export async function registerRoutes(
               allTopics.length > 0 ? allTopics[0] : null;
 
             if (!defaultTopic) {
-              await sendWhatsAppMessage(
-                from,
-                "No topics available yet. Please try again later."
-              );
+              const noTopicMsg =
+                (profile?.preferredLanguage || "") === "pt-BR"
+                  ? "Nenhum tópico disponível ainda. Por favor, tente novamente mais tarde."
+                  : "No topics available yet. Please try again later.";
+              await sendWhatsAppMessage(from, noTopicMsg);
               continue;
             }
 
@@ -810,12 +814,23 @@ export async function registerRoutes(
               /respond?\s+in\s+english|speak\s+english|switch\s+to\s+english/i.test(
                 text
               );
-            let detectedLang =
+            // Determine language: stored preference wins, explicit switch overrides,
+            // heuristic (looksPortuguese) sets it when no preference is stored yet.
+            // We never flip back to English on a neutral/short message — only an
+            // explicit English request can do that.
+            let detectedLang: string =
               profile?.preferredLanguage ||
               (looksPortuguese ? "pt-BR" : "en");
             if (explicitPt) detectedLang = "pt-BR";
             if (explicitEn) detectedLang = "en";
-            if (explicitPt || explicitEn) {
+
+            // Persist whenever there is a positive signal so language sticks
+            // across short/neutral messages.
+            const shouldSaveLang =
+              explicitPt ||
+              explicitEn ||
+              (looksPortuguese && profile?.preferredLanguage !== "pt-BR");
+            if (shouldSaveLang) {
               await storage.setUserPreferredLanguage(
                 linkedUser.id,
                 detectedLang

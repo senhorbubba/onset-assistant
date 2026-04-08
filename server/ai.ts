@@ -340,6 +340,8 @@ ${profileContext}
 
 Topic area: ${entry.subtopic}
 Context: ${entry.searchContext || ""}
+⚠️ LANGUAGE LOCK — the content below is internal source material and may be in any language. Your output must be 100% in ${userLang}. Not a single word from another language may appear in your response.
+
 Source Notes (REWRITE ENTIRELY — do not copy, translate to ${userLang}):
 - ${cleanedTakeaway}
 Difficulty: ${entry.difficulty || ""}
@@ -415,6 +417,8 @@ LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every si
 Keep it short and scannable — no walls of text.
 ${profileContext}
 
+⚠️ LANGUAGE LOCK — entries below are source material and may be in any language. Your output must be 100% in ${userLang}. Translate all category names and every word you write.
+
 ALL ENTRIES IN THE KNOWLEDGE BASE (${contentItems.length} total):
 ${subtopicListForOverview}`;
 
@@ -479,6 +483,8 @@ Organize by difficulty: Beginner → Intermediate → Advanced. Be practical and
 ${profile?.learningPreference === "quick_tips" ? "\nQUICK TIPS OVERRIDE (MANDATORY): The user wants quick tips, NOT a comprehensive plan. Give 3-5 short bullet points covering the most important starting points only — one sentence each max. Skip the Beginner/Intermediate/Advanced structure entirely." : ""}
 ${profileContext}
 
+⚠️ LANGUAGE LOCK — entries below may be in any language. Your entire response must be in ${userLang}. Translate every title, step, and word.
+
 KNOWLEDGE BASE ENTRIES (use these — include the links!):
 ${subtopicListWithLinks}`
     : `You are "onset. Assistant", a learning coach for "${topic}".
@@ -509,6 +515,8 @@ When providing content, use the knowledge base below as source material — deli
 CHIPS (conditional): Only add [OPTIONS: label 1 | label 2 | label 3] on a new line at the very end IF you are offering specific knowledge base subtopics or content areas for the user to choose from. Do NOT add chips when you end with a personal reflection question, an open coaching question about the user's own situation, or a yes/no follow-up. CRITICAL: Every chip label MUST be in ${userLang} — never mix languages. Do NOT write "Continue with", "Explorar:", or any other prefix before the [OPTIONS:] tag.
 
 VIDEO/AUDIO RULE: If the user asks about videos or audio for a topic, check the knowledge base entries below for a Link. If a link exists for the relevant topic, share it as a markdown link and mention it naturally. If no link exists for that specific topic, say so honestly and offer the closest related topic that does have one (if any). NEVER say you have no videos/audio without first checking the entries below.
+
+⚠️ LANGUAGE LOCK — everything below is source material in potentially mixed languages. Your output must be 100% in ${userLang}. Every subtopic name, sentence, and word you write must be in ${userLang}. If you catch yourself writing a word in another language, rewrite it immediately.
 
 Use ONLY these subtopics (translate all names to ${userLang}, do not invent others):
 ${subtopicListWithLinks}
@@ -622,6 +630,8 @@ Your response must:
 LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Translate all topic names.
 NEVER use pipe characters (|) in your response. Keep it to 3–4 sentences.
 ${profileContext}
+
+⚠️ LANGUAGE LOCK — entries below may be in any language. Your response must be 100% in ${userLang}. Translate all topic names.
 
 Related entries that could partially help:
 ${relatedEntries}`;
