@@ -881,7 +881,7 @@ export async function registerRoutes(
             });
 
             if (result.found && result.answer) {
-              let reply = result.answer;
+              let reply = stripMarkdownLinksForWhatsApp(result.answer);
               if (result.link) reply += `\n\n${result.link}`;
               if (result.suggestions && result.suggestions.length > 0) {
                 lastSuggestions.set(from, result.suggestions);
@@ -923,6 +923,19 @@ export async function registerRoutes(
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
+
+// WhatsApp does not render markdown links ([text](url)). Convert them to a
+// plain label + bare URL so WhatsApp auto-links the URL correctly.
+function stripMarkdownLinksForWhatsApp(text: string): string {
+  return text.replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, (_match, label, url) => {
+    const cleanLabel = label.trim();
+    const cleanUrl = url.trim();
+    // If the label is generic ("aqui", "here", "link", "clique aqui", etc.)
+    // just return the URL. Otherwise keep "Label: URL" for context.
+    const genericLabels = /^(aqui|here|link|clique aqui|click here|assistir|watch|ver|veja|acesse|access|abrir|open)$/i;
+    return genericLabels.test(cleanLabel) ? cleanUrl : `${cleanLabel}: ${cleanUrl}`;
+  });
+}
 
 async function sendWhatsAppMessage(to: string, text: string): Promise<boolean> {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;

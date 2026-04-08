@@ -476,7 +476,9 @@ async function generateExploreOrPlanResponse(
 EMOJI RULE (ABSOLUTE): NEVER use emojis. Only use them if the user explicitly asks.
 TONE MIRRORING: Match the user's communication style — formal/casual, brief/detailed. Don't impose a fixed tone.
 
-The user wants a learning plan. Create a structured plan using ONLY the entries below. For EACH entry that has a link, you MUST include it so the user can access the content directly. Format links as markdown: [short title](url) — use the subtopic name (translated) as the link text, keep it short. CRITICAL: Never put any punctuation (period, comma, etc.) inside the URL parentheses. The period ending a sentence goes AFTER the closing parenthesis: [title](url). not [title](url.)
+The user wants a learning plan. Create a structured plan using ONLY the entries below. For EACH entry that has a link, you MUST include the bare URL on its own line so the user can access the content directly. Do NOT use markdown link syntax ([text](url)) — just write the URL as plain text. Example format:
+• Topic name
+  URL here
 
 LANGUAGE RULE (MANDATORY): Your ENTIRE response MUST be in ${userLang}. Every single word, including subtopic names, plan titles, section headers, and descriptions. If the entries below are in a different language, translate EVERYTHING — never leave any word in the original language.${linkLangNote}
 Organize by difficulty: Beginner → Intermediate → Advanced. Be practical and brief.
