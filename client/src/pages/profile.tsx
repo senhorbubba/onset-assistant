@@ -341,11 +341,13 @@ export default function Profile() {
                 href="https://wa.me/551153045402"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 mt-2 mb-3 px-3 py-2 bg-green-50 hover:bg-green-100 rounded-lg transition-colors group"
+                className="flex items-center gap-2 mt-2 mb-3 px-3 py-2 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
               >
                 <Phone className="w-3.5 h-3.5 text-green-600 shrink-0" />
-                <span className="text-xs text-green-700 font-medium">Chat with bot: <span className="font-mono">+55 11 5304-5402</span></span>
-                <span className="text-xs text-green-500 ml-auto group-hover:underline">Open ↗</span>
+                <div className="flex flex-col">
+                  <span className="text-xs text-green-700 font-medium">Chat with bot</span>
+                  <span className="text-xs text-green-600 font-mono">+55 11 5304-5402</span>
+                </div>
               </a>
               {linkedPhone ? (
                 <div className="space-y-2">
@@ -375,7 +377,6 @@ export default function Profile() {
                           {requestCode.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Send code"}
                         </Button>
                       </div>
-                      <p className="text-xs text-slate-400">Country code + number, digits only. Example: <span className="font-mono">5511940484040</span></p>
                     </div>
                   ) : (
                     <div className="space-y-2">
