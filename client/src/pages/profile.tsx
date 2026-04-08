@@ -362,21 +362,23 @@ export default function Profile() {
                 </div>
               ) : (
                 <>
-                  <p className="text-xs text-slate-500 mb-3">{t.profile.whatsappLinkDesc}</p>
+                  <div className="mb-3 space-y-1">
+                    <p className="text-xs text-slate-600">{t.profile.whatsappStep1}</p>
+                    <p className="text-xs text-slate-600">{t.profile.whatsappStep2}</p>
+                  </div>
                   {whatsappStep === "idle" ? (
-                    <div className="space-y-1.5">
-                      <div className="flex gap-2">
-                        <input
-                          type="tel"
-                          placeholder="5511940484040"
-                          className="border rounded-lg px-2 py-1.5 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
-                          value={whatsappPhone}
-                          onChange={(e) => setWhatsappPhone(e.target.value.replace(/\D/g, ""))}
-                        />
-                        <Button size="sm" onClick={() => requestCode.mutate(whatsappPhone)} disabled={requestCode.isPending || !whatsappPhone.trim()}>
-                          {requestCode.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : t.profile.whatsappSendCode}
-                        </Button>
-                      </div>
+                    <div className="space-y-2">
+                      <input
+                        type="tel"
+                        placeholder="5511940484040"
+                        className="border rounded-lg px-2 py-1.5 text-sm w-full focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
+                        value={whatsappPhone}
+                        onChange={(e) => setWhatsappPhone(e.target.value.replace(/\D/g, ""))}
+                      />
+                      <Button size="sm" className="w-full" onClick={() => requestCode.mutate(whatsappPhone)} disabled={requestCode.isPending || !whatsappPhone.trim()}>
+                        {requestCode.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+                        {t.profile.whatsappSendCode}
+                      </Button>
                     </div>
                   ) : (
                     <div className="space-y-2">

@@ -230,7 +230,8 @@ export const translations = {
       learningSummaryEmpty: "Click Generate to get an AI summary of your learning journey.",
       learningSummaryExploreNext: "Explore next",
       whatsappChatWithBot: "Chat with bot",
-      whatsappLinkDesc: "Link your number to receive answers on WhatsApp. You must message the bot first to activate the connection.",
+      whatsappStep1: "1. Open WhatsApp and send any message to the bot using the link above.",
+      whatsappStep2: "2. Come back here, enter your number, and tap Send code.",
       whatsappUnlink: "Unlink number",
       whatsappSendCode: "Send code",
       whatsappVerify: "Verify",
@@ -485,7 +486,8 @@ export const translations = {
       learningSummaryEmpty: "Clique em Gerar para obter um resumo de IA da sua jornada de aprendizado.",
       learningSummaryExploreNext: "Explorar mais",
       whatsappChatWithBot: "Falar com o bot",
-      whatsappLinkDesc: "Vincule seu número para receber respostas pelo WhatsApp. Você deve enviar uma mensagem ao bot primeiro para ativar a conexão.",
+      whatsappStep1: "1. Abra o WhatsApp e envie qualquer mensagem ao bot usando o link acima.",
+      whatsappStep2: "2. Volte aqui, insira seu número e toque em Enviar código.",
       whatsappUnlink: "Desvincular número",
       whatsappSendCode: "Enviar código",
       whatsappVerify: "Verificar",
@@ -695,7 +697,8 @@ export interface Translations {
     learningSummaryEmpty: string;
     learningSummaryExploreNext: string;
     whatsappChatWithBot: string;
-    whatsappLinkDesc: string;
+    whatsappStep1: string;
+    whatsappStep2: string;
     whatsappUnlink: string;
     whatsappSendCode: string;
     whatsappVerify: string;
