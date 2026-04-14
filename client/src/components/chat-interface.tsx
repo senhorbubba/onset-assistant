@@ -26,7 +26,7 @@ interface ChatInterfaceProps {
 }
 
 export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
-  const { language, t } = useLanguage();
+  const { language, t, setLanguage } = useLanguage();
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
@@ -72,6 +72,8 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
   const [conversationStarted, setConversationStarted] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Always holds the latest sendMessage so the initialMessage effect never closes over stale state.
+  const sendMessageRef = useRef<(text: string) => Promise<void>>(async () => {});
 
   function getEmbedInfo(url: string): { embedUrl: string; embeddable: boolean } {
     try {
@@ -117,19 +119,32 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
     ]);
   }, [language, topic]);
 
+  useEffect(() => { sendMessageRef.current = sendMessage; });
+
   useEffect(() => {
     if (initialMessage && topic) {
-      const timer = setTimeout(() => sendMessage(initialMessage), 300);
+      const timer = setTimeout(() => sendMessageRef.current(initialMessage), 300);
       return () => clearTimeout(timer);
     }
   }, [initialMessage, topic]);
+
+  function detectLangSwitch(text: string): "en" | "pt-BR" | null {
+    const t = text.trim().toLowerCase();
+    if (/english|inglês|inglés/.test(t)) return "en";
+    if (/portugu[eê]s|portugues/.test(t)) return "pt-BR";
+    return null;
+  }
 
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
     setConversationStarted(true);
 
+    // Detect language switch intent before sending so we can update the UI
+    // language immediately when the bot confirms the switch.
+    const switchTo = detectLangSwitch(text);
+
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       role: "user",
       content: text,
       timestamp: new Date(),
@@ -140,19 +155,24 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
     setInput("");
 
     const conversationHistory = updatedMessages
-      .filter(m => m.id !== "welcome")
+      .filter(m => m.id !== "welcome" && m.content.trim().length > 0)
       .map(m => ({ role: m.role as "user" | "bot", content: m.content }));
-    
+
     try {
       const response = await chatMutation.mutateAsync({
         topic,
         question: userMessage.content,
         language,
-        history: conversationHistory.slice(0, -1),
+        // Exclude the just-sent message; cap at 6 to avoid large payloads (server trims anyway)
+        history: conversationHistory.slice(0, -1).slice(-6),
       });
 
+      // If the user asked to switch language and the bot confirmed it,
+      // update the UI language so subsequent messages go in the right language.
+      if (switchTo) setLanguage(switchTo);
+
       const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: crypto.randomUUID(),
         role: "bot",
         content: response.answer,
         link: response.link,
@@ -162,10 +182,16 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
 
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
+      const isTimeout = error instanceof Error && (error.name === "AbortError" || error.message.toLowerCase().includes("abort"));
+      const errorContent = isTimeout
+        ? (language === "pt-BR"
+            ? "Desculpe, a resposta está demorando mais do que o esperado. Por favor, tente novamente."
+            : "Sorry, this is taking longer than usual. Please try again in a moment.")
+        : t.chat.errorMessage;
       const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: crypto.randomUUID(),
         role: "bot",
-        content: t.chat.errorMessage,
+        content: errorContent,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -237,7 +263,7 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
         ref={scrollRef}
       >
         <AnimatePresence initial={false}>
-          {messages.map((msg, msgIdx) => (
+          {messages.filter(msg => msg.role === "user" || msg.content.trim().length > 0).map((msg, msgIdx, arr) => (
             <motion.div
               key={msg.id}
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -319,7 +345,7 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
                   );
                 })()}
                 {/* Suggestion chips — only on the latest bot message */}
-                {msg.role === "bot" && msg.suggestions && msg.suggestions.length > 0 && msgIdx === messages.length - 1 && !chatMutation.isPending && (
+                {msg.role === "bot" && msg.suggestions && msg.suggestions.length > 0 && msgIdx === arr.length - 1 && !chatMutation.isPending && (
                   <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-border/30">
                     {msg.suggestions.map((s) => (
                       <button

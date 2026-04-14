@@ -28,12 +28,22 @@ async function callClaude(
     role: "user" | "assistant";
     content: string;
   }>;
+
+  // Use prompt caching for large system prompts to reduce latency and cost.
+  // cache_control marks the system prompt cacheable for 5 minutes — safe because
+  // system prompts change only when content is uploaded.
+  const systemPayload: Anthropic.MessageCreateParamsNonStreaming["system"] =
+    systemMsg.length > 3000
+      ? [{ type: "text", text: systemMsg, cache_control: { type: "ephemeral" } } as Anthropic.TextBlockParam]
+      : systemMsg;
+
   const response = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
-    system: systemMsg,
+    system: systemPayload,
     messages: chatMsgs,
     max_tokens: maxTokens,
   });
+
   const text = response.content[0]?.type === "text" ? response.content[0].text.trim() : "";
   if (!text) throw new Error("Empty response from Claude API");
   return text;
@@ -146,15 +156,12 @@ function buildSuggestions(
   isPt: boolean
 ): string[] {
   if (classification.startsWith("MATCH") && matchedIdx !== undefined) {
-    const related = contentItems
-      .filter((_, i) => i !== matchedIdx)
-      .slice(0, 1)
-      .map((item) => item.subtopic);
+    // Keep to translated generic labels — raw DB subtopics may be in the wrong language.
     return [
       isPt ? "Me conte mais sobre isso" : "Tell me more about this",
       isPt ? "Me dê um exemplo prático" : "Give me a practical example",
-      ...related,
-    ].slice(0, 3);
+      isPt ? "Mostrar outros tópicos" : "Show other topics",
+    ];
   }
   if (classification.startsWith("OVERVIEW")) {
     return [
@@ -164,13 +171,12 @@ function buildSuggestions(
     ];
   }
   if (classification.startsWith("PLAN")) {
-    const first =
-      contentItems.filter((i) => i.difficulty === "Beginner")[0]?.subtopic ||
-      contentItems[0]?.subtopic;
+    // Do NOT include raw DB subtopics — they may be in the wrong language.
+    // The plan response body already lists all topics; chips are just navigation.
     return [
-      ...(first ? [first] : []),
       isPt ? "Tenho uma pergunta específica" : "I have a specific question",
-    ].slice(0, 3);
+      isPt ? "Mostrar tópicos disponíveis" : "Show available topics",
+    ];
   }
   if (classification.startsWith("EXPLORE")) return [];
   return [
@@ -185,7 +191,7 @@ const CONTINUATION_RE =
   /^(tell me more|tellme more|me conta mais|me ensina mais|continue|continua|continuar|go on|expand|expand on that|yes|sim|sure|claro|ok|okay|got it|entendi|and then|e depois|e aí|what else|o que mais|more|mais)[\s?!.]*$/i;
 
 const LANG_SWITCH_RE =
-  /^(responde?\s+(em\s+)?(português|portugues|english|inglês|inglés)|change\s+(to\s+)?(english|portuguese|português)|switch\s+to\s+(english|portuguese|português)|s[oó]\s+em\s+portugu[eê]s|please\s+(respond\s+in|use)\s+(english|portuguese|português)|fala\s+em\s+(português|english|inglês)|continua?\s+(em|in)\s+(português|portuguese|english|inglês|english)|in\s+english\s+please|em\s+português\s+por\s+favor)[.!?]?\s*$/i;
+  /^(responde?\s+(em\s+)?(português|portugues|english|inglês|inglés)|change\s+(to\s+)?(english|portuguese|português)|switch\s+to\s+(english|portuguese|português)|s[oó]\s+em\s+portugu[eê]s|please\s+(respond\s+in|use)\s+(english|portuguese|português)|(respond\s+in|use)\s+(english|portuguese|português)\s+please|fala\s+em\s+(português|english|inglês)|continua?\s+(em|in)\s+(português|portuguese|english|inglês|english)|in\s+english(\s+please)?|em\s+português(\s+por\s+favor)?|respond\s+in\s+english(\s+please)?|responde\s+em\s+portugu[eê]s)[.!?]?\s*$/i;
 
 async function classifyIntent(
   topic: string,
@@ -200,9 +206,15 @@ async function classifyIntent(
     history.length > 0
       ? [...history].reverse().find((m) => m.role === "bot")?.content || ""
       : "";
+  // Detect if the last bot message was an overview (category list).
+  // Checks: 3+ newlines (multi-line response) AND either markdown bold
+  // (the overview prompt always generates **Category**), a "— N topic(s)/tópico(s)"
+  // count pattern, or at least 2 bullet lines — robust to Portuguese responses.
+  const bulletLineCount = lastBotMsg.split("\n").filter((l) => l.trim().startsWith("-")).length;
   const lastWasOverview =
     (lastBotMsg.match(/\n/g) || []).length >= 3 &&
-    /\*\*|—\s*\d+\s*topic|\btopics?\b/i.test(lastBotMsg);
+    (bulletLineCount >= 2 ||
+      /\*\*|—\s*\d+\s*t[oó]pico|—\s*\d+\s*topic|\btopics?\b|\btópicos?\b/i.test(lastBotMsg));
 
   if (
     (CONTINUATION_RE.test(question.trim()) ||
@@ -237,7 +249,8 @@ CRITICAL — CONTEXT AWARENESS:
 - VIDEO/AUDIO RULE: If the user asks whether there are videos, audio, or media about a topic they are currently discussing (from conversation history), classify as MATCH for that topic entry so the link can be surfaced. If the topic is broad or unclear, classify as EXPLORE.
 
 Respond with ONLY the classification tag, nothing else.
-${isPt ? "The user may write in Portuguese." : ""}
+The primary audience is Brazilian — users often write in Portuguese. Short messages (greetings, "oi", "olá", "hi", "ok", "sim") are ALWAYS EXPLORE, never OFF_TOPIC.
+${!isPt && question.trim().length <= 10 ? "This message is very short — treat it as a greeting or continuation (EXPLORE) unless it clearly matches an entry." : ""}
 
 ENTRIES:
 ${contentItems.map((item, i) => `[${i}] ${item.subtopic} | Keywords: ${item.keywords || "none"} | Context: ${item.searchContext || "none"}`).join("\n")}`;
@@ -406,8 +419,9 @@ TONE MIRRORING: Match the user's communication style from their message — form
 
 The user wants to know what content is available. Give a HIGH-LEVEL overview only.
 - Group the ${contentItems.length} entries into logical categories (e.g., "Feedback", "Listening", "Conflict").
+- Count EXACTLY how many entries fall into each category — do not estimate or round. The total across all categories must equal ${contentItems.length}.
 - Format MUST be a markdown bullet list, one category per line, like this:
-  - **Category Name** — N topics
+  - **Category Name** — N tópicos
 - Do NOT put multiple categories on the same line. Each category gets its own bullet.
 - Do NOT list individual subtopic names or describe them.
 - After the list, add one short sentence inviting the user to pick a category.

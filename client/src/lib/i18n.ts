@@ -734,7 +734,7 @@ export function detectLanguage(): Language {
     return "pt-BR";
   }
 
-  return "en";
+  return "pt-BR";
 }
 
 export function getTranslations(lang: Language): Translations {

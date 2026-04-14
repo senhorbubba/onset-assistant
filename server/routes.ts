@@ -644,7 +644,8 @@ export async function registerRoutes(
       });
 
       const userProfile = await storage.getUserProfile(userId);
-      const isPt = userProfile?.preferredLanguage === "pt-BR";
+      // Default to pt-BR when no preference is stored (primary market is Brazil).
+      const isPt = (userProfile?.preferredLanguage ?? "pt-BR") !== "en";
       const otpMessage = isPt
         ? `Seu código de verificação onset. é: *${code}*\n\nEste código expira em 10 minutos.`
         : `Your onset. verification code is: *${code}*\n\nThis code expires in 10 minutes.`;
@@ -700,6 +701,16 @@ export async function registerRoutes(
     try {
       await storage.setUserWhatsappPhone(userId, normalized);
       res.json({ success: true, phone: normalized });
+
+      // Send a welcome message to the newly linked number.
+      const userProfile = await storage.getUserProfile(userId);
+      const isPt = (userProfile?.preferredLanguage ?? "pt-BR") !== "en";
+      const allTopics = await storage.getAvailableTopics();
+      const topicName = allTopics[0] ?? "";
+      const welcomeMsg = isPt
+        ? `Número vinculado com sucesso! Agora você pode me perguntar qualquer coisa sobre *${topicName}* diretamente por aqui.`
+        : `Your number is now linked! You can now ask me anything about *${topicName}* directly here.`;
+      sendWhatsAppMessage(normalized, welcomeMsg).catch(() => {});
     } catch (error: any) {
       if (error?.code === "23505") {
         return res.status(409).json({
@@ -762,13 +773,7 @@ export async function registerRoutes(
             const linkedUser = await storage.getUserByWhatsappPhone(from);
 
             if (!linkedUser) {
-              const looksPortuguese =
-                /[àáâãéêíóôõúç]|como|você|quero|obrigad|aprender|sobre|pode|ajud/i.test(
-                  text
-                );
-              const unregisteredMsg = looksPortuguese
-                ? `Olá! Seu número do WhatsApp ainda não está vinculado a uma conta. Peça ao administrador para vincular seu número ao seu perfil e tente novamente.`
-                : `Hi! Your WhatsApp number is not linked to an account yet. Ask your administrator to link your number to your profile and try again.`;
+              const unregisteredMsg = `Olá! Seu número do WhatsApp ainda não está vinculado a uma conta. Peça ao administrador para vincular seu número ao seu perfil e tente novamente.`;
               await sendWhatsAppMessage(from, unregisteredMsg);
               continue;
             }
@@ -776,6 +781,8 @@ export async function registerRoutes(
             const allTopics = await storage.getAvailableTopics();
             const defaultTopic =
               allTopics.length > 0 ? allTopics[0] : null;
+
+            const profile = await storage.getUserProfile(linkedUser.id);
 
             if (!defaultTopic) {
               const noTopicMsg =
@@ -785,8 +792,6 @@ export async function registerRoutes(
               await sendWhatsAppMessage(from, noTopicMsg);
               continue;
             }
-
-            const profile = await storage.getUserProfile(linkedUser.id);
             const topicExp = await storage.getTopicExperience(
               linkedUser.id,
               defaultTopic
@@ -805,7 +810,7 @@ export async function registerRoutes(
               ]);
 
             const looksPortuguese =
-              /[àáâãéêíóôõúç]|como|você|quero|obrigad|aprender|sobre|pode|ajud/i.test(
+              /[àáâãéêíóôõúç]|^(oi|olá|ola|tudo|sim|não|nao|bom|boa|dia|tarde|noite|salve|fala|e aí|eai|valeu|obrigado|obrigada|tchau|até|ate|help|ajuda)\b|como|você|quero|obrigad|aprender|sobre|pode|ajud/i.test(
                 text
               );
             const explicitPt =
@@ -819,8 +824,7 @@ export async function registerRoutes(
             // We never flip back to English on a neutral/short message — only an
             // explicit English request can do that.
             let detectedLang: string =
-              profile?.preferredLanguage ||
-              (looksPortuguese ? "pt-BR" : "en");
+              profile?.preferredLanguage || "pt-BR";
             if (explicitPt) detectedLang = "pt-BR";
             if (explicitEn) detectedLang = "en";
 
@@ -858,7 +862,17 @@ export async function registerRoutes(
             if (numericReply) {
               const prev = lastSuggestions.get(from);
               const idx = parseInt(numericReply[1], 10) - 1;
-              if (prev && prev[idx]) resolvedText = prev[idx];
+              if (prev && prev[idx]) {
+                resolvedText = prev[idx];
+              } else {
+                // No suggestion memory (e.g. after server restart) — ask user to rephrase
+                const rephraseMsg =
+                  detectedLang === "pt-BR"
+                    ? "Por favor, escreva sua pergunta completa."
+                    : "Please type your full question.";
+                await sendWhatsAppMessage(from, rephraseMsg);
+                continue;
+              }
             }
 
             const contentItems = await getContentCached(defaultTopic);
@@ -880,7 +894,7 @@ export async function registerRoutes(
               found: result.found,
             });
 
-            if (result.found && result.answer) {
+            if (result.answer) {
               let reply = stripMarkdownLinksForWhatsApp(result.answer);
               if (result.link) reply += `\n\n${result.link}`;
               if (result.suggestions && result.suggestions.length > 0) {
@@ -904,6 +918,9 @@ export async function registerRoutes(
                   ? `Não encontrei uma resposta sobre isso na nossa base de conhecimento sobre "${defaultTopic}". Tente perguntar de outra forma!`
                   : `I don't have information about that in our "${defaultTopic}" knowledge base yet. Try asking something else!`;
               await sendWhatsAppMessage(from, notFoundMsg);
+            }
+
+            if (!result.found) {
               await storage.logUnansweredQuestion({
                 topic: defaultTopic,
                 question: text,
