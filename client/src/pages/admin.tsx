@@ -304,9 +304,9 @@ function AdminPanel() {
                           <SelectValue placeholder={t.admin.selectTopic} />
                         </SelectTrigger>
                         <SelectContent>
-                          {topics.map((topic) => (
-                            <SelectItem key={topic} value={topic} data-testid={`option-topic-${topic}`}>
-                              {topic}
+                          {topics.map((opt) => (
+                            <SelectItem key={opt.topic} value={opt.topic} data-testid={`option-topic-${opt.topic}`}>
+                              {opt.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -558,8 +558,8 @@ function AdminPanel() {
                             <TableHead>{t.admin.userEmail}</TableHead>
                             <TableHead className="text-center">Admin</TableHead>
                             <TableHead>WhatsApp</TableHead>
-                            {topics?.map((topic) => (
-                              <TableHead key={topic} className="text-center">{topic} Qs</TableHead>
+                            {topics?.map((opt) => (
+                              <TableHead key={opt.topic} className="text-center">{opt.label} Qs</TableHead>
                             ))}
                             <TableHead>{t.admin.registered}</TableHead>
                           </TableRow>
@@ -607,10 +607,10 @@ function AdminPanel() {
                                   </Button>
                                 </div>
                               </TableCell>
-                              {topics?.map((topic) => (
-                                <TableCell key={topic} className="text-center">
+                              {topics?.map((opt) => (
+                                <TableCell key={opt.topic} className="text-center">
                                   <Badge variant="secondary" className="text-xs">
-                                    {user.questionCounts?.[topic] || 0}
+                                    {user.questionCounts?.[opt.topic] || 0}
                                   </Badge>
                                 </TableCell>
                               ))}
@@ -674,9 +674,9 @@ function AdminPanel() {
                             </Button>
                           </div>
                           <div className="flex gap-2 flex-wrap">
-                            {topics?.map((topic) => (
-                              <Badge key={topic} variant="secondary" className="text-[10px]">
-                                {topic}: {user.questionCounts?.[topic] || 0}
+                            {topics?.map((opt) => (
+                              <Badge key={opt.topic} variant="secondary" className="text-[10px]">
+                                {opt.label}: {user.questionCounts?.[opt.topic] || 0}
                               </Badge>
                             ))}
                           </div>

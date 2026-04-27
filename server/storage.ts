@@ -21,11 +21,16 @@ import {
   type InsertChatHistory,
 } from "@shared/schema";
 import { eq, and, desc, sql, count } from "drizzle-orm";
+import { translateTopicToPortuguese } from "./ai";
+
+// Dedupes concurrent translation requests for the same topic so we don't fire
+// duplicate AI calls when several users hit /api/topics at once.
+const pendingTopicTranslations = new Map<string, Promise<string>>();
 
 export interface IStorage {
   getAllContent(): Promise<Content[]>;
   getContentByTopic(topic: string): Promise<Content[]>;
-  getAvailableTopics(): Promise<string[]>;
+  getAvailableTopics(language?: string): Promise<{ topic: string; label: string }[]>;
   createContent(item: InsertContent): Promise<Content>;
   clearContentByTopic(topic: string): Promise<void>;
   clearAllContent(): Promise<void>;
@@ -74,12 +79,46 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(content).where(eq(content.topic, topic));
   }
 
-  async getAvailableTopics(): Promise<string[]> {
+  async getAvailableTopics(language?: string): Promise<{ topic: string; label: string }[]> {
     const results = await db
-      .selectDistinct({ topic: content.topic })
+      .selectDistinct({ topic: content.topic, topicLabelPt: content.topicLabelPt })
       .from(content)
       .orderBy(content.topic);
-    return results.map(r => r.topic);
+
+    if (language !== "pt-BR") {
+      return results.map(r => ({ topic: r.topic, label: r.topic }));
+    }
+
+    // For PT, fill in any missing translations via AI and persist to DB so
+    // future requests are instant.
+    await Promise.all(
+      results
+        .filter(r => !r.topicLabelPt)
+        .map(async (r) => {
+          try {
+            let promise = pendingTopicTranslations.get(r.topic);
+            if (!promise) {
+              promise = translateTopicToPortuguese(r.topic).then(async (translated) => {
+                await db
+                  .update(content)
+                  .set({ topicLabelPt: translated })
+                  .where(eq(content.topic, r.topic));
+                return translated;
+              });
+              pendingTopicTranslations.set(r.topic, promise);
+              promise.finally(() => pendingTopicTranslations.delete(r.topic));
+            }
+            r.topicLabelPt = await promise;
+          } catch {
+            // On failure, fall back to the English topic name for this request.
+          }
+        })
+    );
+
+    return results.map(r => ({
+      topic: r.topic,
+      label: r.topicLabelPt || r.topic,
+    }));
   }
 
   async createContent(item: InsertContent): Promise<Content> {

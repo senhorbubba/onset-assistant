@@ -1,9 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Content, UnansweredQuestion } from "@shared/schema";
+import { useLanguage } from "@/lib/language-context";
+
+export type TopicOption = { topic: string; label: string };
 
 export function useTopics() {
-  return useQuery<string[]>({
-    queryKey: ["/api/topics"],
+  const { language } = useLanguage();
+  return useQuery<TopicOption[]>({
+    queryKey: ["/api/topics", language],
+    queryFn: async () => {
+      const res = await fetch(`/api/topics?language=${encodeURIComponent(language)}`);
+      if (!res.ok) throw new Error("Failed to fetch topics");
+      return res.json();
+    },
   });
 }
 

@@ -66,6 +66,7 @@ export const content = pgTable("content", {
   id: serial("id").primaryKey(),
   unitId: text("unit_id"),
   topic: text("topic").notNull(),
+  topicLabelPt: text("topic_label_pt"),
   subtopic: text("subtopic").notNull(),
   searchContext: text("search_context"),
   keywords: text("keywords"),

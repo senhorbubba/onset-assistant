@@ -11,7 +11,7 @@ import type { Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useTopics } from "@/hooks/use-content";
+import { useTopics, type TopicOption } from "@/hooks/use-content";
 import { useToast } from "@/hooks/use-toast";
 import onsetLogo from "@assets/onset_logo.png";
 
@@ -104,13 +104,15 @@ export default function Home() {
     window.scrollTo(0, 0);
   }, []);
 
+  const topicLabel = topics?.find(t => t.topic === topic)?.label ?? topic;
+
   // Auto-select topic when arriving with ?topic= or ?q= param from profile
   useEffect(() => {
     if (initialMessage && topics && topics.length > 0 && !topic) {
       if (initialTopic) {
-        const found = topics.find(t => t === initialTopic);
+        const found = topics.find(t => t.topic === initialTopic);
         if (found) {
-          setTopic(found);
+          setTopic(found.topic);
         } else {
           // Topic no longer exists — warn and let user pick
           toast({
@@ -123,8 +125,8 @@ export default function Home() {
         // Fallback: extract from 'Tell me about "TopicName"' pattern
         const match = initialMessage.match(/Tell me about "([^"]+)"/i);
         const targetTopic = match ? match[1] : null;
-        const found = targetTopic ? topics.find(t => t === targetTopic) : null;
-        setTopic(found || topics[0]);
+        const found = targetTopic ? topics.find(t => t.topic === targetTopic) : null;
+        setTopic(found?.topic || topics[0]?.topic || "");
       }
     }
   }, [initialMessage, topics]);
@@ -304,8 +306,8 @@ export default function Home() {
                       <SelectValue placeholder={t.home.selectTopic} />
                     </SelectTrigger>
                     <SelectContent>
-                      {topics.map((t) => (
-                        <SelectItem key={t} value={t} data-testid={`option-topic-${t}`}>{t}</SelectItem>
+                      {topics.map((opt) => (
+                        <SelectItem key={opt.topic} value={opt.topic} data-testid={`option-topic-${opt.topic}`}>{opt.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -339,7 +341,7 @@ export default function Home() {
               </Button>
             </div>
             
-            <ChatInterface topic={topic} initialMessage={initialMessage} />
+            <ChatInterface topic={topic} topicLabel={topicLabel} initialMessage={initialMessage} />
           </motion.div>
         )}
       </main>

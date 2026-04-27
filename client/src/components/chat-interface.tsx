@@ -22,10 +22,12 @@ interface Message {
 
 interface ChatInterfaceProps {
   topic: string;
+  topicLabel?: string;
   initialMessage?: string;
 }
 
-export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
+export function ChatInterface({ topic, topicLabel, initialMessage }: ChatInterfaceProps) {
+  const displayTopic = topicLabel ?? topic;
   const { language, t, setLanguage } = useLanguage();
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
@@ -63,7 +65,7 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
     {
       id: "welcome",
       role: "bot",
-      content: t.chat.welcomeMessage(topic),
+      content: t.chat.welcomeMessage(displayTopic),
       timestamp: new Date(),
     },
   ]);
@@ -113,11 +115,11 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
       {
         id: "welcome",
         role: "bot",
-        content: t.chat.welcomeMessage(topic),
+        content: t.chat.welcomeMessage(displayTopic),
         timestamp: new Date(),
       },
     ]);
-  }, [language, topic]);
+  }, [language, topic, displayTopic]);
 
   useEffect(() => { sendMessageRef.current = sendMessage; });
 
@@ -215,7 +217,7 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
             <img src={onsetLogo} alt="Onset" className="w-10 h-10 object-contain" />
           </div>
           <h3 className="text-lg font-bold text-slate-900 mb-2" data-testid="text-experience-question">
-            {t.topicExperience.question(topic)}
+            {t.topicExperience.question(displayTopic)}
           </h3>
           <div className="space-y-3 mt-6">
             {[
@@ -248,7 +250,7 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
           <div>
             <h3 className="font-bold text-base sm:text-lg text-foreground">onset. Assistant</h3>
             <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider">
-              {t.chat.topic}: {topic}
+              {t.chat.topic}: {displayTopic}
             </p>
           </div>
         </div>
@@ -408,7 +410,7 @@ export function ChatInterface({ topic, initialMessage }: ChatInterfaceProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={t.chat.placeholder(topic)}
+            placeholder={t.chat.placeholder(displayTopic)}
             className="min-h-[48px] sm:min-h-[60px] max-h-[100px] sm:max-h-[120px] pr-12 resize-none rounded-xl border-border bg-white shadow-sm focus-visible:ring-primary/20 text-sm sm:text-base"
             data-testid="input-question"
           />

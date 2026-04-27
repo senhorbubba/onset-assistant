@@ -19,6 +19,7 @@ const upload = multer({
 const jsonItemSchema = z.object({
   Unit_ID: z.string().optional(),
   Topic: z.string(),
+  Topic_PT: z.string().optional(),
   Subtopic: z.string(),
   Search_Context: z.string().optional(),
   Keywords: z.string().optional(),
@@ -200,8 +201,9 @@ export async function registerRoutes(
 
   // ── Topics ─────────────────────────────────────────────────────────────────
 
-  app.get("/api/topics", async (_req, res) => {
-    const topics = await storage.getAvailableTopics();
+  app.get("/api/topics", async (req, res) => {
+    const language = typeof req.query.language === "string" ? req.query.language : undefined;
+    const topics = await storage.getAvailableTopics(language);
     res.json(topics);
   });
 
@@ -253,6 +255,7 @@ export async function registerRoutes(
         const contentItems = validated.map((item: any) => ({
           unitId: item.Unit_ID || null,
           topic: item.Topic,
+          topicLabelPt: item.Topic_PT || null,
           subtopic: item.Subtopic,
           searchContext: item.Search_Context || null,
           keywords: item.Keywords || null,
@@ -541,7 +544,7 @@ export async function registerRoutes(
   app.get("/api/admin/users/export", requireAdmin, async (_req, res) => {
     try {
       const usersWithStats = await storage.getAllUsersWithStats();
-      const topics = await storage.getAvailableTopics();
+      const topics = (await storage.getAvailableTopics()).map(t => t.topic);
       const BOM = "\uFEFF";
       const topicHeaders = topics.map((t) => `${t} Qs`).join(",");
       const header = `Name,Email,${topicHeaders || "Questions"},Registered`;
@@ -705,7 +708,7 @@ export async function registerRoutes(
       // Send a welcome message to the newly linked number.
       const userProfile = await storage.getUserProfile(userId);
       const isPt = (userProfile?.preferredLanguage ?? "pt-BR") !== "en";
-      const allTopics = await storage.getAvailableTopics();
+      const allTopics = (await storage.getAvailableTopics()).map(t => t.topic);
       const topicName = allTopics[0] ?? "";
       const welcomeMsg = isPt
         ? `Número vinculado com sucesso! Agora você pode me perguntar qualquer coisa sobre *${topicName}* diretamente por aqui.`
@@ -778,7 +781,7 @@ export async function registerRoutes(
               continue;
             }
 
-            const allTopics = await storage.getAvailableTopics();
+            const allTopics = (await storage.getAvailableTopics()).map(t => t.topic);
             const defaultTopic =
               allTopics.length > 0 ? allTopics[0] : null;
 

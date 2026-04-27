@@ -108,6 +108,22 @@ function getProfileLabel(field: string, key: string): string {
   return profileLabels[field]?.[key] || key || "Not specified";
 }
 
+export async function translateTopicToPortuguese(topic: string): Promise<string> {
+  const response = await anthropic.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 80,
+    messages: [
+      {
+        role: "user",
+        content: `Translate this topic name from English to Brazilian Portuguese. It's a short label for a learning module (e.g. "Sales", "Time Management", "Public Speaking"). If it's already in Portuguese, a proper noun, an acronym, or a brand name, return it unchanged. Respond with ONLY the translated name — no quotes, no explanation, no punctuation.\n\nTopic: ${topic}`,
+      },
+    ],
+  });
+  const text = response.content[0]?.type === "text" ? response.content[0].text.trim() : "";
+  const cleaned = text.replace(/^["'`]|["'`]$/g, "").trim();
+  return cleaned || topic;
+}
+
 function buildProfileContext(
   profile: UserProfile | null,
   topicExp: TopicExperience | null
